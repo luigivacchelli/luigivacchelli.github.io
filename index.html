@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-
-
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>Luigi Vacchelli Portfolio</title>
   <link href="stile.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-
 </head>
 <body>
 
@@ -51,20 +48,21 @@
 </div>
 
 <!-- Overlay biografico -->
-<div class="overlay">
-  <label class="back-arrow" for="toggle-about">←</label>
-  <div class="about-text">
-&nbsp; &nbsp; &nbsp; &nbsp; director and photographer<br>
-&nbsp; &nbsp; &nbsp; &nbsp; body is in Rome, heart is in Genoa, mind is at peace
- &nbsp;</div>
-  <div class="social-icons">
-    <a href="https://vimeo.com/luigivacchelli" target="_blank"><i class="fab fa-vimeo"></i></a>
-    <a href="https://www.imdb.com/it/name/nm13854795/" target="_blank"><i class="fab fa-imdb"></i></a>
-    <a href="https://www.instagram.com/luigi_vacchelli/" target="_blank"><i class="fab fa-instagram"></i></a>
-    <a href="mailto:ggvacchelli@gmail.com"><i class="fas fa-envelope"></i></a>
-    <a href="https://www.linkedin.com/in/luigivacchelli/" target="_blank"><i class="fab fa-linkedin"></i></a>
+<label class="overlay" for="toggle-about">
+  <div class="about-content" onclick="event.stopPropagation();">
+    <div class="about-text">
+      director and photographer<br>
+      body is in Rome, heart is in Genoa, mind is at peace
+    </div>
+    <div class="social-icons">
+      <a href="https://vimeo.com/luigivacchelli" target="_blank"><i class="fab fa-vimeo"></i></a>
+      <a href="https://www.imdb.com/it/name/nm13854795/" target="_blank"><i class="fab fa-imdb"></i></a>
+      <a href="https://www.instagram.com/luigi_vacchelli/" target="_blank"><i class="fab fa-instagram"></i></a>
+      <a href="mailto:ggvacchelli@gmail.com"><i class="fas fa-envelope"></i></a>
+      <a href="https://www.linkedin.com/in/luigivacchelli/" target="_blank"><i class="fab fa-linkedin"></i></a>
+    </div>
   </div>
-</div>
+</label>
 
 </body>
 </html>
