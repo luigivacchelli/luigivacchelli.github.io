@@ -1,70 +1,72 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Luigi Vacchelli Portfolio</title>
-  <link href="stile.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="stile.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 </head>
 <body>
-
-<input hidden="" id="toggle-about" type="checkbox">
 
 <!-- Header -->
 <div class="page-header">
   <div class="header-left">luigivacchelli</div>
   <div class="header-right">
-    <label for="toggle-about" class="about-toggle">chisono</label>
+    <div class="about-toggle" id="about-trigger">chisono</div>
   </div>
 </div>
 
 <!-- Galleria -->
 <div class="container">
   <div class="column">
-    <a class="media-link image-link"><img alt="" src="immagini/bike.jpg"></a>
-    <a class="media-link image-link"><img alt="" src="immagini/imperatore.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="graphics/ghosts.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/hand.jpg"></a>
-    <a class="media-link image-link"><img alt="" src="immagini/slate.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/sun.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/epm.jpg"></a>
-    <a class="media-link image-link"><img alt="" src="immagini/sciure.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
+    <a class="media-link image-link"><img src="immagini/frame.jpg" alt=""></a>
+    <a class="media-link"><video autoplay loop muted playsinline src="graphics/ghosts.mp4"></video></a>
+    <a class="media-link image-link"><img src="immagini/edera.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/ambulance.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/sea.jpg" alt=""></a>
+    <a class="media-link"><video autoplay loop muted playsinline src="video/sun.mp4"></video></a>
+    <a class="media-link image-link"><img src="immagini/wip.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/tube.jpg" alt=""></a>
   </div>
   <div class="column">
-    <a class="media-link image-link"><img alt="" src="immagini/greenhand.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/flares.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/pool.jpg"></a>
-    <a class="media-link image-link"><img src="immagini/peter/peter1.jpg" data-gallery="immagini/peter/peter2.jpg,immagini/peter/peter3.jpg,immagini/peter/peter4.jpg,immagini/peter/peter5.jpg"
-        alt=""></a>
-    <a class="media-link image-link"><img alt="" src="immagini/edera.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/antenne.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
+    <a class="media-link image-link"><img src="immagini/track.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/bike.jpg" alt=""></a>
+    <a class="media-link"><video autoplay loop muted playsinline src="video/flares.mp4"></video></a>
+    <a class="media-link image-link"><img src="immagini/web.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/pool.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/peter/peter1.jpg" data-gallery="immagini/peter/peter2.jpg,immagini/peter/peter3.jpg,immagini/peter/peter4.jpg,immagini/peter/peter5.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/balls.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/greenhand.jpg" alt=""></a>
+    <a class="media-link image-link"><img src="immagini/web.jpg" alt=""></a>
   </div>
 </div>
 
-<!-- Overlay biografico -->
-<label class="overlay" for="toggle-about">
-  <div class="about-content" onclick="event.stopPropagation();">
-    <div class="about-text">
+<!-- Overlay immagine e testo -->
+<div class="fullscreen-overlay" id="fullscreen-overlay">
+  <div class="overlay-content">
+    <img src="immagini/luigivacchelli.jpg" alt="Luigi Vacchelli">
+    <div class="overlay-text">
       director and photographer<br>
       body is in Rome, heart is in Genoa, mind is at peace
     </div>
-    <div class="social-icons">
-      <a href="https://vimeo.com/luigivacchelli" target="_blank"><i class="fab fa-vimeo"></i></a>
-      <a href="https://www.imdb.com/it/name/nm13854795/" target="_blank"><i class="fab fa-imdb"></i></a>
-      <a href="https://www.instagram.com/luigi_vacchelli/" target="_blank"><i class="fab fa-instagram"></i></a>
-      <a href="mailto:ggvacchelli@gmail.com"><i class="fas fa-envelope"></i></a>
-      <a href="https://www.linkedin.com/in/luigivacchelli/" target="_blank"><i class="fab fa-linkedin"></i></a>
-    </div>
   </div>
-</label>
+</div>
 
-<!-- JavaScript per cambio immagini -->
+<!-- JavaScript -->
 <script>
+  const trigger = document.getElementById('about-trigger');
+  const overlay = document.getElementById('fullscreen-overlay');
+
+  trigger.addEventListener('click', () => {
+    overlay.classList.add('show');
+  });
+
+  overlay.addEventListener('click', () => {
+    overlay.classList.remove('show');
+  });
+
+  // Cambio immagini Peter
   document.querySelectorAll('.image-link img').forEach(img => {
     const originalSrc = img.src;
     const gallery = img.dataset.gallery ? img.dataset.gallery.split(',') : [];
@@ -72,7 +74,6 @@
 
     img.addEventListener('click', () => {
       if (gallery.length === 0) return;
-
       index = (index + 1) % (gallery.length + 1);
       img.src = index === 0 ? originalSrc : gallery[index - 1];
     });
