@@ -22,27 +22,26 @@
 <!-- Galleria -->
 <div class="container">
   <div class="column">
-    <a class="media-link image-link"><img alt="" src="immagini/ph.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/1.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/ph1.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/ph1.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/ph.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/ph.jpg"></a>
+    <a class="media-link image-link"><img alt="" src="immagini/bike.jpg"></a>
+    <a class="media-link image-link"><img alt="" src="immagini/imperatore.jpg"></a>
+    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="graphics/ghosts.mp4"></video></a>
+    <a class="media-link image-link"><img alt="" src="immagini/hand.jpg"></a>
+    <a class="media-link image-link"><img alt="" src="immagini/slate.jpg"></a>
+    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/sun.mp4"></video></a>
+    <a class="media-link image-link"><img alt="" src="immagini/epm.jpg"></a>
+    <a class="media-link image-link"><img alt="" src="immagini/sciure.jpg"></a>
     <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
   </div>
   <div class="column">
-    <a class="media-link image-link"><img alt="" src="immagini/ph1.jpg"></a>
+    <a class="media-link image-link"><img alt="" src="immagini/greenhand.jpg"></a>
+    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/flares.mp4"></video></a>
+    <a class="media-link image-link"><img alt="" src="immagini/pool.jpg"></a>
+    <a class="media-link image-link"><img src="immagini/peter/peter1.jpg" data-gallery="immagini/peter/peter2.jpg,immagini/peter/peter3.jpg,immagini/peter/peter4.jpg,immagini/peter/peter5.jpg"
+        alt=""></a>
+    <a class="media-link image-link"><img alt="" src="immagini/edera.jpg"></a>
     <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/ph.jpg"></a>
+    <a class="media-link image-link"><img alt="" src="immagini/antenne.jpg"></a>
     <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/ph1.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/ph.jpg"></a>
-    <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
-    <a class="media-link image-link"><img alt="" src="immagini/ph1.jpg"></a>
     <a class="media-link"><video autoplay="" loop="" muted="" playsinline="" src="video/ph.mp4"></video></a>
   </div>
 </div>
@@ -63,6 +62,22 @@
     </div>
   </div>
 </label>
+
+<!-- JavaScript per cambio immagini -->
+<script>
+  document.querySelectorAll('.image-link img').forEach(img => {
+    const originalSrc = img.src;
+    const gallery = img.dataset.gallery ? img.dataset.gallery.split(',') : [];
+    let index = 0;
+
+    img.addEventListener('click', () => {
+      if (gallery.length === 0) return;
+
+      index = (index + 1) % (gallery.length + 1);
+      img.src = index === 0 ? originalSrc : gallery[index - 1];
+    });
+  });
+</script>
 
 </body>
 </html>
