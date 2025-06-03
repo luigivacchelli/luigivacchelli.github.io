@@ -4,8 +4,10 @@
   padding: 0;
 }
 
-body {
+html, body {
+  height: 100%;
   font-family: sans-serif;
+  overflow: hidden;
 }
 
 /* Header */
@@ -20,7 +22,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1cm;
+  padding-left: 1cm;
+  padding-right: 1cm;
 }
 
 .header-left {
@@ -46,6 +49,7 @@ body {
   display: flex;
   gap: 1cm;
   padding: 60px 1cm 0 1cm;
+  height: 100vh;
 }
 
 .column {
@@ -73,22 +77,22 @@ body {
   display: block;
 }
 
-/* Overlay */
+/* Overlay immagine e testo */
 .fullscreen-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 1s ease;
-  z-index: 2000;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1s ease;
+  z-index: 3000;
   padding-top: 60px;
 }
 
@@ -98,17 +102,73 @@ body {
 }
 
 .overlay-content {
-  text-align: center;
+  display: flex;
+  align-items: flex-start;
+  gap: 4rem;
+  max-width: 90%;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 0 2rem;
 }
 
 .overlay-content img {
-  max-width: 70vw;
-  max-height: 70vh;
-  margin-bottom: 20px;
+  width: 45vw;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+  margin-left: 1cm;
 }
 
 .overlay-text {
   font-size: 1.2rem;
+  line-height: 2.2rem;
   font-weight: bold;
-  color: #000;
+  color: #980807;
+  max-width: 40vw;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  html, body {
+    overflow: auto;
+  }
+
+  .container {
+    flex-direction: column;
+    height: auto;
+    padding: 70px 5vw;
+  }
+
+  .column {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .container .column:nth-child(1),
+  .container .column:nth-child(2) {
+    display: contents;
+  }
+
+  .page-header {
+    padding-left: 5vw;
+    padding-right: 5vw;
+  }
+
+  .overlay-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 0 1rem;
+  }
+
+  .overlay-content img {
+    width: 80vw;
+    margin-left: 0;
+  }
+
+  .overlay-text {
+    max-width: 90vw;
+    text-align: center;
+  }
 }
