@@ -77,56 +77,6 @@ html, body {
   display: block;
 }
 
-/* Overlay immagine e testo */
-.fullscreen-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 1s ease;
-  z-index: 3000;
-  padding-top: 60px;
-}
-
-.fullscreen-overlay.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.overlay-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 4rem;
-  max-width: 90%;
-  flex-wrap: wrap;
-  width: 100%;
-  padding: 0 2rem;
-}
-
-.overlay-content img {
-  width: 45vw;
-  height: auto;
-  max-height: 80vh;
-  object-fit: contain;
-  margin-left: 1cm;
-}
-
-.overlay-text {
-  font-size: 1.2rem;
-  line-height: 2.2rem;
-  font-weight: bold;
-  color: #980807;
-  max-width: 40vw;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   html, body {
@@ -153,22 +103,5 @@ html, body {
   .page-header {
     padding-left: 5vw;
     padding-right: 5vw;
-  }
-
-  .overlay-content {
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    padding: 0 1rem;
-  }
-
-  .overlay-content img {
-    width: 80vw;
-    margin-left: 0;
-  }
-
-  .overlay-text {
-    max-width: 90vw;
-    text-align: center;
   }
 }

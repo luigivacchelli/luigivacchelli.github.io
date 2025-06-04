@@ -11,7 +11,7 @@
 
 <!-- Header -->
 <div class="page-header">
-  <div class="header-left">luigivacchelli</div>
+  <div class="header-left">LUIGIVACCHELLI</div>
   <div class="header-right">
     <div class="about-toggle" id="about-trigger">chisono</div>
   </div>
@@ -42,30 +42,8 @@
   </div>
 </div>
 
-<!-- Overlay immagine e testo -->
-<div class="fullscreen-overlay" id="fullscreen-overlay">
-  <div class="overlay-content">
-    <img src="immagini/luigivacchelli.jpg" alt="Luigi Vacchelli">
-    <div class="overlay-text">
-      director and photographer<br>
-      body is in Rome, heart is in Genoa, mind is at peace
-    </div>
-  </div>
-</div>
-
 <!-- JavaScript -->
 <script>
-  const trigger = document.getElementById('about-trigger');
-  const overlay = document.getElementById('fullscreen-overlay');
-
-  trigger.addEventListener('click', () => {
-    overlay.classList.add('show');
-  });
-
-  overlay.addEventListener('click', () => {
-    overlay.classList.remove('show');
-  });
-
   // Cambio immagini Peter
   document.querySelectorAll('.image-link img').forEach(img => {
     const originalSrc = img.src;
