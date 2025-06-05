@@ -27,9 +27,10 @@ html, body {
   z-index: 1000;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   padding-left: 2.36rem;
   padding-right: 2.36rem;
+  padding-bottom: 6px;
 }
 
 .header-left {
