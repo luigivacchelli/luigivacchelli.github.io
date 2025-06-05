@@ -28,8 +28,8 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-left: 1cm;
-  padding-right: 1cm;
+  padding-left: 2.36rem;
+  padding-right: 2.36rem;
 }
 
 .header-left {
@@ -88,8 +88,8 @@ html, body {
 /* Galleria */
 .container {
   display: flex;
-  gap: 1cm;
-  padding: 60px 1cm 0 1cm;
+  gap: 2.36rem;
+  padding: 60px 2.36rem 0 2.36rem;
   height: 100vh;
 }
 
