@@ -19,6 +19,11 @@
   <link rel="preload" href="scans/cat.jpg" as="image">
 </head>
 <body>
+    
+<!-- Preloader -->
+<div id="preloader">
+    <img src="loghino.png" class="loader-icon" alt="" />
+</div>
 
 <!-- Header -->
 <div class="page-header">
@@ -30,56 +35,74 @@
 
 <!-- Checkbox che controlla l’overlay -->
 <input type="checkbox" id="about-toggle" hidden>
-<div class="about-overlay">
-  <label for="about-toggle" class="about-background"></label> <!-- sfondo cliccabile -->
-  <div class="about-text">
-    <p>BODY IS IN ROME<br> HEART IS IN GENOA<br> MIND IS AT PEACE</p>
-  </div>
-</div>
-
-
-<!-- Galleria -->
-<div class="container">
-  <div class="column left">
-    <div class="media-link"><img src="immagini/frame.jpg" alt=""></div>
-    <div class="media-link"><video autoplay loop muted playsinline src="graphics/ghosts.mp4"></video></div>
-    <div class="media-link"><img src="immagini/edera.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/ambulance.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/tent.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/sea.jpg" alt=""></div>
-    <div class="media-link"><video autoplay loop muted playsinline src="video/sun.mp4"></video></div>
-    <div class="media-link"><img src="immagini/wip.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/tube.jpg" alt=""></div>
-  </div>
-  <div class="column right">
-    <div class="media-link"><img src="immagini/track.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/bike.jpg" alt=""></div>
-    <div class="media-link"><video autoplay loop muted playsinline src="video/flares.mp4"></video></div>
-    <div class="media-link"><img src="immagini/mirrors.jpg" alt=""></div>
-    <div class="media-link"><img src="scans/cat.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/pool.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/peter/peter1.jpg" data-gallery="immagini/peter/peter2.jpg,immagini/peter/peter3.jpg,immagini/peter/peter4.jpg,immagini/peter/peter5.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/balls.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/greenhand.jpg" alt=""></div>
-    <div class="media-link"><img src="immagini/web.jpg" alt=""></div>
-  </div>
-</div>
-
-<!-- JavaScript -->
-<script>
-  // Cambio immagini Peter
-  document.querySelectorAll('.media-link img').forEach(img => {
-    const originalSrc = img.src;
-    const gallery = img.dataset.gallery ? img.dataset.gallery.split(',') : [];
-    let index = 0;
-
-    img.addEventListener('click', () => {
-      if (gallery.length === 0) return;
-      index = (index + 1) % (gallery.length + 1);
-      img.src = index === 0 ? originalSrc : gallery[index - 1];
-    });
-  });
-</script>
-
+    <div class="about-overlay">
+        <label for="about-toggle" class="about-background"></label> <!-- sfondo cliccabile -->
+        <img src="immagini/luigivacchelli.jpg" class="about-image">
+            <div class="about-text">
+                <div class="line">BODY IS IN ROME</div>
+                <div class="line">HEART IS IN GENOA</div>
+                <div class="line">MIND IS AT PEACE</div>
+            </div>
+    </div>
+    
+    <!-- Galleria -->
+    <div class="container">
+        <div class="column left">
+            <div class="media-link"><img src="immagini/frame.jpg" alt=""></div>
+            <div class="media-link"><video autoplay loop muted playsinline src="graphics/ghosts.mp4"></video></div>
+            <div class="media-link"><img src="immagini/edera.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/ambulance.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/tent.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/sea.jpg" alt=""></div>
+            <div class="media-link"><video autoplay loop muted playsinline src="video/sun.mp4"></video></div>
+            <div class="media-link"><img src="immagini/wip.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/tube.jpg" alt=""></div>
+        </div>
+        <div class="column right">
+            <div class="media-link"><img src="immagini/track.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/bike.jpg" alt=""></div>
+            <div class="media-link"><video autoplay loop muted playsinline src="video/flares.mp4"></video></div>
+            <div class="media-link"><img src="immagini/mirrors.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/rock.jpg" alt=""></div>
+            <div class="media-link"><img src="scans/cat.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/pool.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/peter/peter1.jpg" data-gallery="immagini/peter/peter2.jpg,immagini/peter/peter3.jpg,immagini/peter/peter4.jpg,immagini/peter/peter5.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/balls.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/greenhand.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/web.jpg" alt=""></div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Cambio immagini Peter
+        document.querySelectorAll('.media-link img').forEach(img => {
+            const originalSrc = img.src;
+            const gallery = img.dataset.gallery ? img.dataset.gallery.split(',') : [];
+            let index = 0;
+            
+            img.addEventListener('click', () => {
+                if (gallery.length === 0) return;
+                index = (index + 1) % (gallery.length + 1);
+                img.src = index === 0 ? originalSrc : gallery[index - 1];
+            });
+        });
+    </script>
+    
+    <script>
+          window.addEventListener('load', () => {
+            setTimeout(() => {
+              document.body.classList.add('loaded');
+            }, 5000); // attende 5 secondi dopo il load
+          });
+        </script>
+    
+    <script>
+      setTimeout(() => {
+        const preloader = document.getElementById('preloader');
+        if (preloader) preloader.remove();
+      }, 10000); // 8s animazione + 2s fadeout
+    </script>
+    
 </body>
 </html>
