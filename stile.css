@@ -36,7 +36,7 @@ html, body {
   justify-content: center;
   align-items: center;
   animation: preloader-bg-transition 8s linear forwards, preloader-fadeout 2s linear 8s forwards;
-  pointer-events: all;
+  pointer-events: none;
   opacity: 1;
 }
 
@@ -152,7 +152,6 @@ html, body {
   transform: translateX(-50%) translateY(-50%); /* sposta tutto l’elemento a sinistra del centro */
   max-width: 350px; /* dimensione gestibile */
   height: auto;
-  z-index: 0; /* sotto al testo se necessario */
 }
 
 .about-text {
@@ -166,7 +165,6 @@ html, body {
   font-size: 2rem;
   max-width: 600px;
   cursor: default;
-  z-index: 1
 }
 
 #about-toggle:checked ~ .about-overlay {
