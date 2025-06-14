@@ -64,6 +64,101 @@ html, body {
   color: var(--color-hover);
 }
 
+/* Overlay */
+.about-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.3); /* semitrasparente */
+    backdrop-filter: blur(8px); /* sfocatura */
+    -webkit-backdrop-filter: blur(8px); /* Safari support */
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 1s ease, visibility 0s linear 1s, pointer-events 0s linear 1s;
+}
+
+.about-background {
+    position: absolute;
+    inset: 0;
+}
+
+.about-image {
+    position: absolute;
+    top: 50%;
+    left: 50%; /* bordo sinistro al centro */
+    transform: translate(-50%, -50%);
+    max-width: 500px; /* dimensione gestibile */
+    height: auto;
+    border-radius: 0px;
+    overflow: hidden;
+}
+
+.about-text-box {
+    position: absolute;
+    top: 47%;
+    left: 50%; /* bordo sinistro al centro */
+    transform: translate(-50%, -50%);
+    width: 750px;
+    display: flex;
+    flex-direction: column;
+    gap: 4rem; /* distanza tra le righe */
+    }
+
+.text-row {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.word {
+    white-space: nowrap;
+    display: inline-block;
+    font-family: 'Kirome', sans-serif;
+    font-size: 4rem;
+    color: var(--color-secondary);
+}
+
+/* Allinea la prima parola al bordo sinistro */
+.word1 {
+  position: absolute;
+  left: 15px;
+}
+
+/* Allinea la seconda parola al centro sinistro */
+.word2 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-150%); /* si allinea a sinistra del centro */
+}
+
+/* Allinea la terza parola al centro destro */
+.word3 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(50%); /* si allinea a destra del centro */
+}
+
+/* Allinea l’ultima parola al bordo destro */
+.word4 {
+  position: absolute;
+  right: 0;
+  text-align: right;
+}
+
+/* Spostamento della parola finale della prima riga */
+.text-row:first-child .word4 {
+  transform: translateX(2px); /* Aggiusta come preferisci */
+}
+
+#about-toggle:checked ~ .about-overlay {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 1s ease, visibility 0s linear 0s, pointer-events 0s linear 0s;
+}
+
 /* Galleria */
 .container {
   display: flex;
