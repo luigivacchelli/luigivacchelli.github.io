@@ -7,6 +7,7 @@
 
 :root {
   --color-primary: #070898;
+  --color-primary2: #285FF4;
   --color-secondary: #980807;
   --color-hover: #079808;
   --mobile-padding: 5vw
@@ -88,22 +89,45 @@ html, body {
     top: 50%;
     left: 50%; /* bordo sinistro al centro */
     transform: translate(-50%, -50%);
-    max-width: 500px; /* dimensione gestibile */
+    max-width: 750px; /* dimensione gestibile */
     height: auto;
     border-radius: 0px;
+    border: 6px solid var(--color-primary2);
     overflow: hidden;
+}
+
+.webcam-container {
+  position: absolute;
+  top: 50%;     /* sposta verticalmente */
+  left: 50%;    /* sposta orizzontalmente */
+  transform: translate(-50.5%, 0%) rotate(2.5deg); /* adatta per centrare nello schermo dell’immagine */
+  height: 54px; /* altezza del video */
+  width: 91px;  /* larghezza del video */
+  overflow: hidden;
+  border-radius: 2px; /* bordo stondato, se vuoi */
+  z-index: 1002;
+  pointer-events: none;
+}
+
+#webcam {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  filter: contrast(1) brightness(0.9) saturate(0.9) hue-rotate(-9deg) grayscale(0.1);
 }
 
 .about-text-box {
     position: absolute;
-    top: 47%;
+    top: 50%;
     left: 50%; /* bordo sinistro al centro */
-    transform: translate(-50%, -50%);
-    width: 750px;
+    transform: translate(-122%, -360%);
+    width: 500px;
     display: flex;
     flex-direction: column;
-    gap: 4rem; /* distanza tra le righe */
-    }
+    gap: 3rem; /* distanza tra le righe */
+    border: none;
+}
 
 .text-row {
     position: relative;
@@ -113,31 +137,31 @@ html, body {
 }
 
 .word {
-    white-space: nowrap;
     display: inline-block;
     font-family: 'Kirome', sans-serif;
-    font-size: 4rem;
+    font-size: 3rem;
     color: var(--color-secondary);
 }
 
 /* Allinea la prima parola al bordo sinistro */
 .word1 {
   position: absolute;
-  left: 15px;
+  left: 0px;
+  transform: translateX(0px);
 }
 
 /* Allinea la seconda parola al centro sinistro */
 .word2 {
   position: absolute;
   left: 50%;
-  transform: translateX(-150%); /* si allinea a sinistra del centro */
+  transform: translateX(-140%); /* si allinea a sinistra del centro */
 }
 
 /* Allinea la terza parola al centro destro */
 .word3 {
   position: absolute;
   left: 50%;
-  transform: translateX(50%); /* si allinea a destra del centro */
+  transform: translateX(10%); /* si allinea a destra del centro */
 }
 
 /* Allinea l’ultima parola al bordo destro */
@@ -145,11 +169,12 @@ html, body {
   position: absolute;
   right: 0;
   text-align: right;
+  transform: translateX(20px); /* sposta a destra */
 }
 
 /* Spostamento della parola finale della prima riga */
 .text-row:first-child .word4 {
-  transform: translateX(2px); /* Aggiusta come preferisci */
+  transform: translateX(22px); /* Aggiusta come preferisci */
 }
 
 #about-toggle:checked ~ .about-overlay {
@@ -201,10 +226,10 @@ html, body {
 
 /* Responsive */
 @media (max-width: 768px) {
-    html, body {
-        overflow: auto;
-    }
-    
+  html, body {
+    overflow: auto;
+  }
+
   .container {
     flex-direction: column;
     height: auto;
@@ -215,19 +240,38 @@ html, body {
     width: 100%;
     height: auto;
     overflow: visible;
+    padding-bottom: 0;
   }
 
   .page-header {
     padding-left: var(--mobile-padding);
     padding-right: var(--mobile-padding);
   }
+
+  .about-text-box {
+    width: 85%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    gap: 2rem;
+  }
+
+  .about-image {
+    max-width: 90vw;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .word {
+    font-size: 2.2rem;
+  }
 }
 
 body {
-    -ms-overflow-style: none;  /* IE e Edge */
-    scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-    
-    body::-webkit-scrollbar {
-      display: none;             /* Chrome, Safari */
-    }
+
+body::-webkit-scrollbar {
+  display: none;
+}

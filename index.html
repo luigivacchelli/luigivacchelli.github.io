@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Luigi Vacchelli Portfolio</title>
-  <link href="stile.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="stile.css"/>
   
   <!-- Preload primi 4 elementi colonna sinistra -->
   <link rel="preload" href="immagini/frame.jpg" as="image">
@@ -22,9 +22,9 @@
 
 <!-- Header -->
 <div class="page-header">
-  <div class="header-left">luigivacchelli</div>
+  <div class="header-left">luigivacchelli!</div>
   <div class="header-right">
-    <label for="about-toggle" class="about-toggle">chisono</label>
+    <label for="about-toggle" class="about-toggle">chisono?</label>
   </div>
 </div>
 
@@ -34,27 +34,32 @@
 <!-- Overlay con bio -->
 <div class="about-overlay">
     <label for="about-toggle" class="about-background"></label> <!-- sfondo cliccabile -->
-    <img src="immagini/lvwetplateborder.jpg" class="about-image">
-        <div class="about-text-box">
-          <div class="text-row">
-            <div class="word word1">HEART</div>
-            <div class="word word2">IS</div>
-            <div class="word word3">IN</div>
-            <div class="word word4">GENOA</div>
-          </div>
-          <div class="text-row">
-            <div class="word word1">BODY</div>
-            <div class="word word2">IS</div>
-            <div class="word word3">IN</div>
-            <div class="word word4">ROME</div>
-          </div>
-          <div class="text-row">
-            <div class="word word1">MIND</div>
-            <div class="word word2">IS</div>
-            <div class="word word3">IN</div>
-            <div class="word word4">EDEN</div>
-          </div>
+    <img src="immagini/lvkidjvc.jpg" class="about-image">
+        <!-- Video nella zona dello schermo -->
+        <div class="webcam-container">
+          <video id="webcam" autoplay muted playsinline></video>
         </div>
+        <div class="about-text-box">
+            <div class="text-row">
+                <div class="word word1">HEART</div>
+                <div class="word word2">IS</div>
+                <div class="word word3">IN</div>
+                <div class="word word4">GENOA</div>
+            </div>
+            <div class="text-row">
+                <div class="word word1">BODY</div>
+                <div class="word word2">IS</div>
+                <div class="word word3">IN</div>
+                <div class="word word4">ROME</div>
+            </div>
+            <div class="text-row">
+                <div class="word word1">MIND</div>
+                <div class="word word2">IS</div>
+                <div class="word word3">IN</div>
+                <div class="word word4">HEAVEN</div>
+            </div>
+        </div>
+        <div class="debug-square-box"></div>
 </div>
     
     <!-- Galleria -->
@@ -98,6 +103,16 @@
                 index = (index + 1) % (gallery.length + 1);
                 img.src = index === 0 ? originalSrc : gallery[index - 1];
             });
+        });
+    </script>
+    <script>
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          const video = document.getElementById('webcam');
+          video.srcObject = stream;
+        })
+        .catch(error => {
+          console.error("Errore nell'accesso alla webcam:", error);
         });
     </script>
     
