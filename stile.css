@@ -5,10 +5,18 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'FinnishPie';
+  src: url('./fonts/FinnishPieTrial-Beta01Bold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
 :root {
   --color-primary: #070898;
   --color-primary2: #285FF4;
   --color-secondary: #980807;
+  --color-secondary2: #F6C500;
   --color-hover: #079808;
   --mobile-padding: 5vw
 }
@@ -42,7 +50,7 @@ html, body {
 }
 
 .header-left {
-  font-family: 'Kirome', sans-serif;
+  font-family: 'FinnishPie', sans-serif;
   font-size: 1rem;
   font-weight: normal;
   color: var(--color-primary);
@@ -50,7 +58,7 @@ html, body {
 
 .header-right,
 .about-toggle {
-  font-family: 'Kirome', sans-serif;
+  font-family: 'FinnishPie', sans-serif;
   font-size: 1rem;
   font-weight: normal;
   color: var(--color-primary);
@@ -88,7 +96,7 @@ html, body {
     position: absolute;
     top: 50%;
     left: 50%; /* bordo sinistro al centro */
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -63%);
     max-width: 750px; /* dimensione gestibile */
     height: auto;
     border-radius: 0px;
@@ -100,28 +108,27 @@ html, body {
   position: absolute;
   top: 50%;     /* sposta verticalmente */
   left: 50%;    /* sposta orizzontalmente */
-  transform: translate(-50.5%, 0%) rotate(2.5deg); /* adatta per centrare nello schermo dell’immagine */
+  transform: translate(-50.7%, -138%) rotate(2.5deg); /* adatta per centrare nello schermo dell’immagine */
   height: 54px; /* altezza del video */
-  width: 91px;  /* larghezza del video */
+  width: 91.5px;  /* larghezza del video */
   overflow: hidden;
   border-radius: 2px; /* bordo stondato, se vuoi */
   z-index: 1002;
-  pointer-events: none;
 }
 
 #webcam {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  image-rendering: pixelated;
-  filter: contrast(1) brightness(0.9) saturate(0.9) hue-rotate(-9deg) grayscale(0.1);
+  image-rendering: pixelated !important;
+  filter: contrast(1.2) brightness(1) saturate(0.9) hue-rotate(-10deg) grayscale(0.1);
 }
 
-.about-text-box {
+.about-title-box {
     position: absolute;
     top: 50%;
     left: 50%; /* bordo sinistro al centro */
-    transform: translate(-122%, -360%);
+    transform: translate(-50%, 240%);
     width: 500px;
     display: flex;
     flex-direction: column;
@@ -147,7 +154,7 @@ html, body {
 .word1 {
   position: absolute;
   left: 0px;
-  transform: translateX(0px);
+  transform: translateX(-10px);
 }
 
 /* Allinea la seconda parola al centro sinistro */
@@ -169,12 +176,12 @@ html, body {
   position: absolute;
   right: 0;
   text-align: right;
-  transform: translateX(20px); /* sposta a destra */
+  transform: translateX(25px); /* sposta a destra */
 }
 
 /* Spostamento della parola finale della prima riga */
 .text-row:first-child .word4 {
-  transform: translateX(22px); /* Aggiusta come preferisci */
+  transform: translateX(27px); /* Aggiusta come preferisci */
 }
 
 #about-toggle:checked ~ .about-overlay {
@@ -248,30 +255,48 @@ html, body {
     padding-right: var(--mobile-padding);
   }
 
-  .about-text-box {
-    width: 85%;
-    top: 50%;
+  .about-image {
+    position: absolute;
+    top: 5vh; /* spazio dal bordo superiore */
     left: 50%;
-    transform: translate(-50%, -50%);
-    gap: 2rem;
+    transform: translateX(-50%);
+    max-width: 90vw;
+    height: auto;
   }
 
-  .about-image {
-    max-width: 90vw;
+  .webcam-container {
+    top: 5vh; /* segue l'immagine */
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%) rotate(2.5deg);
+    height: 35px;
+    width: 60px;
+  }
+
+  .about-title-box {
+    position: absolute;
+    bottom: 10vh; /* spazio dal fondo */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90vw;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .text-row {
+    justify-content: center;
+    gap: 0.5rem;
+    position: static;
+    width: 100%;
   }
 
   .word {
-    font-size: 2.2rem;
+    position: static;
+    font-size: 1.5rem;
+    color: var(--color-secondary);
+    text-align: center;
   }
-}
 
-body {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-body::-webkit-scrollbar {
-  display: none;
+  .about-body-box {
+    display: none; /* opzionale: nasconde il corpo testo su mobile */
+  }
 }
