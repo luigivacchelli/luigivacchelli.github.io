@@ -8,15 +8,11 @@
   
   <!-- Preload primi 4 elementi colonna sinistra -->
   <link rel="preload" href="immagini/frame.jpg" as="image">
-  <link rel="preload" href="graphics/ghosts.mp4" as="video">
-  <link rel="preload" href="immagini/edera.jpg" as="image">
-  <link rel="preload" href="immagini/ambulance.jpg" as="image">
+  <link rel="preload" href="graphics/ghosts.mp4" as="video" type="video/mp4">
 
   <!-- Preload primi 4 elementi colonna destra -->
   <link rel="preload" href="immagini/track.jpg" as="image">
   <link rel="preload" href="immagini/bike.jpg" as="image">
-  <link rel="preload" href="video/flares.mp4" as="video">
-  <link rel="preload" href="scans/cat.jpg" as="image">
 </head>
 <body>
 
@@ -114,6 +110,27 @@
           console.error("Errore nell'accesso alla webcam:", error);
         });
     </script>
+    
+<svg width="0" height="0" style="position:absolute">
+    <filter id="videoOuterGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <!-- Blur the video -->
+        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+        <!-- Keep only the blur outside the original shape -->
+        <feComposite in="blur" in2="SourceAlpha" operator="out" result="outerGlow"/>
+        <!-- Optional: boost brightness/saturation of the glow -->
+        <feColorMatrix in="outerGlow" type="matrix"
+          values="
+            1.2 0   0   0   0
+            0   1.2 0   0   0
+            0   0   1.2 0   0
+            0   0   0   1   0" result="outerGlowBoost"/>
+        <!-- Merge original video + glow -->
+        <feMerge>
+          <feMergeNode in="SourceGraphic"/>
+          <feMergeNode in="outerGlowBoost"/>
+        </feMerge>
+      </filter>
+    </svg>
     
 </body>
 </html>
