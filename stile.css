@@ -108,8 +108,8 @@ html, body {
   position: absolute;
   top: 50%;     /* sposta verticalmente */
   left: 50%;    /* sposta orizzontalmente */
-  transform: translate(-50.7%, -138%) rotate(2.5deg); /* adatta per centrare nello schermo dell’immagine */
-  height: 54px; /* altezza del video */
+  transform: translate(-50.7%, -136%) rotate(2.5deg); /* adatta per centrare nello schermo dell’immagine */
+  height: 55px; /* altezza del video */
   width: 91.5px;  /* larghezza del video */
   overflow: hidden;
   border-radius: 2px; /* bordo stondato, se vuoi */
