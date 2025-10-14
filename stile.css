@@ -92,12 +92,20 @@ html, body {
     inset: 0;
 }
 
+/* New container that anchors image + webcam together */
+.about-card {
+  position: absolute;
+  top: 50%;
+  left: 25%;
+  transform: translate(-50%, -50%); /* keep your current placement */
+  max-width: 750px;                 /* same as your current image cap */
+  width: 45vw;                      /* responsive width; tweak as desired */
+  z-index: 1002;                    /* above the background overlay */
+}
+
 .about-image {
-    position: absolute;
-    top: 50%;
-    left: 50%; /* bordo sinistro al centro */
-    transform: translate(-50%, -63%);
-    max-width: 750px; /* dimensione gestibile */
+    display: block;
+    width: 100%; /* dimensione gestibile */
     height: auto;
     border-radius: 0px;
     border: 6px solid var(--color-primary);
@@ -106,14 +114,15 @@ html, body {
 
 .webcam-container {
   position: absolute;
-  top: 50%;     /* sposta verticalmente */
-  left: 50%;    /* sposta orizzontalmente */
-  transform: translate(-50.7%, -136%) rotate(2.5deg); /* adatta per centrare nello schermo dell’immagine */
-  height: 55px; /* altezza del video */
-  width: 91.5px;  /* larghezza del video */
+  /* Use % so it scales as the image resizes */
+  top: 49.7%;     /* tweak to align the webcam with the “screen” in your image */
+  left: 43.8%;    /* tweak as needed */
+  width: 12.2%; /* 91.5px / 750px ≈ 12.2% of the card’s width */
+  aspect-ratio: 91.5 / 55; /* preserves the same shape as before */
+  transform: rotate(2.5deg);
   overflow: hidden;
-  border-radius: 2px; /* bordo stondato, se vuoi */
-  z-index: 1002;
+  border-radius: 2px;
+  z-index: 1003;
 }
 
 #webcam {
@@ -126,13 +135,13 @@ html, body {
 
 .about-title-box {
     position: absolute;
-    top: 50%;
-    left: 50%; /* bordo sinistro al centro */
-    transform: translate(-50%, 240%);
+    top: 45%;
+    left: 74%; /* bordo sinistro al centro */
+    transform: translate(-50%, -50%);
     width: 500px;
     display: flex;
     flex-direction: column;
-    gap: 3rem; /* distanza tra le righe */
+    gap: 4rem; /* distanza tra le righe */
     border: none;
 }
 
