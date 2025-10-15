@@ -276,7 +276,7 @@ body.overlay-active {
   /* Overlay mobile layout */
   .about-card {
     position: absolute;
-    top: 14vh; /* immagine nella parte alta */
+    top: 3.5vh; /* immagine nella parte alta */
     left: 50%;
     transform: translateX(-50%);
     width: 90vw;
@@ -294,7 +294,7 @@ body.overlay-active {
   /* Riga singola dinamica */
   .about-title-box {
     position: absolute;
-    top: 4vh;
+    top: 1.5vh;
     left: 50%;
     transform: translateX(-50%);
     width: 90vw;
@@ -309,8 +309,8 @@ body.overlay-active {
   .about-title-box::after {
     content: "HEART IS IN GENOA BODY IS IN ROME MIND IS IN HEAVEN";
     font-family: 'FinnishPie', sans-serif;
-    font-size: clamp(0.4rem, 6vw, 1.3rem); /* dinamico e fluido */
-    color: var(--color-secondary);
+    font-size: 0.917rem;
+    color: var(--color-secondary2);
     text-align: center;
     white-space: nowrap;
     letter-spacing: 0.05em;
