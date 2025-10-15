@@ -117,17 +117,19 @@
     </script>
     
     <script>
-      const aboutToggle = document.getElementById('about-toggle');
-      const body = document.body;
-
-      aboutToggle.addEventListener('change', () => {
-        if (aboutToggle.checked) {
-          body.classList.add('overlay-active');
-        } else {
-          body.classList.remove('overlay-active');
-        }
-      });
+        const aboutToggle = document.getElementById('about-toggle');
+        const body = document.body;
+        
+        aboutToggle.addEventListener('change', () => {
+            if (aboutToggle.checked) {
+                body.classList.add('overlay-active');
+            } else {
+                body.classList.remove('overlay-active');
+            }
+        });
     </script>
+    
+    <script src="gestures.js" defer></script>
     
 </body>
 </html>
