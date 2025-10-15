@@ -240,6 +240,15 @@ html, body {
     display: block;
 }
 
+/* Impedisce lo scroll sotto l’overlay */
+body.overlay-active {
+  overflow: hidden !important;
+  height: 100vh !important;
+  touch-action: none !important;
+  position: fixed !important;
+  width: 100%;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   html, body {

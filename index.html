@@ -31,15 +31,15 @@
 <!-- Checkbox che controlla l’overlay -->
 <input type="checkbox" id="about-toggle" class="about-checkbox" hidden>
     
-<!-- Overlay con bio -->
-<div class="about-overlay">
-    <label for="about-toggle" class="about-background"></label> <!-- sfondo cliccabile -->
-    <div class="about-card">
-      <img src="immagini/lvkidjvc.jpg" class="about-image" alt="">
-      <div class="webcam-container">
-        <video id="webcam" autoplay muted playsinline></video>
-      </div>
-    </div>
+    <!-- Overlay con bio -->
+    <div class="about-overlay">
+        <label for="about-toggle" class="about-background"></label> <!-- sfondo cliccabile -->
+        <div class="about-card">
+            <img src="immagini/lvkidjvc.jpg" class="about-image" alt="">
+                <div class="webcam-container">
+                    <video id="webcam" autoplay muted playsinline></video>
+                </div>
+        </div>
         <div class="about-title-box">
             <div class="text-row">
                 <div class="word word1">HEART</div>
@@ -60,7 +60,7 @@
                 <div class="word word4">HEAVEN</div>
             </div>
         </div>
-</div>
+    </div>
     
     <!-- Galleria -->
     <div class="container">
@@ -106,14 +106,27 @@
         });
     </script>
     <script>
-      navigator.mediaDevices.getUserMedia({ video: true })
+        navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
-          const video = document.getElementById('webcam');
-          video.srcObject = stream;
+            const video = document.getElementById('webcam');
+            video.srcObject = stream;
         })
         .catch(error => {
-          console.error("Errore nell'accesso alla webcam:", error);
+            console.error("Errore nell'accesso alla webcam:", error);
         });
+    </script>
+    
+    <script>
+      const aboutToggle = document.getElementById('about-toggle');
+      const body = document.body;
+
+      aboutToggle.addEventListener('change', () => {
+        if (aboutToggle.checked) {
+          body.classList.add('overlay-active');
+        } else {
+          body.classList.remove('overlay-active');
+        }
+      });
     </script>
     
 </body>
