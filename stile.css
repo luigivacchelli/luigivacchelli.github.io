@@ -160,11 +160,11 @@ html, body {
 /* New container that anchors image + webcam together */
 .about-card {
   position: absolute;
-  top: 50%;
-  left: 25%;
-  transform: translate(-50%, -50%); /* keep your current placement */
-  max-width: 750px;                 /* same as your current image cap */
-  width: 45vw;                      /* responsive width; tweak as desired */
+  top: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(50vw - 2.5rem);
+  max-width: 750px;
   z-index: 1002;                    /* above the background overlay */
 }
 
@@ -269,7 +269,7 @@ html, body {
 .container {
   display: flex;
   gap: 1rem;
-  padding: 2.36rem 2rem 0 2rem;
+  padding: 2.5rem 2rem 0 2rem;
   min-height: calc(100vh - 2rem);
 }
 
