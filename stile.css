@@ -5,13 +5,6 @@
   font-style: normal;
 }
 
-@font-face {
-  font-family: '';
-  src: url('') format('');
-  font-weight: ;
-  font-style: ;
-}
-
 :root {
   --color-primary: #070898;
   --color-primary2: #285FF4;
