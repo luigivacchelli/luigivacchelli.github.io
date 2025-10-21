@@ -6,10 +6,10 @@
 }
 
 @font-face {
-  font-family: 'FinnishPie';
-  src: url('./fonts/FinnishPie/FinnishPieTrial-Beta01Bold.otf') format('opentype');
-  font-weight: bold;
-  font-style: normal;
+  font-family: '';
+  src: url('') format('');
+  font-weight: ;
+  font-style: ;
 }
 
 :root {
@@ -33,6 +33,72 @@ html, body {
   overflow: hidden;
 }
 
+/* Preloader Styles */
+#preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff; /* White background */
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 1.5s ease-out, visibility 1.5s ease-out; /* Fade-out transition */
+}
+
+.preloader-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+}
+
+.loader-icon {
+  width: 150px; /* Adjust size as needed */
+  height: 150px;
+  animation: spin 2s linear infinite; /* The spinning animation */
+}
+
+#preloader p {
+  font-family: 'Kirome', sans-serif;
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  max-width: 1200px;
+  line-height: 1.5;
+}
+
+/* Keyframe animation for the rotation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Class to trigger the fade-out */
+#preloader.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Initially hide the main content until preloader is done */
+.page-header, .container {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 1s ease-in; /* Optional: fade in the main content */
+}
+
+/* Class to show the main content */
+.page-header.visible, .container.visible {
+  visibility: visible;
+  opacity: 1;
+}
+
 /* Header */
 .page-header {
   position: fixed;
@@ -50,7 +116,7 @@ html, body {
 }
 
 .header-left {
-  font-family: 'FinnishPie', sans-serif;
+  font-family: 'Kirome', sans-serif;
   font-size: 1rem;
   font-weight: normal;
   color: var(--color-primary);
@@ -58,7 +124,7 @@ html, body {
 
 .header-right,
 .about-toggle {
-  font-family: 'FinnishPie', sans-serif;
+  font-family: 'Kirome', sans-serif;
   font-size: 1rem;
   font-weight: normal;
   color: var(--color-primary);
@@ -154,7 +220,7 @@ html, body {
 
 .word {
     display: inline-block;
-    font-family: 'FinnishPie', sans-serif;
+    font-family: 'Kirome', sans-serif;
     font-size: 3rem;
     color: var(--color-secondary2);
 }
@@ -308,7 +374,7 @@ body.overlay-active {
 
   .about-title-box::after {
     content: "HEART IS IN GENOA BODY IS IN ROME MIND IS IN HEAVEN";
-    font-family: 'FinnishPie', sans-serif;
+    font-family: 'Kirome', sans-serif;
     font-size: 0.917rem;
     color: var(--color-secondary2);
     text-align: center;

@@ -17,6 +17,14 @@
   
 </head>
 <body>
+    <!-- Preloader Start -->
+      <div id="preloader">
+        <div class="preloader-content">
+          <img src="logos/loaderlogo.png" alt="Loading..." class="loader-icon">
+          <p> Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!</p>
+        </div>
+      </div>
+      <!-- Preloader End -->
 
 <!-- Header -->
 <div class="page-header">
@@ -33,7 +41,7 @@
     <div class="about-overlay">
         <label for="about-toggle" class="about-background"></label> <!-- sfondo cliccabile -->
         <div class="about-card">
-            <img src="mainpage/pictures/lv/lvjvc.jpg" class="about-image" alt="">
+            <img src="lv/lvjvc.jpg" class="about-image" alt="">
                 <div class="webcam-container">
                     <video id="webcam" autoplay muted playsinline></video>
                 </div>
@@ -63,28 +71,28 @@
     <!-- Galleria -->
     <div class="container">
         <div class="column left">
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/frame.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/frame.jpg" alt=""></div>
             <div class="media-link"><video autoplay loop muted playsinline src="mainpage/graphics/hires/ghosts.mp4"></video></div>
-            <div class="media-link"><img src="mainpage/pictures/c41/hires/edera.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/ambulance.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/tent.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/c41/hires/sea.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/c41/lores/edera.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/ambulance.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/tent.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/c41/lores/sea.jpg" alt=""></div>
             <div class="media-link"><video autoplay loop muted playsinline src="mainpage/videos/hires/sun.mp4"></video></div>
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/wip.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/tube.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/wip.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/tube.jpg" alt=""></div>
         </div>
         <div class="column right">
-            <div class="media-link"><img src="mainpage/pictures/c41/hires/track.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/bike.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/c41/lores/track.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/bike.jpg" alt=""></div>
             <div class="media-link"><video autoplay loop muted playsinline src="mainpage/videos/hires/flares.mp4"></video></div>
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/mirrors.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/c41/hires/rock.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/mirrors.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/c41/lores/rock.jpg" alt=""></div>
             <div class="media-link"><img src="scans/cat.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/c41/hires/pool.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/peter/hires/peter1.jpg" data-gallery="mainpage/pictures/peter/hires/peter2.jpg,mainpage/pictures/peter/hires/peter3.jpg,mainpage/pictures/peter/hires/peter4.jpg,mainpage/pictures/peter/hires/peter5.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/balls.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/c41/hires/greenhand.jpg" alt=""></div>
-            <div class="media-link"><img src="mainpage/pictures/bw/hires/web.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/c41/lores/pool.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/peter/lores/peter1.jpg" data-gallery="mainpage/pictures/peter/lores/peter2.jpg,mainpage/pictures/peter/lores/peter3.jpg,mainpage/pictures/peter/lores/peter4.jpg,mainpage/pictures/peter/lores/peter5.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/balls.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/c41/lores/greenhand.jpg" alt=""></div>
+            <div class="media-link"><img src="mainpage/pictures/bw/lores/web.jpg" alt=""></div>
         </div>
     </div>
     
@@ -104,26 +112,39 @@
         });
     </script>
     <script>
-        navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            const video = document.getElementById('webcam');
-            video.srcObject = stream;
-        })
-        .catch(error => {
-            console.error("Errore nell'accesso alla webcam:", error);
-        });
-    </script>
-    
-    <script>
-        const aboutToggle = document.getElementById('about-toggle');
-        const body = document.body;
-        
-        aboutToggle.addEventListener('change', () => {
-            if (aboutToggle.checked) {
-                body.classList.add('overlay-active');
-            } else {
-                body.classList.remove('overlay-active');
-            }
+        // New function to handle webcam access
+        function requestWebcamAccess() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    const video = document.getElementById('webcam');
+                    if (video) {
+                        video.srcObject = stream;
+                    }
+                })
+                .catch(error => {
+                    // This is not an error if the user denies access, so we can just log it.
+                    console.log("Accesso alla webcam non consentito:", error.name);
+                });
+        }
+
+        // Preloader Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const preloader = document.getElementById('preloader');
+            const pageHeader = document.querySelector('.page-header');
+            const mainContainer = document.querySelector('.container');
+
+            setTimeout(() => {
+                // Start the fade-out of the preloader
+                preloader.classList.add('hidden');
+
+                // Make the main content visible
+                pageHeader.classList.add('visible');
+                mainContainer.classList.add('visible');
+                
+                // Request webcam access right after showing the page
+                requestWebcamAccess();
+
+            }, 5000); // 5000 milliseconds = 5 seconds
         });
     </script>
     
