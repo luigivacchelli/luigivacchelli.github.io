@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LuigiVacchelli_Portfolio</title>
+  <link rel="stylesheet" href="stile.css"/>
+  
+  <!-- Preload primi 4 elementi colonna sinistra -->
+  <link rel="preload" href="immagini/frame.jpg" as="image">
+  <link rel="preload" href="graphics/ghosts.mp4" as="video">
+  <link rel="preload" href="immagini/edera.jpg" as="image">
+  <link rel="preload" href="immagini/ambulance.jpg" as="image">
+
+  <!-- Preload primi 4 elementi colonna destra -->
+  <link rel="preload" href="immagini/track.jpg" as="image">
+  <link rel="preload" href="immagini/bike.jpg" as="image">
+  <link rel="preload" href="video/flares.mp4" as="video">
+  <link rel="preload" href="scans/cat.jpg" as="image">
+</head>
+<body>
+
+<!-- Header -->
+<div class="page-header">
+  <div class="header-left">luigivacchelli</div>
+  <div class="header-right">
+    <label for="about-toggle" class="about-toggle">chisono</label>
+  </div>
+</div>
+
+<!-- Checkbox che controlla l’overlay -->
+<input type="checkbox" id="about-toggle" class="about-checkbox" hidden>
+    
+    <!-- Overlay con bio -->
+    <div class="about-overlay">
+        <label for="about-toggle" class="about-background"></label> <!-- sfondo cliccabile -->
+        <div class="about-card">
+            <img src="immagini/lvkidjvc.jpg" class="about-image" alt="">
+                <div class="webcam-container">
+                    <video id="webcam" autoplay muted playsinline></video>
+                </div>
+        </div>
+        <div class="about-title-box">
+            <div class="text-row">
+                <div class="word word1">HEART</div>
+                <div class="word word2">IS</div>
+                <div class="word word3">IN</div>
+                <div class="word word4">GENOA</div>
+            </div>
+            <div class="text-row">
+                <div class="word word1">BODY</div>
+                <div class="word word2">IS</div>
+                <div class="word word3">IN</div>
+                <div class="word word4">ROME</div>
+            </div>
+            <div class="text-row">
+                <div class="word word1">MIND</div>
+                <div class="word word2">IS</div>
+                <div class="word word3">IN</div>
+                <div class="word word4">HEAVEN</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Galleria -->
+    <div class="container">
+        <div class="column left">
+            <div class="media-link"><img src="immagini/frame.jpg" alt=""></div>
+            <div class="media-link"><video autoplay loop muted playsinline src="graphics/ghosts.mp4"></video></div>
+            <div class="media-link"><img src="immagini/edera.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/ambulance.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/tent.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/sea.jpg" alt=""></div>
+            <div class="media-link"><video autoplay loop muted playsinline src="video/sun.mp4"></video></div>
+            <div class="media-link"><img src="immagini/wip.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/tube.jpg" alt=""></div>
+        </div>
+        <div class="column right">
+            <div class="media-link"><img src="immagini/track.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/bike.jpg" alt=""></div>
+            <div class="media-link"><video autoplay loop muted playsinline src="video/flares.mp4"></video></div>
+            <div class="media-link"><img src="immagini/mirrors.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/rock.jpg" alt=""></div>
+            <div class="media-link"><img src="scans/cat.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/pool.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/peter/peter1.jpg" data-gallery="immagini/peter/peter2.jpg,immagini/peter/peter3.jpg,immagini/peter/peter4.jpg,immagini/peter/peter5.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/balls.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/greenhand.jpg" alt=""></div>
+            <div class="media-link"><img src="immagini/web.jpg" alt=""></div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Cambio immagini Peter
+        document.querySelectorAll('.media-link img').forEach(img => {
+            const originalSrc = img.src;
+            const gallery = img.dataset.gallery ? img.dataset.gallery.split(',') : [];
+            let index = 0;
+            
+            img.addEventListener('click', () => {
+                if (gallery.length === 0) return;
+                index = (index + 1) % (gallery.length + 1);
+                img.src = index === 0 ? originalSrc : gallery[index - 1];
+            });
+        });
+    </script>
+    <script>
+        navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            const video = document.getElementById('webcam');
+            video.srcObject = stream;
+        })
+        .catch(error => {
+            console.error("Errore nell'accesso alla webcam:", error);
+        });
+    </script>
+    
+    <script>
+        const aboutToggle = document.getElementById('about-toggle');
+        const body = document.body;
+        
+        aboutToggle.addEventListener('change', () => {
+            if (aboutToggle.checked) {
+                body.classList.add('overlay-active');
+            } else {
+                body.classList.remove('overlay-active');
+            }
+        });
+    </script>
+    
+</body>
+</html>
