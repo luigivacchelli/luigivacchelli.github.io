@@ -7,6 +7,9 @@
   <title>Luigi Vacchelli</title>
   <link rel="stylesheet" href="stile.css"/>
   
+  <link rel="preload" href="logos/loaderlogo.png" as="image">
+  <link rel="preload" href="./fonts/Kirome/Kirome.woff2" as="font" type="font/woff2" crossorigin>
+  
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
@@ -110,13 +113,11 @@
             }
         };
 
-        // --- FUNCTION DEFINITIONS ---
+        // --- FUNCTION DEFINITIONS  ---
 
-        // Function to translate the page based on browser language
         function translatePage() {
             const userLang = navigator.language.substring(0, 2);
             const language = userLang === 'it' ? 'it' : 'en';
-
             document.querySelectorAll('[data-i18n-key]').forEach(element => {
                 const key = element.dataset.i18nKey;
                 const translation = translations[language][key];
@@ -126,7 +127,6 @@
             });
         }
 
-        // Function to handle webcam access
         function requestWebcamAccess() {
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(stream => {
@@ -136,13 +136,11 @@
                 .catch(error => { console.log("Webcam access was not granted:", error.name); });
         }
 
-        // Function to set up the clickable image gallery
         function setupImageGallery() {
             document.querySelectorAll('.media-link img').forEach(img => {
                 const originalSrc = img.src;
                 const gallery = img.dataset.gallery ? img.dataset.gallery.split(',') : [];
                 let index = 0;
-                
                 img.addEventListener('click', () => {
                     if (gallery.length === 0) return;
                     index = (index + 1) % (gallery.length + 1);
@@ -151,31 +149,33 @@
             });
         }
 
+        // --- NEW, IMPROVED MAIN EXECUTION ---
 
-        // --- MAIN EXECUTION ---
-
-        // This runs when the page structure is ready
+        // This event fires as soon as the HTML is ready.
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Translate the page immediately
-            translatePage();
+            // Task 1: Make the preloader content visible.
+            document.querySelector('.preloader-content').classList.add('ready');
 
-            // 2. Set up the image gallery
+            // Task 2: Run functions that only need the HTML to exist.
+            translatePage();
             setupImageGallery();
-        
-            // 3. Set up the preloader logic
+        });
+
+        // This event fires ONLY when ALL content (images, videos, fonts) is fully loaded.
+        window.addEventListener('load', () => {
             const preloader = document.getElementById('preloader');
             const pageHeader = document.querySelector('.page-header');
             const mainContainer = document.querySelector('.container');
 
-            setTimeout(() => {
-                preloader.classList.add('hidden');
-                pageHeader.classList.add('visible');
-                mainContainer.classList.add('visible');
-                
-                // 4. Request webcam access after the preloader is gone
-                requestWebcamAccess();
+            // Hide the preloader now that everything is ready.
+            preloader.classList.add('hidden');
 
-            }, 5000); // 5 seconds
+            // Show the main content.
+            pageHeader.classList.add('visible');
+            mainContainer.classList.add('visible');
+            
+            // Request webcam access now that the page is visible.
+            requestWebcamAccess();
         });
     </script>
     
