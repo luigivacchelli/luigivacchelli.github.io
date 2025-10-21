@@ -21,7 +21,7 @@
       <div id="preloader">
         <div class="preloader-content">
           <img src="logos/loaderlogo.png" alt="Loading..." class="loader-icon">
-          <p> Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!</p>
+              <p data-i18n-key="welcomeMessage">Questo sito richiede accesso alla webcam per essere più bello. <br> Non fate i timidi!</p>
         </div>
       </div>
       <!-- Preloader End -->
@@ -30,7 +30,7 @@
 <div class="page-header">
   <div class="header-left">luigivacchelli</div>
   <div class="header-right">
-    <label for="about-toggle" class="about-toggle">chisono</label>
+      <label for="about-toggle" class="about-toggle" data-i18n-key="aboutLink">chisono</label>
   </div>
 </div>
 
@@ -97,6 +97,36 @@
     </div>
     
     <!-- JavaScript -->
+    
+    <script>
+        // --- INTERNATIONALIZATION (i18n) LOGIC ---
+        // 1. Define all your translations here
+        const translations = {
+            'en': {
+                welcomeMessage: "This website uses your webcam to enhance the experience. Please, don't be shy!",
+                aboutLink: "whoami"
+            },
+            'it': {
+                welcomeMessage: "Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!",
+                aboutLink: "chisono"
+            }
+        };
+
+        // 2. This function finds and replaces all text
+        function translatePage() {
+            // Detect browser language ('it' or something else)
+            const userLang = navigator.language.substring(0, 2);
+            const language = userLang === 'it' ? 'it' : 'en';
+
+            document.querySelectorAll('[data-i18n-key]').forEach(element => {
+                const key = element.dataset.i18nKey;
+                const translation = translations[language][key];
+                if (translation !== undefined) {
+                    element.innerHTML = translation; // Use innerHTML to allow for <br> tags
+                }
+            });
+        }
+    </script>
     <script>
         // Cambio immagini Peter
         document.querySelectorAll('.media-link img').forEach(img => {
@@ -126,7 +156,8 @@
                     console.log("Accesso alla webcam non consentito:", error.name);
                 });
         }
-
+    </script>
+    <script>
         // Preloader Logic
         document.addEventListener('DOMContentLoaded', () => {
             const preloader = document.getElementById('preloader');
