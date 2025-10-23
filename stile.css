@@ -65,50 +65,40 @@ html, body {
 #preloader p {
   font-family: 'Kirome', sans-serif;
   font-size: 1.5rem;
-  color: var(--color-primary);
+  color: var(--color-primary); /* Fallback color */
   max-width: 1200px;
   line-height: 1.5;
-}
-
-/* Loading Bar Styles */
-.loading-bar-container {
-  width: 250px;
-  height: 10px;
-  background-color: var(--color-primary);
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.loading-bar-fill {
-  width: 0%; /* Start at 0% */
-  height: 100%;
-  background-color: var(--color-hover);
-  border-radius: 5px;
-
-  /* The multi-part animation. It runs as soon as the page loads. */
-  animation: loading-progress-animation 5s ease-in-out forwards;
+  background: linear-gradient(to right,
+      var(--color-hover) 50%,
+      var(--color-primary) 50%
+    );
+  background-size: 200% 100%; /* 1. The background is your "green rectangle" next to the "blue text" */
+  -webkit-background-clip: text;
+  background-clip: text; /* 2. The text is the "hole in the matte"*/
+  color: transparent; /* The tex's own color is made transparent */
+  animation: loading-progress-animation 6s ease-in-out forwards;
 }
 
 @keyframes loading-progress-animation {
   0% {
-    width: 0%; /* Start at 0% */
+    background-position: 100% 0; /* Corresponds to 0% width */
   }
   25% {
-    width: 37%; /* Phase 1: Quickly jump to 37% in the first ~1.25s */
+    background-position: 63% 0; /* Corresponds to 37% width */
   }
   90% {
-    width: 77%; /* Phase 2: Slowly crawl from 65% to 85% for the next ~3.25s */
+    background-position: 23% 0; /* Corresponds to 77% width */
   }
   100% {
-    width: 96%; /* Phase 3: Sit at 90% for the final 0.5s */
+    background-position: 7% 0; /* Corresponds to 93% width */
   }
 }
 
-/* When JS adds .loading-finished to the body, this forces the bar to 100% */
-body.loading-finished .loading-bar-fill {
+/* Final "fill" animation, this forces the bar to 100% */
+body.loading-finished #preloader p {
   animation: none; /* Stop the old animation */
-  width: 100%;
-  transition: width 0.5s ease-in-out; /* Animate the final fill smoothly */
+  background-position: 0% 0; /* 100% filled position */
+  transition: background-position 1s ease-in-out; /* Animate the final fill smoothly */
 }
 
 

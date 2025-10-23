@@ -25,12 +25,6 @@
         <div class="preloader-content">
           <img src="logos/loaderlogo.png" alt="Loading..." class="loader-icon">
           <p data-i18n-key="welcomeMessage">Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!</p>
-          
-          <!-- Loading Bar HTML -->
-          <div class="loading-bar-container">
-              <div class="loading-bar-fill"></div>
-          </div>
-
         </div>
       </div>
       <!-- Preloader End -->
@@ -109,9 +103,13 @@
                 const translation = translations[language][key];
                 if (translation !== undefined) {
                     element.innerHTML = translation;
+                    if (key === 'welcomeMessage') {
+                        element.setAttribute('data-text', element.innerText);
+                    }
                 }
             });
         }
+                                                                 
 
         function requestWebcamAccess() {
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -156,7 +154,7 @@
                         mainContainer.classList.add('visible');
                         
                         requestWebcamAccess();
-                    }, 600); // Wait 600ms for the bar to finish animating to 100%
+                    }, 1100); // Wait 1000ms for the bar to finish animating to 100%
                 }
             }
 
