@@ -24,7 +24,13 @@
       <div id="preloader">
         <div class="preloader-content">
           <img src="logos/loaderlogo.png" alt="Loading..." class="loader-icon">
-              <p data-i18n-key="welcomeMessage">Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!</p>
+          <p data-i18n-key="welcomeMessage">Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!</p>
+          
+          <!-- Loading Bar HTML -->
+          <div class="loading-bar-container">
+              <div class="loading-bar-fill"></div>
+          </div>
+
         </div>
       </div>
       <!-- Preloader End -->
@@ -79,8 +85,8 @@
         </div>
     </div>
     
-<!-- JavaScript -->
-        <script>
+    <!-- JavaScript -->
+    <script>
         // --- DICTIONARY FOR TRANSLATIONS ---
         const translations = {
             'en': {
@@ -93,7 +99,7 @@
             }
         };
 
-        // --- FUNCTION DEFINITIONS ---
+        // --- FUNCTION DEFINITIONS  ---
 
         function translatePage() {
             const userLang = navigator.language.substring(0, 2);
@@ -129,47 +135,45 @@
             });
         }
 
-        // --- NEW, DUAL-CONDITION MAIN EXECUTION ---
+        // --- SIMPLIFIED PRELOADER LOGIC ---
 
-        // Create two flags to track our conditions
         let isContentLoaded = false;
-        let isTimerFinished = false;
+            let isTimerFinished = false;
 
-        function hidePreloader() {
-            // This function will only run when BOTH conditions are true
-            if (isContentLoaded && isTimerFinished) {
-                const preloader = document.getElementById('preloader');
-                const pageHeader = document.querySelector('.page-header');
-                const mainContainer = document.querySelector('.container');
+            function hidePreloader() {
+                if (isContentLoaded && isTimerFinished) {
+                    const preloader = document.getElementById('preloader');
+                    const pageHeader = document.querySelector('.page-header');
+                    const mainContainer = document.querySelector('.container');
 
-                preloader.classList.add('hidden');
-                pageHeader.classList.add('visible');
-                mainContainer.classList.add('visible');
-                
-                requestWebcamAccess();
+                    preloader.classList.add('hidden');
+                    pageHeader.classList.add('visible');
+                    mainContainer.classList.add('visible');
+                    
+                    requestWebcamAccess();
+                }
             }
-        }
 
-        // This event fires as soon as the HTML is ready.
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelector('.preloader-content').classList.add('ready');
-            translatePage();
-            setupImageGallery();
-        });
+            // This event fires as soon as the HTML is ready.
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelector('.preloader-content').classList.add('ready');
+                translatePage();
+                setupImageGallery();
+            });
 
-        // This event fires ONLY when ALL content is fully loaded.
-        window.addEventListener('load', () => {
-            console.log("Content finished loading."); // For debugging
-            isContentLoaded = true;
-            hidePreloader(); // Try to hide the preloader
-        });
+            // This event fires ONLY when ALL content is fully loaded.
+            window.addEventListener('load', () => {
+                isContentLoaded = true;
+                // NEW: When content is loaded, tell the loading bar to finish its animation
+                document.querySelector('.loading-bar-fill').classList.add('finished');
+                hidePreloader();
+            });
 
-        // This timer will run for 6 seconds.
-        setTimeout(() => {
-            console.log("Timer finished."); // For debugging
-            isTimerFinished = true;
-            hidePreloader(); // Try to hide the preloader
-        }, 6000); // 6000 milliseconds = 6 seconds
+            // This timer will run for 6 seconds.
+            setTimeout(() => {
+                isTimerFinished = true;
+                hidePreloader();
+            }, 6000);
 
     </script>
     

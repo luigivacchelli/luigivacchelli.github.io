@@ -11,7 +11,8 @@
   --color-secondary: #980807;
   --color-secondary2: #F6C500;
   --color-hover: #079808;
-  --mobile-padding: 5vw
+  --mobile-padding: 5vw;
+  --loading-progress: 0%; /* Variable for the loading bar */
 }
 
 * {
@@ -69,6 +70,44 @@ html, body {
   line-height: 1.5;
 }
 
+/* Loading Bar Styles */
+.loading-bar-container {
+  width: 250px;
+  height: 10px;
+  background-color: var(--color-primary); /* Blue "empty" color */
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+    width: 0%; /* Start at 0% */
+    height: 100%;
+    background-color: var(--color-hover); /* Green "filled" color */
+    border-radius: 5px;
+    
+    /* Start a 6-second animation that moves the bar to 95% */
+    animation: paced-loading 6s linear forwards;
+  }
+
+  /* This new class will be added by JS when content is loaded */
+  .loading-bar-fill.finished {
+    /* Animate the final step to 100% quickly */
+    width: 100%;
+    transition: width 0.5s ease-in-out;
+  }
+
+@keyframes paced-loading {
+  from {
+    width: 0%;
+  }
+  to {
+    /* Animate to 95%, not 100%. This is a UX trick. */
+    /* It shows the user "we're almost done, just waiting for the final check." */
+    width: 95%;
+  }
+}
+
+
 /* Keyframe animation for the rotation */
 @keyframes spin {
   from {
@@ -83,6 +122,7 @@ html, body {
 #preloader.hidden {
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
 }
 
 /* Initially hide the main content until preloader is done */
