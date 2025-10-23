@@ -12,7 +12,6 @@
   --color-secondary2: #F6C500;
   --color-hover: #079808;
   --mobile-padding: 5vw;
-  --loading-progress: 0%; /* Variable for the loading bar */
 }
 
 * {
