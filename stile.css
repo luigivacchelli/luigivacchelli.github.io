@@ -173,7 +173,7 @@ html, body {
     width: 100%; /* dimensione gestibile */
     height: auto;
     border-radius: 0px;
-    border: 6px solid var(--color-primary);
+    /*border: 6px solid var(--color-primary);*/
     overflow: hidden;
 }
 

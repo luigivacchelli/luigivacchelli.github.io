@@ -79,8 +79,8 @@
         </div>
     </div>
     
-    <!-- JavaScript -->
-    <script>
+<!-- JavaScript -->
+        <script>
         // --- DICTIONARY FOR TRANSLATIONS ---
         const translations = {
             'en': {
@@ -93,7 +93,7 @@
             }
         };
 
-        // --- FUNCTION DEFINITIONS  ---
+        // --- FUNCTION DEFINITIONS ---
 
         function translatePage() {
             const userLang = navigator.language.substring(0, 2);
@@ -129,34 +129,48 @@
             });
         }
 
-        // --- NEW, IMPROVED MAIN EXECUTION ---
+        // --- NEW, DUAL-CONDITION MAIN EXECUTION ---
+
+        // Create two flags to track our conditions
+        let isContentLoaded = false;
+        let isTimerFinished = false;
+
+        function hidePreloader() {
+            // This function will only run when BOTH conditions are true
+            if (isContentLoaded && isTimerFinished) {
+                const preloader = document.getElementById('preloader');
+                const pageHeader = document.querySelector('.page-header');
+                const mainContainer = document.querySelector('.container');
+
+                preloader.classList.add('hidden');
+                pageHeader.classList.add('visible');
+                mainContainer.classList.add('visible');
+                
+                requestWebcamAccess();
+            }
+        }
 
         // This event fires as soon as the HTML is ready.
         document.addEventListener('DOMContentLoaded', () => {
-            // Task 1: Make the preloader content visible.
             document.querySelector('.preloader-content').classList.add('ready');
-
-            // Task 2: Run functions that only need the HTML to exist.
             translatePage();
             setupImageGallery();
         });
 
-        // This event fires ONLY when ALL content (images, videos, fonts) is fully loaded.
+        // This event fires ONLY when ALL content is fully loaded.
         window.addEventListener('load', () => {
-            const preloader = document.getElementById('preloader');
-            const pageHeader = document.querySelector('.page-header');
-            const mainContainer = document.querySelector('.container');
-
-            // Hide the preloader now that everything is ready.
-            preloader.classList.add('hidden');
-
-            // Show the main content.
-            pageHeader.classList.add('visible');
-            mainContainer.classList.add('visible');
-            
-            // Request webcam access now that the page is visible.
-            requestWebcamAccess();
+            console.log("Content finished loading."); // For debugging
+            isContentLoaded = true;
+            hidePreloader(); // Try to hide the preloader
         });
+
+        // This timer will run for 6 seconds.
+        setTimeout(() => {
+            console.log("Timer finished."); // For debugging
+            isTimerFinished = true;
+            hidePreloader(); // Try to hide the preloader
+        }, 6000); // 6000 milliseconds = 6 seconds
+
     </script>
     
 </body>
