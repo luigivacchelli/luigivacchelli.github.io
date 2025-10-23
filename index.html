@@ -135,22 +135,28 @@
             });
         }
 
-        // --- SIMPLIFIED PRELOADER LOGIC ---
+        // --- ELEGANT PRELOADER LOGIC ---
 
         let isContentLoaded = false;
             let isTimerFinished = false;
 
-            function hidePreloader() {
+            function finishLoading() {
                 if (isContentLoaded && isTimerFinished) {
-                    const preloader = document.getElementById('preloader');
-                    const pageHeader = document.querySelector('.page-header');
-                    const mainContainer = document.querySelector('.container');
+                    // Add a class to the body to trigger all final animations
+                    document.body.classList.add('loading-finished');
 
-                    preloader.classList.add('hidden');
-                    pageHeader.classList.add('visible');
-                    mainContainer.classList.add('visible');
-                    
-                    requestWebcamAccess();
+                    // Set a timer for the fade-out to happen AFTER the bar fills
+                    setTimeout(() => {
+                        const preloader = document.getElementById('preloader');
+                        const pageHeader = document.querySelector('.page-header');
+                        const mainContainer = document.querySelector('.container');
+
+                        preloader.classList.add('hidden');
+                        pageHeader.classList.add('visible');
+                        mainContainer.classList.add('visible');
+                        
+                        requestWebcamAccess();
+                    }, 600); // Wait 600ms for the bar to finish animating to 100%
                 }
             }
 
@@ -164,15 +170,13 @@
             // This event fires ONLY when ALL content is fully loaded.
             window.addEventListener('load', () => {
                 isContentLoaded = true;
-                // NEW: When content is loaded, tell the loading bar to finish its animation
-                document.querySelector('.loading-bar-fill').classList.add('finished');
-                hidePreloader();
+                finishLoading();
             });
 
             // This timer will run for 6 seconds.
             setTimeout(() => {
                 isTimerFinished = true;
-                hidePreloader();
+                finishLoading();
             }, 6000);
 
     </script>

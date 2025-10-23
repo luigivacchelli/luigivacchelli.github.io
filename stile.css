@@ -74,37 +74,41 @@ html, body {
 .loading-bar-container {
   width: 250px;
   height: 10px;
-  background-color: var(--color-primary); /* Blue "empty" color */
+  background-color: var(--color-primary);
   border-radius: 5px;
   overflow: hidden;
 }
 
 .loading-bar-fill {
+  width: 0%; /* Start at 0% */
+  height: 100%;
+  background-color: var(--color-hover);
+  border-radius: 5px;
+
+  /* The multi-part animation. It runs as soon as the page loads. */
+  animation: loading-progress-animation 5s ease-in-out forwards;
+}
+
+@keyframes loading-progress-animation {
+  0% {
     width: 0%; /* Start at 0% */
-    height: 100%;
-    background-color: var(--color-hover); /* Green "filled" color */
-    border-radius: 5px;
-    
-    /* Start a 6-second animation that moves the bar to 95% */
-    animation: paced-loading 6s linear forwards;
   }
+  25% {
+    width: 37%; /* Phase 1: Quickly jump to 37% in the first ~1.25s */
+  }
+  90% {
+    width: 77%; /* Phase 2: Slowly crawl from 65% to 85% for the next ~3.25s */
+  }
+  100% {
+    width: 96%; /* Phase 3: Sit at 90% for the final 0.5s */
+  }
+}
 
-  /* This new class will be added by JS when content is loaded */
-  .loading-bar-fill.finished {
-    /* Animate the final step to 100% quickly */
-    width: 100%;
-    transition: width 0.5s ease-in-out;
-  }
-
-@keyframes paced-loading {
-  from {
-    width: 0%;
-  }
-  to {
-    /* Animate to 95%, not 100%. This is a UX trick. */
-    /* It shows the user "we're almost done, just waiting for the final check." */
-    width: 95%;
-  }
+/* When JS adds .loading-finished to the body, this forces the bar to 100% */
+body.loading-finished .loading-bar-fill {
+  animation: none; /* Stop the old animation */
+  width: 100%;
+  transition: width 0.5s ease-in-out; /* Animate the final fill smoothly */
 }
 
 
