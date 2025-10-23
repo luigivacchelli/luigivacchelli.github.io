@@ -76,7 +76,7 @@ html, body {
   -webkit-background-clip: text;
   background-clip: text; /* 2. The text is the "hole in the matte"*/
   color: transparent; /* The tex's own color is made transparent */
-  animation: loading-progress-animation 6s ease-in-out forwards;
+  animation: loading-progress-animation 3s ease-in-out forwards;
 }
 
 @keyframes loading-progress-animation {

@@ -88,8 +88,8 @@
             finishLoading();
         });
 
-        // This timer will run for 6 seconds.
+        // This timer will run for 3 seconds.
         setTimeout(() => {
             isTimerFinished = true;
             finishLoading();
-        }, 6000);
+        }, 3000); // 3000 milliseconds = 3 seconds
