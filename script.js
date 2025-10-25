@@ -76,8 +76,8 @@ function finishLoading() {
 // --- NEW: CRITICAL CONTENT TRACKING ---
 function trackCriticalContent() {
     // Select the first 4 media items from each column
-    const leftMedia = Array.from(document.querySelectorAll('.column.left .media-link img, .column.left .media-link video')).slice(0, 4);
-    const rightMedia = Array.from(document.querySelectorAll('.column.right .media-link img, .column.right .media-link video')).slice(0, 4);
+    const leftMedia = Array.from(document.querySelectorAll('.column.left .media-link img, .column.left .media-link video')).slice(0, 3);
+    const rightMedia = Array.from(document.querySelectorAll('.column.right .media-link img, .column.right .media-link video')).slice(0, 3);
     
     // Combine them into one list of critical items to watch
     const criticalItems = [...leftMedia, ...rightMedia];
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 setTimeout(() => {
     isTimerFinished = true;
     finishLoading();
-}, 3000);
+}, 4000);
 
 // Backup safety net: if something goes wrong with tracking,
 // ensure site still loads when everything is officially done.
