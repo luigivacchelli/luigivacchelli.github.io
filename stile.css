@@ -166,6 +166,33 @@ body.loading-finished #preloader p {
   color: var(--color-hover);
 }
 
+/* Footer */
+.site-footer {
+  position: fixed; /* Lock it to the viewport */
+  bottom: 0;       /* Align it to the bottom */
+  left: 0;
+  width: 100%;
+  padding: 0.35rem 0; /* Give it some vertical breathing room */
+  text-align: center;
+  z-index: 1000;     /* Place it on the same layer as the header */
+  pointer-events: none; /* Allows clicks to pass through to the columns if they overlap */
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.25s linear, transform 0.2s linear;
+}
+
+.site-footer.visible {
+  opacity: 1; /* Class to make it visible */
+  transform: translateY(0);
+}
+
+.site-footer p {
+  font-family: sans-serif; /* Use a standard, readable font */
+  font-size: 0.70rem;
+  font-weight: bold; /* Make it small and unobtrusive */
+  color: var(--color-secondary);
+}
+
 /* Overlay */
 .about-overlay {
     position: fixed;
@@ -243,7 +270,7 @@ body.loading-finished #preloader p {
   flex: 1;
   overflow-y: scroll;
   height: calc(100vh - 2rem);
-  padding-bottom: 0.50rem;
+  padding-bottom: 0.5rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -347,7 +374,7 @@ body.overlay-active {
     --color-primary: #285FF4;
     --color-secondary: #AF3029;
     --color-secondary2: #F6C500;
-    --color-hover: #66800B;
+    --color-hover: #34C734;
     --page-background: #100F0F;
   }
 

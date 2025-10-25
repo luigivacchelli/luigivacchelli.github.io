@@ -12,11 +12,13 @@
      const translations = {
          'en': {
              welcomeMessage: "This site uses your webcam to enhance the experience. <br> Please don't be shy!",
-             aboutLink: "whoami"
+             aboutLink: "whoami",
+             copyright: "© 2025 Luigi Vacchelli. All rights reserved."
          },
          'it': {
              welcomeMessage: "Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!",
-             aboutLink: "chisono"
+             aboutLink: "chisono",
+             copyright: "© 2025 Luigi Vacchelli. Tutti i diritti riservati."
          }
      };
 
@@ -191,6 +193,42 @@
              }
          });
      }
+     
+     // --- Shows the footer only when the user has scrolled to the end of boyh columns. Hides it if either column scrolls back up. ---
+     function setupFooterObserver() {
+         if (!('IntersectionObserver' in window)) return;
+
+         const footer = document.querySelector('.site-footer');
+         if (!footer) return;
+
+         // --- NEW STATE-TRACKING LOGIC ---
+         // These flags will track the real-time visibility of each trigger
+         let isLeftColumnAtEnd = false;
+         let isRightColumnAtEnd = false;
+
+         const observerCallback = (entries) => {
+             entries.forEach(entry => {
+                 // Update the correct flag based on which trigger is being observed
+                 if (entry.target.dataset.column === 'left') {
+                     isLeftColumnAtEnd = entry.isIntersecting;
+                 }
+                 if (entry.target.dataset.column === 'right') {
+                     isRightColumnAtEnd = entry.isIntersecting;
+                 }
+             });
+
+             // After updating the flags, check the condition to show or hide the footer
+             if (isLeftColumnAtEnd && isRightColumnAtEnd) {
+                 footer.classList.add('visible'); // Show footer only if BOTH are at the end
+             } else {
+                 footer.classList.remove('visible'); // Hide it if even one is not
+             }
+         };
+
+         const observer = new IntersectionObserver(observerCallback);
+         const scrollTriggers = document.querySelectorAll('.scroll-trigger');
+         scrollTriggers.forEach(trigger => observer.observe(trigger));
+     }
 
      // --- MAIN EVENT LISTENERS ---
      document.addEventListener('DOMContentLoaded', () => {
@@ -200,6 +238,7 @@
          translatePage();
          setupImageGallery();
          trackCriticalContent();
+         setupFooterObserver();
          const aboutToggle = document.querySelector('.about-toggle');
              if (aboutToggle) {
                  // When it's clicked the first time, upgrade the overlay image.
