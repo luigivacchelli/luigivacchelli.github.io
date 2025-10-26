@@ -194,34 +194,29 @@
          });
      }
      
-     // --- Shows the footer only when the user has scrolled to the end of boyh columns. Hides it if either column scrolls back up. ---
+     // --- Shows the footer only when the user has scrolled to the end of boyh columns. Hides it if either column scrolls back up. Handles both desktop (both columns) and mobile (just the final column). ---
      function setupFooterObserver() {
          if (!('IntersectionObserver' in window)) return;
-
          const footer = document.querySelector('.site-footer');
          if (!footer) return;
 
-         // --- NEW STATE-TRACKING LOGIC ---
-         // These flags will track the real-time visibility of each trigger
-         let isLeftColumnAtEnd = false;
-         let isRightColumnAtEnd = false;
+         let isLeftAtEnd = false;
+         let isRightAtEnd = false;
 
          const observerCallback = (entries) => {
              entries.forEach(entry => {
-                 // Update the correct flag based on which trigger is being observed
-                 if (entry.target.dataset.column === 'left') {
-                     isLeftColumnAtEnd = entry.isIntersecting;
-                 }
-                 if (entry.target.dataset.column === 'right') {
-                     isRightColumnAtEnd = entry.isIntersecting;
-                 }
+                 if (entry.target.dataset.column === 'left') isLeftAtEnd = entry.isIntersecting;
+                 if (entry.target.dataset.column === 'right') isRightAtEnd = entry.isIntersecting;
              });
 
-             // After updating the flags, check the condition to show or hide the footer
-             if (isLeftColumnAtEnd && isRightColumnAtEnd) {
-                 footer.classList.add('visible'); // Show footer only if BOTH are at the end
+             const isDesktop = window.innerWidth > 768;
+
+             if (isDesktop) {
+                 // On desktop, we need both triggers to be visible
+                 footer.classList.toggle('visible', isLeftAtEnd && isRightAtEnd);
              } else {
-                 footer.classList.remove('visible'); // Hide it if even one is not
+                 // On mobile, as you correctly said, we only care if the final (right) trigger is visible
+                 footer.classList.toggle('visible', isRightAtEnd);
              }
          };
 
