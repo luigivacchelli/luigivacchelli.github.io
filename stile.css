@@ -19,6 +19,21 @@
   --page-background: #ffffff;
 }
 
+/* --- DARK MODE STYLES --- */
+@media (prefers-color-scheme: dark) {
+  :root { /* Overwrite your default colors for dark mode */
+    --color-primary: #285FF4;
+    --color-secondary: #AF3029;
+    --color-secondary2: #F6C500;
+    --color-hover: #34C734;
+    --page-background: #100F0F;
+  }
+
+  .about-overlay { /* Specific adjustment for the blurred overlay in dark mode */
+    background: rgba(0, 0, 0, 0.3); /* A darker semi-transparent background */
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -103,7 +118,6 @@ body.loading-finished #preloader p {
   background-position: 0% 0;
   transition: background-position 1s ease-in-out;
 }
-
 
 @keyframes spin {
   from {
@@ -300,29 +314,38 @@ body.overlay-active {
   width: 100%;
 }
 
-/* Responsive */
+/* Responsive layout for mobile */
+
 @media (max-width: 768px) {
+
+  /* --- 1. General Layout --- */
+  
   html, body {
-    overflow: auto;
+    overflow: auto; /* Allow the main page to scroll */
   }
 
   .container {
-    flex-direction: column;
+    flex-direction: column; /* Stack columns vertically */
     height: auto;
-    padding: 2rem var(--mobile-padding);
+    padding: 2rem var(--mobile-padding) 0.5rem; /* 2rem top/bottom, variable on sides */
+    gap: 0; /* Remove the flex gap to rely on margins */
   }
 
   .column {
     width: 100%;
     height: auto;
     overflow: visible;
-    padding-bottom: 0;
+    padding-bottom: 0; /* Remove all internal column padding */
   }
+
+  /* --- 3. Header & Footer --- */
 
   .page-header {
     padding-left: var(--mobile-padding);
     padding-right: var(--mobile-padding);
   }
+
+  /* --- 4. Overlay --- */
 
   .about-card {
     position: absolute;
@@ -361,25 +384,8 @@ body.overlay-active {
     object-fit: cover;
     image-rendering: pixelated;
   }
-
+  
   .about-body-box {
-    display: none;
-  }
-}
-
-/* --- NEW: DARK MODE STYLES --- */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Overwrite your default colors for dark mode */
-    --color-primary: #285FF4;
-    --color-secondary: #AF3029;
-    --color-secondary2: #F6C500;
-    --color-hover: #34C734;
-    --page-background: #100F0F;
-  }
-
-  /* Specific adjustment for the blurred overlay in dark mode */
-  .about-overlay {
-    background: rgba(0, 0, 0, 0.3); /* A darker semi-transparent background */
-  }
+      display: none;
+    }
 }
