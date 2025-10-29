@@ -289,6 +289,23 @@
 
          return false; // **NEW:** Report that the easter egg was NOT activated.
      }
+     
+     function setupOverlayObserver() {
+         const aboutToggleCheckbox = document.getElementById('about-toggle');
+         if (!aboutToggleCheckbox) return;
+
+         // This function will run whenever the checkbox is checked or unchecked
+         const toggleBodyLock = () => {
+             const isOverlayActive = aboutToggleCheckbox.checked;
+             document.documentElement.setAttribute('data-overlay-active', isOverlayActive);
+         };
+
+         // Run it once on page load in case the page reloads with it open
+         toggleBodyLock();
+         
+         // Run it every time the user clicks the label
+         aboutToggleCheckbox.addEventListener('change', toggleBodyLock);
+     }
 
      // --- MAIN EVENT LISTENERS ---
      document.addEventListener('DOMContentLoaded', () => {
@@ -299,6 +316,7 @@
          setupImageGallery();
          trackCriticalContent();
          setupFooterObserver();
+         setupOverlayObserver();
          const aboutToggle = document.querySelector('.about-toggle');
              if (aboutToggle) {
                  // When it's clicked the first time, upgrade the overlay image.

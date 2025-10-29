@@ -299,11 +299,11 @@ body.loading-finished #preloader p {
   display: block;
 }
 
-body.overlay-active {
-  overflow: hidden !important;
-  height: 100vh !important;
-  touch-action: none !important;
-  position: fixed !important;
+html[data-overlay-active="true"] body {
+  overflow: hidden;
+  height: 100vh;
+  touch-action: none;
+  position: fixed;
   width: 100%;
 }
 
