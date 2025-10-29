@@ -108,47 +108,53 @@
 
          const TRANSITION_GIF_DURATION = 1050;
 
-         // --- REFACTORED: We only need one timer ID and one state variable. ---
          let timerId = null;
          let currentState = 'paused';
 
-         // --- This function remains the same. ---
+         // This promise will hold the active loading process.
+         // This allows us to "cancel" the .then() block if the user clicks away.
+         let activePromise = null;
+
          const switchToLoopingGif = () => {
              ballsImage.src = loopSrc;
              currentState = 'looping';
          };
 
-         /**
-          * REFACTORED: A single function to start the entire animation sequence.
-          * It can be called immediately (on click) or with a delay (on first view).
-          */
-         const startSequence = (initialDelay = 0) => {
-             // First, stop any animations that are currently running.
-             clearTimeout(timerId);
-             ballsImage.src = staticSrc;
-             currentState = 'paused';
+         const playSequenceAfterDelay = (delay) => {
+             currentState = 'loading';
 
-             // This is the function that plays the transition GIF.
-             const playTransition = () => {
+             const timerPromise = new Promise(resolve => setTimeout(resolve, delay));
+             const imageLoadPromise = new Promise((resolve, reject) => {
+                 const transitionGif = new Image();
+                 transitionGif.src = transitionSrc;
+                 transitionGif.onload = resolve;
+                 transitionGif.onerror = reject;
+             });
+
+             // Store the current promise chain.
+             const currentPromise = Promise.all([timerPromise, imageLoadPromise]);
+             activePromise = currentPromise;
+
+             currentPromise.then(() => {
+                 // **CRITICAL CHECK**: Only proceed if this promise is still the active one.
+                 // If the user clicked "stop", activePromise will be null.
+                 if (activePromise !== currentPromise) return;
+                 
                  ballsImage.src = transitionSrc;
                  currentState = 'transitioning';
-                 // Schedule the switch to the final looping GIF.
                  timerId = setTimeout(switchToLoopingGif, TRANSITION_GIF_DURATION);
-             };
-
-             // If there's an initial delay, wait before starting. Otherwise, start now.
-             if (initialDelay > 0) {
-                 timerId = setTimeout(playTransition, initialDelay);
-             } else {
-                 playTransition();
-             }
+             })
+             .catch(() => {
+                 if (activePromise !== currentPromise) return; // Also check on failure
+                 console.error("Failed to load transition GIF, switching directly to loop.");
+                 switchToLoopingGif();
+             });
          };
 
-         /**
-          * REFACTORED: A simpler function to stop all animations.
-          */
          const stopSequence = () => {
              clearTimeout(timerId);
+             // By setting activePromise to null, we "cancel" any pending .then() block.
+             activePromise = null;
              ballsImage.src = staticSrc;
              currentState = 'paused';
          };
@@ -157,20 +163,20 @@
          const observer = new IntersectionObserver((entries, obs) => {
              entries.forEach(entry => {
                  if (entry.isIntersecting) {
-                     // Start the sequence with a 3000ms initial delay.
-                     startSequence(3000);
+                     // On first view, start the sequence with the 3-second minimum delay.
+                     playSequenceAfterDelay(3000);
                      obs.unobserve(ballsImage);
                  }
              });
          }, { threshold: 0.1 });
 
-         // --- CLICK HANDLER ---
+         // --- **CORRECTED** CLICK HANDLER ---
          ballsImage.addEventListener('click', () => {
              if (currentState === 'paused') {
-                 // If paused, start the sequence with NO initial delay.
-                 startSequence();
+                 // If it's paused, start the sequence again with NO delay.
+                 playSequenceAfterDelay(0);
              } else {
-                 // If playing, stop the sequence.
+                 // If it's loading, transitioning, or looping, STOP everything.
                  stopSequence();
              }
          });
