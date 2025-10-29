@@ -309,12 +309,11 @@ body.overlay-active {
 
 /* Easter Egg Styles (Active between 00:00 and 06:00) */
 
-.media-link, .about-card {
+.media-link {
   position: relative;
 }
 
-.media-link::before,
-.about-card::before {
+.media-link::before {
   content: '';
   position: absolute;
   top: 0;
@@ -335,8 +334,7 @@ body.overlay-active {
 
 /* --- The Image Swap --- */
 /* Add a pseudo-element overlay to the media containers */
-body.easter-egg-active .media-link::before,
-body.easter-egg-active .about-card::before {
+body.easter-egg-active .media-link::before {
   opacity: 1;
   transition: none;
 }

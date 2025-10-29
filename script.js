@@ -248,7 +248,7 @@
          const now = new Date();
          const hours = now.getHours();
 
-         const isEasterEggTime = (hours >= 0 && hours <= 6);         
+         const isEasterEggTime = (hours >= 6 );
 
          if (isEasterEggTime) {
              // --- GET THE ELEMENTS ---
@@ -266,11 +266,11 @@
              
              const userLang = navigator.language.substring(0, 2);
              if (userLang === 'it') {
-                 headerLeft.textContent = "cosa ci fai sveglio";
-                 headerRightLabel.textContent = "a quest'ora?";
+                 headerLeft.textContent = "cosa ci fai sveglio a quest'ora?";
+                 headerRightLabel.textContent = "dormi!";
              } else {
-                 headerLeft.textContent = "what are you doing";
-                 headerRightLabel.textContent = "up so late?";
+                 headerLeft.textContent = "what are you doing up so late?";
+                 headerRightLabel.textContent = "go to sleep!";
              }
 
              // --- SET TIMER TO REVERT ---
