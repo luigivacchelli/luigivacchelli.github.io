@@ -173,9 +173,9 @@
                  if (mainContainer) mainContainer.classList.add('visible');
                  
                  requestWebcamAccess();
+                 setupHiresSwapping(); /* Start the hi-res swapping AFTER the page is visible. */
+                 checkForEasterEgg();
                  
-                 // Start the hi-res swapping logic AFTER the page is visible.
-                 setupHiresSwapping();
              }, 1100);
          }
      }
@@ -240,6 +240,50 @@
          const observer = new IntersectionObserver(observerCallback);
          const scrollTriggers = document.querySelectorAll('.scroll-trigger');
          scrollTriggers.forEach(trigger => observer.observe(trigger));
+     }
+     
+     /* Checks for the easter egg condition (time between midnight and 6 AM). If active, it replaces content and then reverts it after 10 seconds. */
+     function checkForEasterEgg() {
+         const now = new Date();
+         const hours = now.getHours();
+
+         const isEasterEggTime = (hours >= 0 && hours <= 6);
+
+         if (isEasterEggTime) {
+             // --- 1. GET THE ELEMENTS ---
+             const headerLeft = document.querySelector('.header-left');
+             const headerRightLabel = document.querySelector('.header-right .about-toggle');
+             
+             // Safety check
+             if (!headerLeft || !headerRightLabel) return;
+
+             // --- 2. STORE THE ORIGINAL TEXT ---
+             const originalLeftText = headerLeft.textContent;
+             const originalRightText = headerRightLabel.textContent;
+             
+             // --- 3. APPLY THE EASTER EGG STATE ---
+             document.body.classList.add('easter-egg-active');
+             
+             const userLang = navigator.language.substring(0, 2);
+             if (userLang === 'it') {
+                 headerLeft.textContent = "cosa ci fai sveglio";
+                 headerRightLabel.textContent = "a quest'ora?";
+             } else {
+                 headerLeft.textContent = "what are you doing";
+                 headerRightLabel.textContent = "up so late?";
+             }
+
+             // --- 4. SET TIMER TO REVERT ---
+             setTimeout(() => {
+                 // Remove the CSS class to trigger the fade-out of images
+                 document.body.classList.remove('easter-egg-active');
+
+                 // Restore the original text directly from our stored variables
+                 headerLeft.textContent = originalLeftText;
+                 headerRightLabel.textContent = originalRightText;
+                 
+             }, 8000); // 8 seconds
+         }
      }
 
      // --- MAIN EVENT LISTENERS ---
