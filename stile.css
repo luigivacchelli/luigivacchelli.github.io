@@ -161,7 +161,7 @@ body.loading-finished #preloader p {
   font-size: 1rem;
   font-weight: normal;
   color: var(--color-primary);
-  transition: color 2s ease-out, opacity 2s ease-out;
+  transition: color 0.3s ease-out, opacity 2s ease-out;
 }
 
 .about-toggle {
