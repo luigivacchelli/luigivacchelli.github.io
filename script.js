@@ -242,7 +242,7 @@
          scrollTriggers.forEach(trigger => observer.observe(trigger));
      }
      
-     /* Checks for the easter egg condition (time between midnight and 6 AM). If active, it replaces content and then reverts it after 10 seconds. */
+     /* Checks for the easter egg condition (time between midnight and 6 AM). If active, it replaces content and then reverts it after 8 seconds. */
      function checkForEasterEgg() {
          const now = new Date();
          const hours = now.getHours();
