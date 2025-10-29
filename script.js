@@ -93,6 +93,58 @@
              });
          });
      }
+     
+     /* Creates an interactive loop for the "balls.jpg" image, swapping it with a GIF after a delay and on user interaction. Initial view for 5 seconds, click interaction for 3 seconds */
+     function setupInteractiveBalls() {
+         const ballsImage = document.querySelector('img[src*="balls.jpg"]');
+         if (!ballsImage) {
+             console.warn('Interactive balls image not found.');
+             return;
+         }
+
+         const staticSrc = 'pictures/bw/lores/balls.jpg';
+         const animatedSrc = 'graphics/lores/balls.gif';
+
+         let timerId = null;
+
+         const switchToGif = () => {
+             const gif = new Image();
+             gif.src = animatedSrc;
+             gif.onload = () => {
+                 ballsImage.src = animatedSrc;
+             };
+         };
+
+         // --- **CHANGE #1**: The function now accepts a `duration` parameter. ---
+         const startLoop = (duration) => {
+             clearTimeout(timerId);
+             ballsImage.src = staticSrc;
+
+             // The timer now uses the duration that was passed into the function.
+             timerId = setTimeout(switchToGif, duration);
+         };
+
+         // --- SET UP THE INITIAL TRIGGER ---
+         const observer = new IntersectionObserver((entries, obs) => {
+             entries.forEach(entry => {
+                 if (entry.isIntersecting) {
+                     // --- **CHANGE #2**: When it first appears, call the loop with 5000ms. ---
+                     startLoop(5000); // 5 seconds for the initial view
+
+                     obs.unobserve(ballsImage);
+                 }
+             });
+         }, { threshold: 0.1 });
+
+         // --- SET UP THE CLICK HANDLER ---
+         ballsImage.addEventListener('click', () => {
+             // --- **CHANGE #3**: On every click, call the loop with 3000ms. ---
+             startLoop(3000); // 3 seconds for user interaction
+         });
+
+         // OBSERVE THE IMAGE
+         observer.observe(ballsImage);
+     }
 
      // --- NEW: HIGH-RESOLUTION SWAPPING LOGIC ---
      function setupHiresSwapping() {
@@ -307,6 +359,7 @@
          }
          translatePage();
          setupImageGallery();
+         setupInteractiveBalls();
          trackCriticalContent();
          setupFooterObserver();
          const aboutToggle = document.querySelector('.about-toggle');
