@@ -59,6 +59,32 @@
              webcamContainer.style.display = 'none';
          });
      }
+     
+     /**
+      * Solves the mobile 100vh issue by creating a reliable CSS variable.
+      * This ensures the overlay always covers the exact visible screen area.
+      */
+     function setTrueViewportHeight() {
+         // This function calculates the true inner height of the window.
+         const setHeight = () => {
+             // `window.innerHeight` gives the actual visible height at any moment.
+             const vh = window.innerHeight;
+             // We set the value on the root <html> element. The ':root' in CSS
+             // refers to this element. We also multiply by 1px to make it a unit.
+             document.documentElement.style.setProperty('--app-height', `${vh}px`);
+         };
+
+         // Run the function once when the page loads.
+         setHeight();
+
+         // Run the function again any time the window is resized (e.g., orientation change).
+         // We "debounce" this for performance, so it doesn't fire too rapidly.
+         let timeout;
+         window.addEventListener('resize', () => {
+             clearTimeout(timeout);
+             timeout = setTimeout(setHeight, 100);
+         });
+     }
 
      function setupImageGallery() {
          galleryImages.forEach(img => {
@@ -309,6 +335,7 @@
          setupImageGallery();
          trackCriticalContent();
          setupFooterObserver();
+         setTrueViewportHeight();
          const aboutToggle = document.querySelector('.about-toggle');
              if (aboutToggle) {
                  // When it's clicked the first time, upgrade the overlay image.
