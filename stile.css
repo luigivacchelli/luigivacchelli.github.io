@@ -301,7 +301,7 @@ body.loading-finished #preloader p {
 
 body.overlay-active {
   overflow: hidden !important;
-  height: 100% !important;
+  height: 100vh !important;
   touch-action: none !important;
   position: fixed !important;
   width: 100%;
