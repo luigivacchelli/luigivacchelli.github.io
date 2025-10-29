@@ -5,6 +5,7 @@
      const pageHeader = document.querySelector('.page-header');
      const mainContainer = document.querySelector('.container');
      const webcamVideo = document.getElementById('webcam');
+     const webcamContainer = document.querySelector('.webcam-container');
      const galleryImages = document.querySelectorAll('.media-link img');
      const i18nElements = document.querySelectorAll('[data-i18n-key]');
      const headerLeft = document.querySelector('.header-left');
@@ -43,13 +44,20 @@
      }
 
      function requestWebcamAccess() {
-         if (!webcamVideo) return;
+         if (!webcamVideo || !webcamContainer) return;
+         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                 console.warn("getUserMedia not supported by this browser.");
+                 webcamContainer.style.display = 'none';
+                 return;
+             } /* If the browser is old and doesn't support webcams, hide the container. */
 
          navigator.mediaDevices.getUserMedia({ video: true })
              .then(stream => {
                  webcamVideo.srcObject = stream;
              })
-             .catch(error => { console.log("Webcam access was not granted:", error.name); });
+         .catch(error => { console.log("Webcam access was not granted:", error.name);
+             webcamContainer.style.display = 'none';
+         });
      }
 
      function setupImageGallery() {
