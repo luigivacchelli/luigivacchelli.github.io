@@ -248,7 +248,7 @@
          const now = new Date();
          const hours = now.getHours();
 
-         const isEasterEggTime = (hours >= 6 );
+         const isEasterEggTime = (hours >= 0 && hours <= 6);
 
          if (isEasterEggTime) {
              // --- GET THE ELEMENTS ---
