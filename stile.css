@@ -99,18 +99,10 @@ html, body {
 }
 
 @keyframes loading-progress-animation {
-  0%, 25% {
-    background-position: 100% 0; /* Corresponds to 0% width */
-  }
-  50% {
-    background-position: 63% 0; /* Corresponds to 37% width */
-  }
-  97% {
-    background-position: 23% 0; /* Corresponds to 77% width */
-  }
-  100% {
-    background-position: 7% 0; /* Corresponds to 93% width */
-  }
+  0%, 25% { background-position: 100% 0; } /* Corresponds to 0% width */
+  50% { background-position: 63% 0; } /* Corresponds to 37% width */
+  97% { background-position: 23% 0; } /* Corresponds to 77% width */
+  100% { background-position: 7% 0; } /* Corresponds to 93% width */
 }
 
 body.loading-finished #preloader p {

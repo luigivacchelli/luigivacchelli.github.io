@@ -172,9 +172,9 @@
                  if (pageHeader) pageHeader.classList.add('visible');
                  if (mainContainer) mainContainer.classList.add('visible');
                  
+                 checkForEasterEgg();
                  requestWebcamAccess();
                  setupHiresSwapping(); /* Start the hi-res swapping AFTER the page is visible. */
-                 checkForEasterEgg();
                  
              }, 1100);
          }
@@ -247,7 +247,7 @@
          const now = new Date();
          const hours = now.getHours();
 
-         const isEasterEggTime = (hours >= 0 && hours <= 6);
+         const isEasterEggTime = (hours >= 6 && hours <= 11); /* Testing time */
 
          if (isEasterEggTime) {
              // --- 1. GET THE ELEMENTS ---
