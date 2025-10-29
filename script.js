@@ -7,6 +7,8 @@
      const webcamVideo = document.getElementById('webcam');
      const galleryImages = document.querySelectorAll('.media-link img');
      const i18nElements = document.querySelectorAll('[data-i18n-key]');
+     const headerLeft = document.querySelector('.header-left');
+     const headerRightLabel = document.querySelector('.header-right .about-toggle');
 
      // --- DICTIONARY FOR TRANSLATIONS ---
      const translations = {
@@ -251,13 +253,11 @@
          const isEasterEggTime = (hours >= 0 && hours <= 6);
 
          if (isEasterEggTime) {
-             // --- GET THE ELEMENTS ---
-             const headerLeft = document.querySelector('.header-left');
-             const headerRightLabel = document.querySelector('.header-right .about-toggle');
-             
+             // Safety check using the cached elements.
              if (!headerLeft || !headerRightLabel) return false;
 
              // --- STORE THE ORIGINAL TEXT ---
+             // Use the cached variables directly.
              const originalLeftText = headerLeft.textContent;
              const originalRightText = headerRightLabel.textContent;
              
@@ -266,9 +266,11 @@
              
              const userLang = navigator.language.substring(0, 2);
              if (userLang === 'it') {
+                 // Use the cached variables directly.
                  headerLeft.textContent = "cosa ci fai sveglio a quest'ora?";
                  headerRightLabel.textContent = "dormi!";
              } else {
+                 // Use the cached variables directly.
                  headerLeft.textContent = "what are you doing up so late?";
                  headerRightLabel.textContent = "go to sleep!";
              }
@@ -276,35 +278,18 @@
              // --- SET TIMER TO REVERT ---
              setTimeout(() => {
                  document.body.classList.remove('easter-egg-active');
+                 // Use the cached variables directly.
                  headerLeft.textContent = originalLeftText;
                  headerRightLabel.textContent = originalRightText;
 
-                 // **NEW:** Ask for permission AFTER the easter egg is finished.
                  requestWebcamAccess();
                  
-             }, 8000); // 8 seconds
+             }, 8000);
 
-             return true; // **NEW:** Report that the easter egg was activated.
+             return true;
          }
 
-         return false; // **NEW:** Report that the easter egg was NOT activated.
-     }
-     
-     function setupOverlayObserver() {
-         const aboutToggleCheckbox = document.getElementById('about-toggle');
-         if (!aboutToggleCheckbox) return;
-
-         // This function will run whenever the checkbox is checked or unchecked
-         const toggleBodyLock = () => {
-             const isOverlayActive = aboutToggleCheckbox.checked;
-             document.documentElement.setAttribute('data-overlay-active', isOverlayActive);
-         };
-
-         // Run it once on page load in case the page reloads with it open
-         toggleBodyLock();
-         
-         // Run it every time the user clicks the label
-         aboutToggleCheckbox.addEventListener('change', toggleBodyLock);
+         return false;
      }
 
      // --- MAIN EVENT LISTENERS ---
@@ -316,7 +301,6 @@
          setupImageGallery();
          trackCriticalContent();
          setupFooterObserver();
-         setupOverlayObserver();
          const aboutToggle = document.querySelector('.about-toggle');
              if (aboutToggle) {
                  // When it's clicked the first time, upgrade the overlay image.
