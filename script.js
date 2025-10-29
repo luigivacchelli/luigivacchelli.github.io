@@ -168,11 +168,13 @@
              document.body.classList.add('loading-finished');
 
              setTimeout(() => {
-                 checkForEasterEgg();
+                 const easterEggWasActivated = checkForEasterEgg();
                  if (preloader) preloader.classList.add('hidden');
                  if (pageHeader) pageHeader.classList.add('visible');
                  if (mainContainer) mainContainer.classList.add('visible');
-                 requestWebcamAccess();
+                 if (!easterEggWasActivated) {
+                                 requestWebcamAccess();
+                             }
                  setupHiresSwapping(); /* Start the hi-res swapping AFTER the page is visible. */
                  
              }, 1100);
@@ -246,21 +248,20 @@
          const now = new Date();
          const hours = now.getHours();
 
-         const isEasterEggTime = (hours >= 6 && hours <= 11); /* Testing time */
+         const isEasterEggTime = (hours >= 0 && hours <= 6);         
 
          if (isEasterEggTime) {
-             // --- 1. GET THE ELEMENTS ---
+             // --- GET THE ELEMENTS ---
              const headerLeft = document.querySelector('.header-left');
              const headerRightLabel = document.querySelector('.header-right .about-toggle');
              
-             // Safety check
-             if (!headerLeft || !headerRightLabel) return;
+             if (!headerLeft || !headerRightLabel) return false;
 
-             // --- 2. STORE THE ORIGINAL TEXT ---
+             // --- STORE THE ORIGINAL TEXT ---
              const originalLeftText = headerLeft.textContent;
              const originalRightText = headerRightLabel.textContent;
              
-             // --- 3. APPLY THE EASTER EGG STATE ---
+             // --- APPLY THE EASTER EGG STATE ---
              document.body.classList.add('easter-egg-active');
              
              const userLang = navigator.language.substring(0, 2);
@@ -272,17 +273,21 @@
                  headerRightLabel.textContent = "up so late?";
              }
 
-             // --- 4. SET TIMER TO REVERT ---
+             // --- SET TIMER TO REVERT ---
              setTimeout(() => {
-                 // Remove the CSS class to trigger the fade-out of images
                  document.body.classList.remove('easter-egg-active');
-
-                 // Restore the original text directly from our stored variables
                  headerLeft.textContent = originalLeftText;
                  headerRightLabel.textContent = originalRightText;
+
+                 // **NEW:** Ask for permission AFTER the easter egg is finished.
+                 requestWebcamAccess();
                  
              }, 8000); // 8 seconds
+
+             return true; // **NEW:** Report that the easter egg was activated.
          }
+
+         return false; // **NEW:** Report that the easter egg was NOT activated.
      }
 
      // --- MAIN EVENT LISTENERS ---
