@@ -88,34 +88,51 @@
 
      // --- NEW: HIGH-RESOLUTION SWAPPING LOGIC ---
      function setupHiresSwapping() {
-         if (!'IntersectionObserver' in window) {
+         // First, check if IntersectionObserver is supported.
+         if (!('IntersectionObserver' in window)) {
              console.log("IntersectionObserver not supported, skipping hi-res swap.");
              return;
          }
 
          const observerCallback = (entries, observer) => {
              entries.forEach(entry => {
-                 if (!entry.isIntersecting) {
+                 // We are now interested ONLY when an image ENTERS the viewport.
+                 if (entry.isIntersecting) {
                      const img = entry.target;
                      const hiresSrc = img.dataset.hiresSrc;
 
+                     // Proceed only if there's a hires source and it hasn't been swapped yet.
                      if (hiresSrc && !img.dataset.isSwapped) {
+                         // Start downloading the hi-res version in the background.
                          const hiresImage = new Image();
                          hiresImage.src = hiresSrc;
 
+                         // When it's fully downloaded...
                          hiresImage.onload = () => {
+                             // ...swap the src of the actual image on the page.
                              img.src = hiresSrc;
+                             // Mark it as swapped to prevent re-downloads.
                              img.dataset.isSwapped = 'true';
-                             observer.unobserve(img);
                          };
+                         
+                         // Crucially, stop observing this image now that we've started the process.
+                         observer.unobserve(img);
                      }
                  }
              });
          };
 
-         const observer = new IntersectionObserver(observerCallback);
+         // The 'rootMargin' option tells the browser to start loading images when
+         // they are 200px *before* they enter the screen, making the swap feel instant.
+         const observerOptions = {
+             rootMargin: '200px 0px 200px 0px'
+         };
+
+         const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+         // Tell the observer to watch all gallery images that have a hi-res source.
          galleryImages.forEach(img => {
-             if (img.dataset.hiresSrc) { // Only observe images that have a hi-res version
+             if (img.dataset.hiresSrc) {
                  observer.observe(img);
              }
          });
