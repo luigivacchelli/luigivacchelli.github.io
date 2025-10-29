@@ -168,11 +168,10 @@
              document.body.classList.add('loading-finished');
 
              setTimeout(() => {
+                 checkForEasterEgg();
                  if (preloader) preloader.classList.add('hidden');
                  if (pageHeader) pageHeader.classList.add('visible');
                  if (mainContainer) mainContainer.classList.add('visible');
-                 
-                 checkForEasterEgg();
                  requestWebcamAccess();
                  setupHiresSwapping(); /* Start the hi-res swapping AFTER the page is visible. */
                  
