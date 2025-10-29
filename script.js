@@ -102,7 +102,7 @@
              return;
          }
 
-         const staticSrc = 'pictures/bw/lores/balls.jpg';
+         const staticSrc = 'pictures/bw/hires/balls.jpg';
          const transitionSrc = 'graphics/lores/balls1.gif';
          const loopSrc = 'graphics/lores/balls2.gif';
 
