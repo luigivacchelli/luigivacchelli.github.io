@@ -13,19 +13,19 @@
   /* --- Light Mode (Default) --- */
   --color-primary: #070898;
   --color-secondary: #980807;
-  --color-secondary2: #F6C500;
+  --color-secondary2: #D93B00; /* Bold yellow: F6C500 */
   --color-hover: #079808;
   --mobile-padding: 5vw;
-  --page-background: #ffffff;
+  --page-background: #f2f2f2; /* Creamy white: #FFFCF1 */
 }
 
 /* --- DARK MODE STYLES --- */
 @media (prefers-color-scheme: dark) {
   :root { /* Overwrite your default colors for dark mode */
-    --color-primary: #285FF4;
-    --color-secondary: #AF3029;
-    --color-secondary2: #F6C500;
-    --color-hover: #34C734;
+    --color-primary: #205FA6;
+    --color-secondary: #D14D41;
+    --color-secondary2: #D0A215;
+    --color-hover: #5BA32A;
     --page-background: #100F0F;
   }
 
