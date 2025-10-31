@@ -16,7 +16,7 @@
   --color-secondary2: #D93B00; /* Bold yellow: F6C500 */
   --color-hover: #079808;
   --mobile-padding: 5vw;
-  --page-background: #f2f2f2; /* Creamy white: #FFFCF1 */
+  --page-background: #FAFAFA; /* Creamy white: #FFFCF1 */
 }
 
 /* --- DARK MODE STYLES --- */
@@ -290,6 +290,7 @@ body.loading-finished #preloader p {
 .media-link {
   display: block;
   margin-bottom: 1rem;
+  min-height: 200px; /* Optional: A fallback height to prevent a total collapse on ultra-slow connections */
 }
 
 .media-link img,
