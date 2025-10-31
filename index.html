@@ -37,28 +37,25 @@
     <!-- Preloader Start -->
       <div id="preloader">
         <div class="preloader-content">
-          <img src="logos/lores/loaderlogo.webp" alt="Loading..." class="loader-icon" data-no-image-index="true">
+          <img src="logos/lores/loaderlogo.webp" alt="Loading..." class="loader-icon" data-no-imageindex="true">
           <p data-i18n-key="welcomeMessage" class="font-display">Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!</p>
         </div>
       </div>
       <!-- Preloader End -->
 
-<!-- Header -->
-<div class="page-header">
-  <div class="header-left font-display">luigivacchelli</div>
-  <div class="header-right font-display">
-      <label for="about-toggle" class="about-toggle" data-i18n-key="aboutLink">chisono</label>
-  </div>
-</div>
-
-<!-- Checkbox che controlla l’overlay -->
-<input type="checkbox" id="about-toggle" class="about-checkbox" hidden>
-    
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left font-display">luigivacchelli</div>
+      <div class="header-right font-display">
+          <button id="about-trigger" class="about-toggle" data-i18n-key="aboutLink">chisono</button>
+      </div>
+    </div>
+        
     <!-- Overlay con bio -->
-    <div class="about-overlay">
-        <label for="about-toggle" class="about-background"></label> <!-- sfondo cliccabile -->
+    <div id="about-overlay" class="about-overlay">
+        <div id="about-background" class="about-background"></div> <!-- sfondo cliccabile -->
         <div class="about-card">
-            <img src="lv/lores/lvjvc.jpg" data-hires-src="lv/hires/lvjvc.jpg" class="about-image" alt="picture of a young boy holding a camcorder">
+            <img src="lv/lores/lvjvc.jpg" data-hires-src="lv/hires/lvjvc.jpg" class="about-image" data-no-imageindex="true" alt="picture of a young boy holding a camcorder">
                 <div class="webcam-container">
                     <video id="webcam" autoplay muted playsinline></video>
                 </div>
@@ -70,13 +67,13 @@
         <div class="column left">
             <div class="media-link"><img src="pictures/bw/lores/frame.jpg" data-hires-src="pictures/bw/hires/frame.jpg" alt="An empty frame for a poster advertisment showing the city behind it."></div>
             <div class="media-link"><video autoplay loop muted playsinline src="graphics/lores/ghosts.mp4"></video></div>
-            <div class="media-link"><img src="pictures/c41/lores/edera.jpg" data-hires-src="pictures/c41/hires/edera.jpg" alt="Flowers on a hill at sunset." data-no-image-index="true"></div>
+            <div class="media-link"><img src="pictures/c41/lores/edera.jpg" data-hires-src="pictures/c41/hires/edera.jpg" alt="Flowers on a hill at sunset." data-no-imageindex="true"></div>
             <div class="media-link"><img src="pictures/bw/lores/ambulance.jpg" data-hires-src="pictures/bw/hires/ambulance.jpg" alt="A hearse parked in an ambulance parking spot." loading="lazy"></div>
             <div class="media-link"><img src="pictures/bw/lores/tent.jpg" data-hires-src="pictures/bw/hires/tent.jpg" alt="A white tent in a field at night." loading="lazy"></div>
             <div class="media-link"><img src="pictures/c41/lores/sea.jpg" data-hires-src="pictures/c41/hires/sea.jpg" alt="A rocky beach with red umbrellas." loading="lazy"></div>
             <div class="media-link"><video autoplay loop muted playsinline src="videos/lores/sun.mp4" preload="none"></video></div>
-            <div class="media-link"><img src="pictures/bw/lores/wip.jpg" data-hires-src="pictures/bw/hires/wip.jpg" alt="A work in progress street sign." loading="lazy" data-no-image-index="true"></div>
-            <div class="media-link"><img src="pictures/c41/lores/rock.jpg" data-hires-src="pictures/c41/hires/rock.jpg" alt="A giant rock in the middle of the sea seen from a boat." loading="lazy" data-no-image-index="true"></div>
+            <div class="media-link"><img src="pictures/bw/lores/wip.jpg" data-hires-src="pictures/bw/hires/wip.jpg" alt="A work in progress street sign." loading="lazy" data-no-imageindex="true"></div>
+            <div class="media-link"><img src="pictures/c41/lores/rock.jpg" data-hires-src="pictures/c41/hires/rock.jpg" alt="A giant rock in the middle of the sea seen from a boat." loading="lazy" data-no-imageindex="true"></div>
             <div class="media-link"><img src="pictures/bw/lores/tube.jpg" data-hires-src="pictures/bw/hires/tube.jpg" alt="A fast moving subway train." loading="lazy"></div>
             <div class="media-link"><img src="pictures/c41/lores/valviola.jpg" data-hires-src="pictures/c41/hires/valviola.jpg" alt="Cows grazing by a lake in a sunny landscape." loading="lazy"></div>
             <div class="scroll-trigger" data-column="left"></div>
@@ -85,14 +82,14 @@
             <div class="media-link"><img src="pictures/c41/lores/track.jpg" data-hires-src="pictures/c41/hires/track.jpg" alt="A sprinter track with statues all around."></div>
             <div class="media-link"><img src="pictures/bw/lores/bike.jpg" data-hires-src="pictures/bw/hires/bike.jpg" alt="A bike chained covered in a white plastic sheet."></div>
             <div class="media-link"><video autoplay loop muted playsinline src="videos/lores/flares.mp4"></video></div>
-            <div class="media-link"><img src="scans/lores/cat.jpg" data-hires-src="scans/hires/cat.jpg" alt="A cat drawn by a child on the page of a notebook." loading="lazy" data-no-image-index="true"></div>
-            <div class="media-link"><img src="pictures/c41/lores/pool.jpg" data-hires-src="pictures/c41/hires/pool.jpg" alt="Two hands holding a cue stick." loading="lazy" data-no-image-index="true"></div>
-            <div class="media-link"><img src="pictures/peter/lores/peter1.jpg" data-hires-src="pictures/peter/hires/peter1.jpg" data-gallery="pictures/peter/lores/peter2.jpg,pictures/peter/lores/peter3.jpg,pictures/peter/lores/peter4.jpg,pictures/peter/lores/peter5.jpg" data-hires-gallery="pictures/peter/hires/peter2.jpg,pictures/peter/hires/peter3.jpg,pictures/peter/hires/peter4.jpg,pictures/peter/hires/peter5.jpg" alt="A guy lit by the sun in a church." loading="lazy" data-no-image-index="true"></div>
-            <div class="media-link"><img src="pictures/bw/lores/mirrors.jpg" data-hires-src="pictures/bw/hires/mirrors.jpg" alt="A room with a giant mirror in it." loading="lazy" data-no-image-index="true"></div>
+            <div class="media-link"><img src="scans/lores/cat.jpg" data-hires-src="scans/hires/cat.jpg" alt="A cat drawn by a child on the page of a notebook." loading="lazy" data-no-imageindex="true"></div>
+            <div class="media-link"><img src="pictures/c41/lores/pool.jpg" data-hires-src="pictures/c41/hires/pool.jpg" alt="Two hands holding a cue stick." loading="lazy" data-no-imageindex="true"></div>
+            <div class="media-link"><img src="pictures/peter/lores/peter1.jpg" data-hires-src="pictures/peter/hires/peter1.jpg" data-gallery="pictures/peter/lores/peter2.jpg,pictures/peter/lores/peter3.jpg,pictures/peter/lores/peter4.jpg,pictures/peter/lores/peter5.jpg" data-hires-gallery="pictures/peter/hires/peter2.jpg,pictures/peter/hires/peter3.jpg,pictures/peter/hires/peter4.jpg,pictures/peter/hires/peter5.jpg" alt="A guy lit by the sun in a church." loading="lazy" data-no-imageindex="true"></div>
+            <div class="media-link"><img src="pictures/bw/lores/mirrors.jpg" data-hires-src="pictures/bw/hires/mirrors.jpg" alt="A room with a giant mirror in it." loading="lazy" data-no-imageindex="true"></div>
             <div class="media-link"><img src="pictures/bw/lores/balls.jpg" data-hires-src="pictures/bw/hires/balls.jpg" alt="A guy juggling with plastic balls." loading="lazy"></div>
-            <div class="media-link"><img src="pictures/c41/lores/greenhand.jpg" data-hires-src="pictures/c41/hires/greenhand.jpg" alt="A hand lit by a green light on the street." loading="lazy" data-no-image-index="true"></div>
+            <div class="media-link"><img src="pictures/c41/lores/greenhand.jpg" data-hires-src="pictures/c41/hires/greenhand.jpg" alt="A hand lit by a green light on the street." loading="lazy" data-no-imageindex="true"></div>
             <div class="media-link"><video autoplay loop muted playsinline src="videos/lores/vulcano.mp4" preload="none"></video></div>
-            <div class="media-link"><img src="pictures/bw/lores/web.jpg" data-hires-src="pictures/bw/hires/web.jpg" alt="A pole with metal wires connected to it." loading="lazy" data-no-image-index="true"></div>
+            <div class="media-link"><img src="pictures/bw/lores/web.jpg" data-hires-src="pictures/bw/hires/web.jpg" alt="A pole with metal wires connected to it." loading="lazy" data-no-imageindex="true"></div>
             <div class="scroll-trigger" data-column="right"></div>
         </div>
     </div>
