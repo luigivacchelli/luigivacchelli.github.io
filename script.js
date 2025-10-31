@@ -344,11 +344,11 @@
                      const language = userLang === 'it' ? 'it' : 'en';
 
                      // 2. Get the correct translations from the object
-                     const message = translations[language].easterEggMessage;
-                     const action = translations[language].easterEggAction;
+                     const question = translations[language].easterEggLeftHeader;
+                     const action = translations[language].easterEggRightHeader;
 
                      // 3. Apply the translated text
-                     headerLeft.textContent = message;
+                     headerLeft.textContent = question;
                      aboutTrigger.textContent = action;
 
              setTimeout(() => {
