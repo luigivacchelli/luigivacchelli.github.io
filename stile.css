@@ -291,6 +291,7 @@ body.loading-finished #preloader p {
   display: block;
   margin-bottom: 1rem;
   min-height: 200px; /* Optional: A fallback height to prevent a total collapse on ultra-slow connections */
+  position: relative;
 }
 
 .media-link img,
@@ -303,11 +304,6 @@ body.loading-finished #preloader p {
 
 html.overlay-active {
   overflow: hidden !important;
-}
-
-/* Easter Egg Styles (Active between 00:00 and 06:00) */
-.media-link {
-  position: relative;
 }
 
 .media-link::before {
