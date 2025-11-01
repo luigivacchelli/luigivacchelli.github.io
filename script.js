@@ -27,7 +27,7 @@
              welcomeMessage: "Questo sito richiede l'accesso alla webcam per essere più bello. <br> Non fate i timidi!",
              aboutLink: "chisono",
              easterEggLeftHeader: "cosa ci fai ancora in piedi?",
-             easterEggRightHeader: "dormi!",
+             easterEggRightHeader: "corri a letto!",
              copyright: "© 2025 Luigi Vacchelli. Tutti i diritti riservati."
          }
      };
