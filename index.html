@@ -63,11 +63,36 @@
     <!-- Overlay con bio -->
     <div id="about-overlay" class="about-overlay">
         <div id="about-background" class="about-background"></div> <!-- sfondo cliccabile -->
-        <div class="about-card">
-            <img src="lv/lores/lvjvc.jpg" data-hires-src="lv/hires/lvjvc.jpg" class="about-image" data-no-imageindex="true" alt="picture of a young boy holding a camcorder">
-                <div class="webcam-container">
-                    <video id="webcam" autoplay muted playsinline></video>
+        <div class="about-content-container">
+            <!-- PART 1: The Image Column -->
+            <div class="about-column about-image-column">
+                <div class="about-card"> <!-- We keep the .about-card as a wrapper -->
+                    <img src="lv/lores/lvjvc.jpg" data-hires-src="lv/hires/lvjvc.jpg" class="about-image" data-no-imageindex="true" alt="picture of a young boy holding a camcorder">
+                        <div class="webcam-container">
+                            <video id="webcam" autoplay muted playsinline></video>
+                        </div>
                 </div>
+            </div>
+            <!-- PART 2: The Text Column -->
+            <div class="about-column about-text-column">
+                <p data-i18n-key="aboutBio" >Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce at turpis felis. Vivamus convallis blandit lectus. Maecenas at sem aliquet, elementum ipsum ac, fermentum metus. Sed eu finibus ex. Integer congue lobortis nisi eget varius. Pellentesque ut commodo nibh. Mauris augue enim, ultricies vitae odio ut, porta dapibus diam. Pellentesque varius arcu tempus eros interdum, ut euismod eros dictum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam nisi odio, hendrerit vel enim non, vestibulum euismod metus. Nam urna odio, vulputate et diam non, eleifend maximus tellus.</p>
+                <div class="about-social-links font-display">
+                    <a href="https://www.instagram.com/luigi_vacchelli" target="_blank" rel="noopener noreferrer">instagram</a>
+                    <a href="https://vimeo.com/luigivacchelli" target="_blank" rel="noopener noreferrer">vimeo</a>
+                    <a href="https://www.imdb.com/name/nm13854795/" target="_blank" rel="noopener noreferrer">imdb</a>
+                    <a href="https://it.linkedin.com/in/luigivacchelli" target="_blank" rel="noopener noreferrer">linkedin</a>
+                    <a href="mailto:ggvacchelli@gmail.com">email</a>
+                </div>
+                <!--
+                <hr class="about-divider">
+                <div class="about-projects">
+                    <h4>Sezioni del portfolio</h4>
+                    <a href="https://vimeo.com/358677991?share=copy" target="_blank" rel="noopener noreferrer">un ultimo giro</a>
+                    <a href="https://www.youtube.com/watch?v=cszAIRKwkkA" target="_blank" rel="noopener noreferrer">life sleeper side b - eugenia post meridiem</a>
+                    <a href="URL_TO_PROJECT_C" target="_blank" rel="noopener noreferrer">project c - commercial</a>
+                </div>
+                -->
+            </div>
         </div>
     </div>
     

@@ -213,13 +213,15 @@ body.loading-finished #preloader p {
     visibility: hidden;
     pointer-events: none;
     transition: opacity 1s ease, visibility 0s linear 1s, pointer-events 0s linear 1s;
+    display: flex;
+    align-items: center;
 }
 
 .about-overlay.is-open {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transition: opacity 1s ease, visibility 0s linear 0s, pointer-events 0s linear 0s;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 1s ease, visibility 0s linear 0s, pointer-events 0s linear 0s;
 }
 
 .about-background {
@@ -227,43 +229,105 @@ body.loading-finished #preloader p {
     inset: 0;
 }
 
+.about-content-container {
+    width: 100%;
+    display: flex;
+    align-items: flex-start; /* Aligns tops of columns */
+    gap: 1rem;
+    padding: 2rem;
+    box-sizing: border-box;
+    z-index: 1002;
+}
+
+.about-image-column {
+    flex: 1;
+}
+
+.about-text-column {
+    flex: 1;
+    color: var(--color-primary);
+}
+
 .about-card {
-  position: absolute;
-  top: 2.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(50vw - 2.5rem);
-  max-width: 750px;
-  z-index: 1002;
+    position: relative;
 }
 
 .about-image {
     display: block;
     width: 100%;
     height: auto;
-    border-radius: 0px;
     border: 4px solid var(--color-primary);
-    overflow: hidden;
 }
 
 .webcam-container {
-  position: absolute;
-  top: 49.7%;
-  left: 43.8%;
-  width: 12.2%;
-  aspect-ratio: 91.5 / 55;
-  transform: rotate(2.5deg);
-  overflow: hidden;
-  border-radius: 2px;
-  z-index: 1003;
+    position: absolute;
+    top: 49.7%;
+    left: 43.8%;
+    width: 12.2%;
+    aspect-ratio: 91.5 / 55;
+    transform: rotate(2.5deg);
+    overflow: hidden;
+    border-radius: 2px;
+    z-index: 1003;
 }
 
 #webcam {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+    transform: scaleX(-1);
+}
+
+.about-text-column p {
+  font-family: sans-serif;
+  margin: 0 0 1.5rem 0;
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  text-align: justify;
+}
+
+.about-social-links {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.about-social-links a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.about-social-links a:hover {
+  color: var(--color-hover);
+}
+
+.about-divider {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  image-rendering: pixelated;
-  transform: scaleX(-1);
+  border: none;
+  border-top: 2px solid var(--color-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.about-projects h4 {
+  font-family: sans-serif;
+  margin: 0 0 1rem 0;
+}
+
+.about-projects a {
+  display: block;
+  font-family: sans-serif;
+  color: var(--color-primary);
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.about-projects a:hover {
+  color: var(--color-hover);
 }
 
 /* Galleria */
@@ -359,18 +423,37 @@ body.easter-egg-active .about-toggle {
     padding-right: var(--mobile-padding);
   }
 
-  .about-card {
-    position: absolute;
-    top: 3.5vh;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90vw;
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .about-overlay {
+      align-items: center; /* On mobile, align the content to the top instead of the center */
+      overflow-y: auto; /* Allow the entire overlay to scroll if the content is too long */
   }
 
+  .about-content-container {
+      flex-direction: column; /* This is the key: stack the columns vertically */
+      padding: 5vh var(--mobile-padding) 1.5rem; /* Adjust padding to match your mobile page layout */
+      gap: 1.5rem;
+  }
+  
+  .about-image-column,
+  .about-text-column { /* Make both columns take up the full width when stacked */
+      flex: none; /* Reset the flex-grow property */
+      width: 100%;
+  }
+
+  .about-text-column {
+      text-align: center; /* On mobile, center-align the text for better readability */
+  }
+
+  .about-text-column p { /* The bio text should be left-aligned, even if the parent is centered */
+      text-align: left; /* Or 'justify' if you prefer */
+      font-size: 1rem; /* A more appropriate size for mobile screens */
+  }
+
+  .about-social-links { /* We don't need space-between on mobile. A centered gap looks better. */
+      justify-content: center;
+      gap: 1.5rem;
+  }
+  
   #webcam { /* .webcam-container positioning is inherited from desktop */
     width: 100%;
     height: 100%;
