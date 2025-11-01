@@ -356,7 +356,7 @@
                  headerLeft.textContent = originalLeftText;
                  aboutTrigger.textContent = originalRightText;
                  requestWebcamAccess();
-             }, 8000);
+             }, 5000);
 
              return true;
          }
