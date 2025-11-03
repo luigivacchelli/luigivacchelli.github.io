@@ -237,6 +237,11 @@ body.loading-finished #preloader p {
     padding: 2rem;
     box-sizing: border-box;
     z-index: 1002;
+    pointer-events: none; /* Makes this container invisible to clicks */
+}
+
+.about-column {
+    pointer-events: auto; /* Re-enables clicks for the columns and everything inside them */
 }
 
 .about-image-column {
