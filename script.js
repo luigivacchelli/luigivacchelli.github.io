@@ -113,7 +113,7 @@
      }
      
      function setupInteractiveBalls() {
-         const ballsImage = document.querySelector('img[src*="balls.jpg"]');
+         const ballsImage = document.querySelector('img[src*="balls.webp"]');
          if (!ballsImage) {
              console.warn('Interactive balls image not found.');
              return;
