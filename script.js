@@ -24,7 +24,7 @@
              copyright: "© 2025 Luigi Vacchelli. All rights reserved."
          },
          'it': {
-             welcomeMessage: "Questo sito richiede l'aceesso alla webcam per essere più bello.<br> Non fate i timidi!",
+             welcomeMessage: "Questo sito richiede l'accesso alla webcam per essere più bello.<br> Non fate i timidi!",
              aboutLink: "chisono",
              easterEggLeftHeader: "cosa ci fai ancora in piedi?",
              easterEggRightHeader: "corri a letto!",
