@@ -16,7 +16,7 @@
   --color-secondary2: #D93B00; /* Bold yellow: F6C500 */
   --color-hover: #079808;
   --mobile-padding: 5vw;
-  --page-background: #FAFAFA; /* Creamy white: #FFFCF1 */
+  --page-background: #FFFFFF; /* Less harsh white #FAFAFA, Creamy white: #FFFCF1 */
   --border-color: #000000;
 }
 
@@ -27,7 +27,7 @@
     --color-secondary: #D14D41;
     --color-secondary2: #D0A215;
     --color-hover: #5BA32A;
-    --page-background: #100F0F;
+    --page-background: #000000; /* Less strong black #100F0F */
     --border-color: #FFFFFF;
   }
 
