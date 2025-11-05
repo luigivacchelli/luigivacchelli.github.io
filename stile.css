@@ -361,10 +361,9 @@ body.loading-finished #preloader p {
 .media-link {
   display: block;
   margin-bottom: 1rem;
-  min-height: 200px; /* Optional: A fallback height to prevent a total collapse on ultra-slow connections */
   position: relative;
-  border: 4px solid var(--border-color);
-  box-sizing: border-box;
+  /* border: 4px solid var(--border-color); */
+  /* box-sizing: border-box; */
 }
 
 .media-link img,
