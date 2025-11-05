@@ -113,76 +113,69 @@
      }
      
      function setupInteractiveBalls() {
-         const ballsImage = document.querySelector('img[src*="balls.webp"]');
-         if (!ballsImage) {
-             console.warn('Interactive balls image not found.');
-             return;
+         const container = document.querySelector('.interactive-balls-container');
+         if (!container) return; // Exit if the container isn't found
+
+         const video = container.querySelector('.balls-video');
+         if (!video) return; // Exit if the video isn't found
+         // This event fires every time the video finishes playing
+             video.addEventListener('ended', () => {
+                 // Wait for 3 seconds (3000 milliseconds)
+                 setTimeout(() => {
+                     // After the wait, play the video again from the start
+                     video.play();
+                 }, 3000);
+             });
+         // The function to start the video
+         function playVideo() {
+             // Check if the video is already ready to play without interruption.
+             // A readyState of 3 (HAVE_FUTURE_DATA) or 4 (HAVE_ENOUGH_DATA) is a good sign.
+             if (video.readyState > 2) {
+                 // If it's ready, do the swap and play immediately.
+                 container.classList.add('is-playing');
+                 video.play();
+             } else {
+                 // If not ready, wait for the 'canplay' event.
+                 // This event fires when the browser has downloaded enough data to start playing.
+                 // The '{ once: true }' option is crucial to ensure this only runs once.
+                 video.addEventListener('canplay', () => {
+                     container.classList.add('is-playing');
+                     video.play();
+                 }, { once: true });
+             }
          }
 
-         const staticSrc = 'pictures/bw/hires/balls.jpg';
-         const transitionSrc = 'graphics/lores/balls1.gif';
-         const loopSrc = 'graphics/lores/balls2.gif';
-         const TRANSITION_GIF_DURATION = 1050;
-         let timerId = null;
-         let currentState = 'paused';
-         let activePromise = null;
+         // The function to show the static image
+         function showImage() {
+             container.classList.remove('is-playing');
+             video.pause();
+         }
 
-         const switchToLoopingGif = () => {
-             ballsImage.src = loopSrc;
-             currentState = 'looping';
-         };
-
-         const playSequenceAfterDelay = (delay) => {
-             currentState = 'loading';
-             const timerPromise = new Promise(resolve => setTimeout(resolve, delay));
-             const imageLoadPromise = new Promise((resolve, reject) => {
-                 const transitionGif = new Image();
-                 transitionGif.src = transitionSrc;
-                 transitionGif.onload = resolve;
-                 transitionGif.onerror = reject;
-             });
-
-             const currentPromise = Promise.all([timerPromise, imageLoadPromise]);
-             activePromise = currentPromise;
-
-             currentPromise.then(() => {
-                 if (activePromise !== currentPromise) return;
-                 ballsImage.src = transitionSrc;
-                 currentState = 'transitioning';
-                 timerId = setTimeout(switchToLoopingGif, TRANSITION_GIF_DURATION);
-             })
-             .catch(() => {
-                 if (activePromise !== currentPromise) return;
-                 console.error("Failed to load transition GIF, switching directly to loop.");
-                 switchToLoopingGif();
-             });
-         };
-
-         const stopSequence = () => {
-             clearTimeout(timerId);
-             activePromise = null;
-             ballsImage.src = staticSrc;
-             currentState = 'paused';
-         };
-
+         // --- Start the animation automatically when it scrolls into view ---
          const observer = new IntersectionObserver((entries, obs) => {
              entries.forEach(entry => {
                  if (entry.isIntersecting) {
-                     playSequenceAfterDelay(3000);
-                     obs.unobserve(ballsImage);
+                     // When it's visible, wait 3 seconds, THEN play the video
+                     setTimeout(playVideo, 3000);
+                     obs.unobserve(container); // Stop observing
                  }
              });
          }, { threshold: 0.1 });
 
-         ballsImage.addEventListener('click', () => {
-             if (currentState === 'paused') {
-                 playSequenceAfterDelay(0);
+         // --- Handle the click-to-toggle interaction ---
+         container.addEventListener('click', () => {
+             // Is the 'is-playing' class present?
+             if (container.classList.contains('is-playing')) {
+                 // If it's playing, show the image
+                 showImage();
              } else {
-                 stopSequence();
+                 // If it's paused, play the video
+                 playVideo();
              }
          });
 
-         observer.observe(ballsImage);
+         // Start observing the container
+         observer.observe(container);
      }
 
      function setupHiresSwapping() {

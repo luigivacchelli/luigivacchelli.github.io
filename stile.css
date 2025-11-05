@@ -375,10 +375,24 @@ body.loading-finished #preloader p {
   display: block;
 }
 
+/* --- Interactive Balls Styles --- */
+.interactive-balls-container .balls-video {
+  display: none; /* Hide the video by default */
+}
+
+/* This class will be added by JavaScript to show the video */
+.interactive-balls-container.is-playing .balls-video {
+  display: block; /* Show the video */
+}
+.interactive-balls-container.is-playing .balls-image {
+  display: none; /* Hide the image */
+}
+
 html.overlay-active {
   overflow: hidden !important;
 }
 
+/* --- Easter egg image --- */
 .media-link::before {
   content: '';
   position: absolute;
