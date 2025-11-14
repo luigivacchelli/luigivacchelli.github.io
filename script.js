@@ -21,7 +21,7 @@
              aboutLink: "whoami",
              easterEggLeftHeader: "what are you doing up so late?",
              easterEggRightHeader: "go to sleep!",
-             aboutBio: `Director and photographer, born in '98. I live in Rome, but my heart is in Genoa. <br> I work on short films, photographic projects and international film productions. <br> There's a good chance I'll beat you at <a href="https://www.chess.com/member/lksmrkds" target="_blank" rel="noopener noreferrer">chess</a>.`,
+             aboutBio: `Director and photographer, born in '98. I live in Rome, but my heart is in Genoa. <br> I work on short films, photographic projects and international film productions. <br> Also, there's a good chance I'll beat you at <a href="https://www.chess.com/member/lksmrkds" target="_blank" rel="noopener noreferrer">chess</a>.`,
              copyright: "© 2025 Luigi Vacchelli. All rights reserved."
          },
          'it': {
@@ -29,7 +29,7 @@
              aboutLink: "chisono",
              easterEggLeftHeader: "cosa ci fai ancora in piedi?",
              easterEggRightHeader: "corri a letto!",
-             aboutBio: `Regista e fotografo, classe '98. Vivo a Roma, ma ho lasciato il cuore a Genova. <br> Lavoro a cortometraggi, progetti fotografici e produzioni cinematografiche internazionali. <br> Ci sono buone probabilità che ti batta a <a href="https://www.chess.com/member/lksmrkds" target="_blank" rel="noopener noreferrer">scacchi</a>.`,
+             aboutBio: `Regista e fotografo, classe '98. Vivo a Roma, ma ho lasciato il cuore a Genova. <br> Lavoro a cortometraggi, progetti fotografici e produzioni cinematografiche internazionali. <br> Inoltre, ci sono buone probabilità che ti batta a <a href="https://www.chess.com/member/lksmrkds" target="_blank" rel="noopener noreferrer">scacchi</a>.`,
              copyright: "© 2025 Luigi Vacchelli. Tutti i diritti riservati."
          }
      };

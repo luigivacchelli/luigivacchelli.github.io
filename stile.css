@@ -243,14 +243,10 @@ body.loading-finished #preloader p {
 
 .about-column {
     pointer-events: auto; /* Re-enables clicks for the columns and everything inside them */
-}
-
-.about-image-column {
     flex: 1;
 }
 
 .about-text-column {
-    flex: 1;
     color: var(--color-primary);
 }
 
@@ -286,7 +282,6 @@ body.loading-finished #preloader p {
 }
 
 .about-text-column p {
-  font-family: sans-serif;
   font-weight: bold;
   margin: 0 0 1.5rem 0;
   color: var(--color-primary);
@@ -294,15 +289,13 @@ body.loading-finished #preloader p {
   text-align: justify;
 }
 
-.about-text-column p a {
-  color: var(--color-primary);
-  transition: color 0.3s ease;
-  font-style: italic;
-  text-decoration: none;
+.about-text-column a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
-
-.about-text-column p a:hover {
-  color: var(--color-hover);
+.about-text-column a:hover {
+    color: var(--color-hover);
 }
 
 .about-social-links {
@@ -312,10 +305,8 @@ body.loading-finished #preloader p {
 }
 
 .about-social-links a {
-  color: var(--color-primary);
-  text-decoration: none;
   font-size: 0.9rem;
-  transition: color 0.3s ease;
+  font-weight: bold;
 }
 
 .about-social-links a:hover {
@@ -335,12 +326,8 @@ body.loading-finished #preloader p {
 
 .about-projects a {
   display: block;
-  font-family: sans-serif;
-  color: var(--color-primary);
-  text-decoration: none;
   margin-bottom: 0.75rem;
   font-weight: bold;
-  transition: color 0.3s ease;
 }
 
 .about-projects a:hover {
