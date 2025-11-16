@@ -371,6 +371,38 @@ body.loading-finished #preloader p {
   display: block;
 }
 
+/* === INSTAGRAM CAROUSEL STYLES === */
+.carousel-container {
+    aspect-ratio: 1 / 1;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    /* scroll-snap-type: x proximity; */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.carousel-container::-webkit-scrollbar {
+    display: none;
+}
+
+.carousel-track {
+    display: flex;
+    height: 100%;
+}
+
+.carousel-item {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: center;
+    /* This rule applies to both img and the video-container div */
+}
+
+/* Ensure images that are direct carousel items are styled correctly */
+img.carousel-item {
+    object-fit: cover;
+}
+/* === END OF CAROUSEL STYLES === */
+
 /* --- Interactive Balls Styles --- */
 .interactive-balls-container .balls-video {
   display: none; /* Hide the video by default */

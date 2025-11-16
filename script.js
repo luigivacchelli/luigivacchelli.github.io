@@ -293,6 +293,77 @@
          });
      }
      
+     function setupInfiniteCarousel(carouselElement) {
+             const carousel = carouselElement;
+             if (!carousel) return;
+
+             const track = carousel.querySelector('.carousel-track');
+             let items = Array.from(track.children);
+             let isTeleporting = false;
+
+             function loadHires(item) {
+                 const img = item.querySelector('img');
+                 if (img && img.dataset.hiresSrc && !img.dataset.isSwapped) {
+                     const hiresSrc = img.dataset.hiresSrc;
+                     const hiresImage = new Image();
+                     hiresImage.src = hiresSrc;
+                     hiresImage.onload = () => {
+                         img.src = hiresSrc;
+                         img.dataset.isSwapped = 'true';
+                     };
+                 }
+             }
+
+             function checkAndLoadVisibleItems() {
+                 items.forEach((item) => {
+                     const itemLeft = item.offsetLeft;
+                     const itemWidth = item.offsetWidth;
+                     const scrollLeft = carousel.scrollLeft;
+                     const carouselWidth = carousel.offsetWidth;
+                     if (itemLeft < scrollLeft + carouselWidth + itemWidth && itemLeft + itemWidth > scrollLeft - itemWidth) {
+                         loadHires(item);
+                     }
+                 });
+             }
+
+             const firstClone = items[0].cloneNode(true);
+             const lastClone = items[items.length - 1].cloneNode(true);
+             firstClone.classList.add('clone');
+             lastClone.classList.add('clone');
+             track.appendChild(firstClone);
+             track.insertBefore(lastClone, items[0]);
+             items = Array.from(track.children);
+
+             setTimeout(() => {
+                 track.style.transition = 'none';
+                 carousel.scrollLeft = carousel.querySelector('.carousel-item:not(.clone)').offsetLeft;
+                 track.style.transition = '';
+                 checkAndLoadVisibleItems();
+             }, 0);
+
+             carousel.addEventListener('scroll', () => {
+                 checkAndLoadVisibleItems();
+                 if (isTeleporting) return;
+                 const firstItem = carousel.querySelector('.carousel-item:not(.clone)');
+                 const lastItem = items[items.length - 2];
+                 const itemWidth = firstItem.offsetWidth;
+                 if (carousel.scrollLeft < firstItem.offsetLeft - (itemWidth / 2)) {
+                     isTeleporting = true;
+                     track.style.transition = 'none';
+                     carousel.scrollLeft = lastItem.offsetLeft;
+                     track.style.transition = '';
+                     setTimeout(() => { isTeleporting = false; }, 50);
+                 }
+                 if (carousel.scrollLeft > lastItem.offsetLeft + (itemWidth / 2)) {
+                     isTeleporting = true;
+                     track.style.transition = 'none';
+                     carousel.scrollLeft = firstItem.offsetLeft;
+                     track.style.transition = '';
+                     setTimeout(() => { isTeleporting = false; }, 50);
+                 }
+             });
+         }
+     
      function setupFooterObserver() {
          if (!('IntersectionObserver' in window)) return;
          const footer = document.querySelector('.site-footer');
@@ -367,6 +438,10 @@
          setupImageGallery();
          setupInteractiveBalls();
          trackCriticalContent();
+         const allCarousels = document.querySelectorAll('.carousel-container');
+         allCarousels.forEach(carousel => {
+             setupInfiniteCarousel(carousel); // Call the function for EACH carousel found
+         });
          setupFooterObserver();
 
          // Replaced old checkbox logic with new event listeners
