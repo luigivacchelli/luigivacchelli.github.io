@@ -98,8 +98,31 @@ html, body {
 }
 
 /* --- Mobile Adjustments for Countdown --- */
-@media (max-width: 768px) {
-  #timer {
-    gap: 1.5rem; /* Slightly smaller gap on mobile */
-  }
+@media screen and (orientation: portrait) and (max-width: 768px) {
+    
+    .time-unit label {
+        margin-top: -0.2rem; /* Was -0.7rem. Change to a small positive value. */
+    }
+    
+    .countdown-background-video {
+        /* --- 1. Reset the Centering Logic --- */
+        left: auto; /* Remove the 50% left positioning */
+        top: 50%;   /* Keep the vertical centering */
+        
+        /* --- 2. Pin to the Right Edge --- */
+        right: -20%; /* Pin the right edge of the video to the right edge of the screen */
+        
+        /* --- 3. Reset the Transform --- */
+        transform: translateY(-50%); /* Only translate on the Y-axis for vertical centering */
+        
+        /* --- 4. The "Zoom" Effect --- */
+        /* Remove the 'auto' sizing which tries to fit the video */
+        width: auto;
+        /* Force the height to be 100% of the screen height. This is the zoom. */
+        height: 100%;
+        
+        /* These properties are no longer needed for this view */
+        min-width: unset;
+        min-height: unset;
+    }
 }
