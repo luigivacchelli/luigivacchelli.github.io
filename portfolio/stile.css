@@ -371,7 +371,48 @@ body.loading-finished #preloader p {
   display: block;
 }
 
+/* === AMBIENT SPARK STYLES === */
+
+.spark-canvas {
+    /* Position it perfectly on top of the media */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Make it invisible to clicks so it doesn't block interaction */
+    pointer-events: none;
+    
+    z-index: 5; /* Sit on top of the image/video but below other UI */
+}
+
 /* === INSTAGRAM CAROUSEL STYLES === */
+/* === CAROUSEL PEEK-A-BOO ANIMATION === */
+
+@keyframes peek-a-boo {
+    /* Start (0%) and End (100%) are at the center */
+    0%, 100% {
+        transform: translateX(0);
+    }
+    /* 25% of the way through, move RIGHT by 20% */
+    25% {
+        transform: translateX(-20%);
+    }
+    /* 50% of the way through, move LEFT by 20% */
+    50% {
+        transform: translateX(20%);
+    }
+    /* Hold the LEFT position for a moment before returning to center */
+    75% {
+        transform: translateX(20%);
+    }
+}
+
+.carousel-track.has-peeked {
+    animation: peek-a-boo 5s ease-in-out;
+}
+
 .carousel-container {
     aspect-ratio: 1 / 1;
     overflow-x: scroll;
@@ -404,7 +445,6 @@ img.carousel-item {
 /* === END OF CAROUSEL STYLES === */
 
 /* === DOPLHINS STYLES === */
-
 /* --- 1. The Container --- */
 .video-toggle-container {
     position: relative; /* Anchor for the videos inside */
@@ -445,17 +485,76 @@ img.carousel-item {
     transition: opacity 0.3s ease;
 }
 
-/* --- Interactive Balls Styles --- */
-.interactive-balls-container .balls-video {
-  display: none; /* Hide the video by default */
+/* === POOL STYLES === */
+
+.image-to-video-container {
+    display: grid; /* Make the container a grid to prevent collapse */
+    cursor: pointer;
 }
 
-/* This class will be added by JavaScript to show the video */
-.interactive-balls-container.is-playing .balls-video {
-  display: block; /* Show the video */
+/* Style for BOTH the image and the video */
+.image-to-video-container .pool-image,
+.image-to-video-container .pool-video {
+    /* This tells both elements to stack in the exact same grid cell */
+    grid-area: 1 / 1;
+    
+    /* Make them fill the cell and maintain aspect ratio */
+    width: 100%;
+    height: auto;
+    
+    /* Add a transition for a smooth fade */
+    transition: opacity 0.5s ease;
 }
-.interactive-balls-container.is-playing .balls-image {
-  display: none; /* Hide the image */
+
+/* --- The Toggle Logic --- */
+
+/* By default, the video is on top but completely transparent */
+.pool-video {
+    opacity: 0;
+    z-index: 2; /* Ensure video is physically on top of the image */
+}
+
+/* The image is underneath and visible */
+.pool-image {
+    opacity: 1;
+    z-index: 1;
+}
+
+/* When the container has the 'is-playing' class... */
+.image-to-video-container.is-playing .pool-video {
+    opacity: 1; /* Fade the video in */
+}
+
+/* --- Interactive Balls Styles --- */
+.interactive-balls-container {
+    display: grid; /* Use grid for flicker-free stacking */
+    cursor: pointer;
+}
+
+/* Position both the image and video in the same grid cell */
+.interactive-balls-container .balls-image,
+.interactive-balls-container .balls-video {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: auto;
+    transition: opacity 0.5s ease; /* Add a smooth fade */
+}
+
+/* The video is on top, but hidden by default */
+.balls-video {
+    opacity: 0;
+    z-index: 2;
+}
+
+/* The image is underneath and visible by default */
+.balls-image {
+    opacity: 1;
+    z-index: 1;
+}
+
+/* When the container has the 'is-playing' class... */
+.interactive-balls-container.is-playing .balls-video {
+    opacity: 1; /* Fade the video in */
 }
 
 html.overlay-active {

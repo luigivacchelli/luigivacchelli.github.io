@@ -114,6 +114,142 @@
          });
      }
      
+     function setupAmbientSparks() {
+             const targets = document.querySelectorAll('.spark-on-scroll');
+
+             targets.forEach(target => {
+                 const canvas = document.createElement('canvas');
+                 canvas.className = 'spark-canvas';
+                 target.appendChild(canvas);
+                 const ctx = canvas.getContext('2d');
+                 canvas.width = canvas.offsetWidth;
+                 canvas.height = canvas.offsetHeight;
+
+                 let sparks = [];
+                 const sparkColor = '#F6C500';
+                 const duration = 500;
+                 const sparkCount = 8;
+                 const sparkRadius = 30;
+                 const sparkSize = 8;
+                 
+                 let hasBeenClicked = false; // A new flag to track interaction
+
+                 function draw(timestamp) {
+                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                     sparks = sparks.filter(spark => {
+                         const elapsed = timestamp - spark.startTime;
+                         if (elapsed >= duration) return false;
+                         const progress = elapsed / duration;
+                         const eased = progress * (2 - progress);
+                         const distance = eased * sparkRadius;
+                         const lineLength = sparkSize * (1 - eased);
+                         const x1 = spark.x + distance * Math.cos(spark.angle);
+                         const y1 = spark.y + distance * Math.sin(spark.angle);
+                         const x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle);
+                         const y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle);
+                         ctx.strokeStyle = sparkColor;
+                         ctx.lineWidth = 2;
+                         ctx.beginPath();
+                         ctx.moveTo(x1, y1);
+                         ctx.lineTo(x2, y2);
+                         ctx.stroke();
+                         return true;
+                     });
+                     if (sparks.length > 0) {
+                         requestAnimationFrame(draw);
+                     }
+                 }
+                 
+                 function createSparkBurst() {
+                     // If the user has clicked, do not create any new sparks.
+                     if (hasBeenClicked) return;
+
+                     const x = canvas.width / 2;
+                     const y = canvas.height / 2;
+                     const now = performance.now();
+                     const newSparks = Array.from({ length: sparkCount }, (_, i) => ({
+                         x, y, angle: (2 * Math.PI * i) / sparkCount, startTime: now
+                     }));
+                     const wasEmpty = sparks.length === 0;
+                     sparks.push(...newSparks);
+                     if (wasEmpty) {
+                         requestAnimationFrame(draw);
+                     }
+                 }
+                 
+                 function handleClickInterrupt() {
+                     hasBeenClicked = true;
+                 }
+                 target.addEventListener('click', handleClickInterrupt, { once: true });
+                 
+                 const observer = new IntersectionObserver((entries, obs) => {
+                     entries.forEach(entry => {
+                         if (entry.isIntersecting) {
+                             setTimeout(createSparkBurst, 200);
+                             setTimeout(createSparkBurst, 700);
+                             setTimeout(createSparkBurst, 3200);
+                             setTimeout(createSparkBurst, 3700);
+                             
+                             obs.unobserve(target);
+                         }
+                     });
+                 }, { threshold: 1.0 });
+
+                 observer.observe(target);
+             });
+         }
+     
+     function setupPoolAnimation() {
+         const container = document.getElementById('pool-animation');
+         if (!container) return;
+
+         const video = container.querySelector('.pool-video');
+         if (!video) return;
+
+         // We preload the video so it's ready to play instantly on click
+         video.preload = 'auto';
+         video.load();
+         
+         video.addEventListener('ended', () => {
+                 // Wait for 2 seconds (2000 milliseconds)
+                 setTimeout(() => {
+                     // Remove the 'is-playing' class to fade back to the image
+                     container.classList.remove('is-playing');
+                 }, 50);
+             });
+
+         container.addEventListener('click', () => {
+             // If it's already playing, do nothing.
+             // The user must leave the overlay or reload to replay.
+             if (container.classList.contains('is-playing')) {
+                 return;
+             }
+
+             // Add the class to trigger the CSS fade
+             container.classList.add('is-playing');
+             
+             // Play the video from the beginning with sound
+             video.currentTime = 0;
+             video.muted = false; // Make sure sound is on
+             video.play();
+         });
+
+         // When the overlay closes, we should reset the animation
+         aboutTrigger.addEventListener('click', () => {
+             // This is a simple observer to detect when the overlay closes
+             const observer = new MutationObserver((mutations) => {
+                 mutations.forEach((mutation) => {
+                     if (mutation.attributeName === 'class' && !aboutOverlay.classList.contains('is-open')) {
+                         video.pause();
+                         container.classList.remove('is-playing');
+                         observer.disconnect(); // Stop observing once it's closed
+                     }
+                 });
+             });
+             observer.observe(aboutOverlay, { attributes: true });
+         });
+     }
+     
      function setupVideoToggle() {
          const container = document.getElementById('dolphin-toggle');
          if (!container) return;
@@ -130,68 +266,45 @@
      
      function setupInteractiveBalls() {
          const container = document.querySelector('.interactive-balls-container');
-         if (!container) return; // Exit if the container isn't found
+         if (!container) return;
 
          const video = container.querySelector('.balls-video');
-         if (!video) return; // Exit if the video isn't found
-         // This event fires every time the video finishes playing
-             video.addEventListener('ended', () => {
-                 // Wait for 3 seconds (3000 milliseconds)
-                 setTimeout(() => {
-                     // After the wait, play the video again from the start
+         if (!video) return;
+
+         // --- 1. Set up the delayed loop ---
+         video.addEventListener('ended', () => {
+             setTimeout(() => {
+                 // Check if it's still supposed to be playing before looping
+                 if (container.classList.contains('is-playing')) {
                      video.play();
-                 }, 3000);
-             });
-         // The function to start the video
+                 }
+             }, 3000);
+         });
+
+         // --- 2. The core functions ---
          function playVideo() {
-             // Check if the video is already ready to play without interruption.
-             // A readyState of 3 (HAVE_FUTURE_DATA) or 4 (HAVE_ENOUGH_DATA) is a good sign.
-             if (video.readyState > 2) {
-                 // If it's ready, do the swap and play immediately.
+             if (!container.classList.contains('is-playing')) {
                  container.classList.add('is-playing');
+                 video.currentTime = 0; // Always start from the beginning
                  video.play();
-             } else {
-                 // If not ready, wait for the 'canplay' event.
-                 // This event fires when the browser has downloaded enough data to start playing.
-                 // The '{ once: true }' option is crucial to ensure this only runs once.
-                 video.addEventListener('canplay', () => {
-                     container.classList.add('is-playing');
-                     video.play();
-                 }, { once: true });
              }
          }
 
-         // The function to show the static image
          function showImage() {
-             container.classList.remove('is-playing');
-             video.pause();
+             if (container.classList.contains('is-playing')) {
+                 container.classList.remove('is-playing');
+                 video.pause();
+             }
          }
 
-         // --- Start the animation automatically when it scrolls into view ---
-         const observer = new IntersectionObserver((entries, obs) => {
-             entries.forEach(entry => {
-                 if (entry.isIntersecting) {
-                     // When it's visible, wait 3 seconds, THEN play the video
-                     setTimeout(playVideo, 3000);
-                     obs.unobserve(container); // Stop observing
-                 }
-             });
-         }, { threshold: 0.1 });
-
-         // --- Handle the click-to-toggle interaction ---
+         // --- 4. The Click Handler ---
          container.addEventListener('click', () => {
-             // Is the 'is-playing' class present?
              if (container.classList.contains('is-playing')) {
-                 // If it's playing, show the image
                  showImage();
              } else {
-                 // If it's paused, play the video
                  playVideo();
              }
          });
-
-         // Start observing the container
-         observer.observe(container);
      }
 
      function setupHiresSwapping() {
@@ -308,75 +421,112 @@
      }
      
      function setupInfiniteCarousel(carouselElement) {
-             const carousel = carouselElement;
-             if (!carousel) return;
+         const carousel = carouselElement;
+         if (!carousel) return;
 
-             const track = carousel.querySelector('.carousel-track');
-             let items = Array.from(track.children);
-             let isTeleporting = false;
+         const track = carousel.querySelector('.carousel-track');
+         let items = Array.from(track.children);
+         let isTeleporting = false;
 
-             function loadHires(item) {
-                 const img = item.querySelector('img');
-                 if (img && img.dataset.hiresSrc && !img.dataset.isSwapped) {
-                     const hiresSrc = img.dataset.hiresSrc;
-                     const hiresImage = new Image();
-                     hiresImage.src = hiresSrc;
-                     hiresImage.onload = () => {
-                         img.src = hiresSrc;
-                         img.dataset.isSwapped = 'true';
-                     };
-                 }
+         // --- A function to handle ONLY hires swapping ---
+         function loadHires(item) {
+             const img = item.querySelector('img');
+             if (img && img.dataset.hiresSrc && !img.dataset.isSwapped) {
+                 const hiresSrc = img.dataset.hiresSrc;
+                 const hiresImage = new Image();
+                 hiresImage.src = hiresSrc;
+                 hiresImage.onload = () => {
+                     img.src = hiresSrc;
+                     img.dataset.isSwapped = 'true';
+                 };
              }
+         }
 
-             function checkAndLoadVisibleItems() {
-                 items.forEach((item) => {
-                     const itemLeft = item.offsetLeft;
-                     const itemWidth = item.offsetWidth;
-                     const scrollLeft = carousel.scrollLeft;
-                     const carouselWidth = carousel.offsetWidth;
-                     if (itemLeft < scrollLeft + carouselWidth + itemWidth && itemLeft + itemWidth > scrollLeft - itemWidth) {
-                         loadHires(item);
-                     }
-                 });
-             }
-
-             const firstClone = items[0].cloneNode(true);
-             const lastClone = items[items.length - 1].cloneNode(true);
-             firstClone.classList.add('clone');
-             lastClone.classList.add('clone');
-             track.appendChild(firstClone);
-             track.insertBefore(lastClone, items[0]);
-             items = Array.from(track.children);
-
-             setTimeout(() => {
-                 track.style.transition = 'none';
-                 carousel.scrollLeft = carousel.querySelector('.carousel-item:not(.clone)').offsetLeft;
-                 track.style.transition = '';
-                 checkAndLoadVisibleItems();
-             }, 0);
-
-             carousel.addEventListener('scroll', () => {
-                 checkAndLoadVisibleItems();
-                 if (isTeleporting) return;
-                 const firstItem = carousel.querySelector('.carousel-item:not(.clone)');
-                 const lastItem = items[items.length - 2];
-                 const itemWidth = firstItem.offsetWidth;
-                 if (carousel.scrollLeft < firstItem.offsetLeft - (itemWidth / 2)) {
-                     isTeleporting = true;
-                     track.style.transition = 'none';
-                     carousel.scrollLeft = lastItem.offsetLeft;
-                     track.style.transition = '';
-                     setTimeout(() => { isTeleporting = false; }, 50);
-                 }
-                 if (carousel.scrollLeft > lastItem.offsetLeft + (itemWidth / 2)) {
-                     isTeleporting = true;
-                     track.style.transition = 'none';
-                     carousel.scrollLeft = firstItem.offsetLeft;
-                     track.style.transition = '';
-                     setTimeout(() => { isTeleporting = false; }, 50);
+         // --- A function to check which items are visible and load their hires versions ---
+         function checkAndLoadVisibleItems() {
+             items.forEach((item) => {
+                 const itemLeft = item.offsetLeft;
+                 const itemWidth = item.offsetWidth;
+                 const scrollLeft = carousel.scrollLeft;
+                 const carouselWidth = carousel.offsetWidth;
+                 if (itemLeft < scrollLeft + carouselWidth + itemWidth && itemLeft + itemWidth > scrollLeft - itemWidth) {
+                     loadHires(item);
                  }
              });
          }
+
+         // --- 1. Clone items ---
+         const firstClone = items[0].cloneNode(true);
+         const lastClone = items[items.length - 1].cloneNode(true);
+         firstClone.classList.add('clone');
+         lastClone.classList.add('clone');
+         track.appendChild(firstClone);
+         track.insertBefore(lastClone, items[0]);
+         items = Array.from(track.children);
+
+         // --- 2. Set initial position and load initial hires ---
+         setTimeout(() => {
+             track.style.transition = 'none';
+             carousel.scrollLeft = carousel.querySelector('.carousel-item:not(.clone)').offsetLeft;
+             track.style.transition = '';
+             checkAndLoadVisibleItems();
+         }, 0);
+
+
+         // V V V V V  THIS IS THE NEW CODE BLOCK, PLACED BEFORE THE SCROLL LISTENER  V V V V V
+         // --- 3. The Peek-a-Boo Animation Trigger ---
+         const peekObserver = new IntersectionObserver((entries, obs) => {
+             entries.forEach(entry => {
+                 if (entry.isIntersecting) {
+                     // When the carousel is visible, add the class to trigger the animation
+                     // We use a small delay to ensure the initial scroll position is set
+                     setTimeout(() => {
+                         track.classList.add('has-peeked');
+                     }, 500); // 0.5 second delay
+                     
+                     // Crucially, stop observing so the animation only runs once
+                     obs.unobserve(carousel); 
+                 }
+             });
+         }, { threshold: 0.75 }); // Trigger when 75% of the carousel is visible
+
+         // Start observing the main carousel container
+         peekObserver.observe(carousel);
+         // ^ ^ ^ ^ ^  END OF THE NEW CODE BLOCK  ^ ^ ^ ^ ^
+
+         // --- New logic to cancel the animation on manual scroll ---
+            function cancelPeekAnimation() {
+                // Remove the class that runs the animation
+                track.classList.remove('has-peeked');
+                // IMPORTANT: Also remove this event listener so it doesn't fire again
+                carousel.removeEventListener('scroll', cancelPeekAnimation);
+            }
+            // Listen for the first time the user scrolls manually, and cancel the animation
+            carousel.addEventListener('scroll', cancelPeekAnimation, { once: true });
+
+         // --- 4. The Teleport and Loading Logic on Scroll ---
+         carousel.addEventListener('scroll', () => {
+             checkAndLoadVisibleItems();
+             if (isTeleporting) return;
+             const firstItem = carousel.querySelector('.carousel-item:not(.clone)');
+             const lastItem = items[items.length - 2];
+             const itemWidth = firstItem.offsetWidth;
+             if (carousel.scrollLeft < firstItem.offsetLeft - (itemWidth / 2)) {
+                 isTeleporting = true;
+                 track.style.transition = 'none';
+                 carousel.scrollLeft = lastItem.offsetLeft;
+                 track.style.transition = '';
+                 setTimeout(() => { isTeleporting = false; }, 50);
+             }
+             if (carousel.scrollLeft > lastItem.offsetLeft + (itemWidth / 2)) {
+                 isTeleporting = true;
+                 track.style.transition = 'none';
+                 carousel.scrollLeft = firstItem.offsetLeft;
+                 track.style.transition = '';
+                 setTimeout(() => { isTeleporting = false; }, 50);
+             }
+         });
+     }
      
      function setupFooterObserver() {
          if (!('IntersectionObserver' in window)) return;
@@ -409,7 +559,7 @@
      function checkForEasterEgg() {
          const now = new Date();
          const hours = now.getHours();
-         const isEasterEggTime = (hours >= 0 && hours <= 6);
+         const isEasterEggTime = (hours >= 0 && hours <= 5);
 
          if (isEasterEggTime) {
              if (!headerLeft || !aboutTrigger) return false;
@@ -450,7 +600,9 @@
          }
          translatePage();
          setupImageGallery();
+         setupAmbientSparks();
          setupVideoToggle();
+         setupPoolAnimation();
          setupInteractiveBalls();
          trackCriticalContent();
          const allCarousels = document.querySelectorAll('.carousel-container');
