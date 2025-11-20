@@ -200,27 +200,7 @@
      function setupVideoToggle() {
          const container = document.getElementById('dolphin-toggle');
          if (!container) return;
-
-         const videoNormal = container.querySelector('.video-normal');
-         const videoPixel = container.querySelector('.video-pixelated');
-
-         // Safety check to ensure both videos exist
-         if (!videoNormal || !videoPixel) return;
-
          container.addEventListener('click', () => {
-             const isCurrentlyPixelated = container.classList.contains('is-pixelated');
-
-             if (isCurrentlyPixelated) {
-                 // We are switching BACK to Normal.
-                 // Make Normal video match the Pixel video's time.
-                 videoNormal.currentTime = videoPixel.currentTime;
-             } else {
-                 // We are switching TO Pixelated.
-                 // Make Pixel video match the Normal video's time.
-                 videoPixel.currentTime = videoNormal.currentTime;
-             }
-
-             // Perform the visual switch
              container.classList.toggle('is-pixelated');
          });
      }
