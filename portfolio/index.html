@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google-site-verification" content="o4zUiu6eCaEDegd2uTiCIguf2TpWLpOcmKP_yFJpdJw" />
@@ -11,19 +10,97 @@
   <meta name="description" content="Luigi Vacchelli, regista e fotografo genovese trapiantato a Roma. Nel mio portfolio troverete una collezione di fotografie e riprese video.">
   <meta name="keywords" content="Luigi Vacchelli, portfolio, director, photographer, photography, filmmaking, Rome, Italy, regia, fotografo, cinema, Roma, Italia">
   <meta name="author" content="Luigi Vacchelli">
-    
   <meta name="robots" content="max-image-preview:large">
           
   <link rel="alternate" hreflang="it" href="https://luigivacchelli.github.io/" />
   <link rel="alternate" hreflang="en" href="https://luigivacchelli.github.io/" />
   <link rel="alternate" hreflang="x-default" href="https://luigivacchelli.github.io/" />
-  <!-- SEO TAGS -->
+  <!-- END OF SEO TAGS -->
   
+  <!-- CRITICAL CSS: Render the preloader instantly -->
+  <style>
+      :root {
+          --color-primary: #070898;
+          --color-hover: #079808;
+          --page-background: #FFFFFF;
+          --z-preloader: 999;
+      }
+      @media (prefers-color-scheme: dark) {
+          :root {
+              --color-primary: #205EA6;
+              --color-hover: #5BA32A;
+              --page-background: #000000;
+          }
+      }
+      body {
+          margin: 0;
+          background-color: var(--page-background);
+      }
+      
+      #preloader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: var(--page-background);
+          z-index: var(--z-preloader);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
+      }
+      
+      .preloader-content {
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 25px;
+          opacity: 0;
+          transition: opacity 0.4s ease-in;
+      }
+      
+      .preloader-content.ready {
+          opacity: 1;
+      }
+      
+      .loader-icon {
+          width: 150px;
+          height: 150px;
+          animation: spin 2s linear infinite;
+      }
+      
+      #preloader p {
+          font-size: 1.5rem;
+          line-height: 1.5;
+          background: linear-gradient(to right, var(--color-hover) 50%, var(--color-primary) 50%);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          animation: loading-progress-animation 4s ease-in-out forwards;
+      }
+      
+      @keyframes loading-progress-animation {
+          0%, 25% { background-position: 100% 0; }
+          50% { background-position: 63% 0; }
+          96% { background-position: 23% 0; }
+          100% { background-position: 7% 0; }
+      }
+      
+      @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+      }
+      
+  </style>
+
   <link rel="stylesheet" href="stile.css"/>
-  
   <link rel="preload" href="logos/lores/loaderlogo.webp" as="image">
   <link rel="preload" href="./fonts/Kirome/Kirome.woff2" as="font" type="font/woff2" crossorigin>
-  
+  <!-- Preload Easter Egg Image for instant display -->
+  <link rel="preload" href="lv/lores/sleepy.webp" as="image">
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
@@ -31,7 +108,6 @@
   <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="MyWebSite" />
   <link rel="manifest" href="favicon/site.webmanifest" />
-  
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -40,42 +116,46 @@
     "url": "https://luigivacchelli.github.io/"
   }
   </script>
-  
 </head>
 <body>
     <!-- Preloader Start -->
-      <div id="preloader">
-        <div class="preloader-content">
-          <img src="logos/lores/loaderlogo.webp" alt="Loading..." class="loader-icon" data-no-imageindex="true">
-          <p data-i18n-key="welcomeMessage" class="font-display">Questo sito richiede l'accesso alla webcam per essere più bello.<br> Non fate i timidi!</p>
-        </div>
-      </div>
-      <!-- Preloader End -->
-
-    <!-- Header -->
-    <div class="page-header">
-      <div class="header-left font-display">luigivacchelli</div>
-      <div class="header-right font-display">
-          <button id="about-trigger" class="about-toggle" data-i18n-key="aboutLink">chisono</button>
+    <div id="preloader" aria-hidden="false">
+      <div class="preloader-content">
+        <img src="logos/lores/loaderlogo.webp" alt="Loading..." class="loader-icon" data-no-imageindex="true">
+        <p data-i18n-key="welcomeMessage" class="font-display">Questo sito richiede l'accesso alla webcam per essere più bello.<br> Non fate i timidi!</p>
       </div>
     </div>
+    <!-- Preloader End -->
+
+    <!-- Easter Egg Layer (Hidden by default) -->
+    <div id="easter-egg-layer" aria-hidden="true">
+        <img src="lv/lores/sleepy.webp" alt="Sleepy mode graphic">
+    </div>
+
+    <!-- Header -->
+    <header class="page-header">
+      <div class="header-left font-display">luigivacchelli</div>
+      <div class="header-right font-display">
+          <button id="about-trigger" class="about-toggle" data-i18n-key="aboutLink" aria-label="Open About Me">chisono</button>
+      </div>
+    </header>
         
     <!-- Overlay con bio -->
-    <div id="about-overlay" class="about-overlay">
-        <div id="about-background" class="about-background"></div> <!-- sfondo cliccabile -->
+    <div id="about-overlay" class="about-overlay" role="dialog" aria-modal="true">
+        <div id="about-background" class="about-background" aria-label="Close Overlay"></div> <!-- sfondo cliccabile -->
         <div class="about-content-container">
             <!-- PART 1: The Image Column -->
             <div class="about-column about-image-column">
                 <div class="about-card"> <!-- We keep the .about-card as a wrapper -->
                     <img src="lv/lores/lvjvc.webp" data-hires-src="lv/hires/lvjvc.jpg" class="about-image" data-no-imageindex="true" alt="picture of a young boy holding a camcorder">
-                        <div class="webcam-container">
-                            <video id="webcam" autoplay muted playsinline></video>
-                        </div>
+                    <div class="webcam-container">
+                        <video id="webcam" autoplay muted playsinline></video>
+                    </div>
                 </div>
             </div>
             <!-- PART 2: The Text Column -->
             <div class="about-column about-text-column">
-                    <p data-i18n-key="aboutBio">Regista e fotografo, classe '98. Vivo a Roma, ma ho lasciato il cuore a Genova. <br> Lavoro a cortometraggi, progetti fotografici e produzioni cinematografiche internazionali. <br> Inoltre, ci sono buone probabilità che ti batta a <a href="https://www.chess.com/member/lksmrkds" target="_blank" rel="noopener noreferrer">scacchi</a>.</p>
+                <p data-i18n-key="aboutBio">Regista e fotografo, classe '98. Vivo a Roma, ma ho lasciato il cuore a Genova. <br> Lavoro a cortometraggi, progetti fotografici e produzioni cinematografiche internazionali. <br> Inoltre, ci sono buone probabilità che ti batta a <a href="https://www.chess.com/member/lksmrkds" target="_blank" rel="noopener noreferrer">scacchi</a>.</p>
                 <div class="about-social-links">
                     <a href="https://www.instagram.com/luigi_vacchelli" target="_blank" rel="noopener noreferrer">instagram</a>
                     <a href="https://vimeo.com/luigivacchelli" target="_blank" rel="noopener noreferrer">vimeo</a>
@@ -97,12 +177,20 @@
     </div>
     
     <!-- Galleria -->
-    <div class="container">
+    <main class="container">
         <div class="column left">
-            <div class="media-link"><img src="pictures/bw/lores/frame.webp" data-hires-src="pictures/bw/hires/frame.jpg" alt="An empty frame for a poster advertisment showing the city behind it."></div>
-            <div class="media-link"><video autoplay loop muted playsinline src="graphics/ghosts/lores/ghosts.mp4" poster="pictures/posters/ghosts_poster.webp"></video></div>
-            <div class="media-link spark-on-scroll"><img src="graphics/peter/lores/peter1.webp" data-hires-src="graphics/peter/hires/peter1.jpg" data-gallery="graphics/peter/lores/peter2.webp,graphics/peter/lores/peter3.webp,graphics/peter/lores/peter4.webp,graphics/peter/lores/peter5.webp" data-hires-gallery="graphics/peter/hires/peter2.jpg,graphics/peter/hires/peter3.jpg,graphics/peter/hires/peter4.jpg,graphics/peter/hires/peter5.jpg" alt="A guy lit by the sun in a church." data-no-imageindex="true"></div>
-            <div class="media-link"><img src="pictures/c41/lores/edera.webp" data-hires-src="pictures/c41/hires/edera.jpg" alt="Flowers on a hill at sunset." data-no-imageindex="true"></div>
+            <div class="media-link">
+                <img src="pictures/bw/lores/frame.webp" data-hires-src="pictures/bw/hires/frame.jpg" alt="An empty frame for a poster advertisment showing the city behind it.">
+            </div>
+            <div class="media-link">
+                <video autoplay loop muted playsinline src="graphics/ghosts/lores/ghosts.mp4" poster="pictures/posters/ghosts_poster.webp"></video>
+            </div>
+            <div class="media-link spark-on-scroll">
+                <img src="graphics/peter/lores/peter1.webp" data-hires-src="graphics/peter/hires/peter1.jpg" data-gallery="graphics/peter/lores/peter2.webp,graphics/peter/lores/peter3.webp,graphics/peter/lores/peter4.webp,graphics/peter/lores/peter5.webp" data-hires-gallery="graphics/peter/hires/peter2.jpg,graphics/peter/hires/peter3.jpg,graphics/peter/hires/peter4.jpg,graphics/peter/hires/peter5.jpg" alt="A guy lit by the sun in a church." data-no-imageindex="true">
+            </div>
+            <div class="media-link">
+                <img src="pictures/c41/lores/edera.webp" data-hires-src="pictures/c41/hires/edera.jpg" alt="Flowers on a hill at sunset." data-no-imageindex="true">
+            </div>
             <div class="media-link carousel-container" id="image-carousel-1">
                 <div class="carousel-track">
                     <img class="carousel-item" src="graphics/carousels/lores/1/1.webp" data-hires-src="graphics/carousels/hires/1/1.jpg" alt="Description of image 1">
@@ -137,18 +225,20 @@
             <div class="media-link"><img src="pictures/bw/lores/ambulance.webp" data-hires-src="pictures/bw/hires/ambulance.jpg" alt="A hearse parked in an ambulance parking spot."></div>
             <div class="media-link video-toggle-container spark-on-scroll" id="dolphin-toggle">
                 <video src="videos/lores/dolphins.mp4" autoplay loop muted playsinline class="video-normal"></video>
-                <video src="videos/lores/dolphinspxl.mp4" autoplay loop muted playsinline class="video-pixelated"></video></div>
+                <video src="videos/lores/dolphinspxl.mp4" autoplay loop muted playsinline class="video-pixelated" aria-hidden="true"></video>
+            </div>
             <div class="media-link"><img src="pictures/bw/lores/mirrors.webp" data-hires-src="pictures/bw/hires/mirrors.jpg" alt="A room with a giant mirror in it." data-no-imageindex="true"></div>
             <div class="media-link interactive-balls-container spark-on-scroll">
                 <img src="pictures/bw/lores/balls.webp" data-hires-src="pictures/bw/hires/balls.jpg" alt="A guy juggling with plastic balls." class="balls-image">
-                    <video src="graphics/balls/lores/balls.mp4" muted playsinline class="balls-video"></video></div>
+                    <video src="graphics/balls/lores/balls.mp4" muted playsinline class="balls-video"></video>
+            </div>
             <div class="media-link"><img src="pictures/c41/lores/greenhand.webp" data-hires-src="pictures/c41/hires/greenhand.jpg" alt="A hand lit by a green light on the street." data-no-imageindex="true"></div>
             <div class="media-link"><video autoplay loop muted playsinline src="videos/lores/vulcano.mp4" poster="pictures/posters/vulcano_poster.webp" preload="none"></video></div>
             <div class="media-link"><img src="pictures/bw/lores/web.webp" data-hires-src="pictures/bw/hires/web.jpg" alt="A pole with metal wires connected to it." data-no-imageindex="true"></div>
             <div class="media-link"><img src="pictures/c41/lores/valviola.webp" data-hires-src="pictures/c41/hires/valviola.jpg" alt="Cows grazing by a lake in a sunny landscape."></div>
             <div class="scroll-trigger" data-column="right"></div>
         </div>
-    </div>
+    </main>
     
     <!-- JavaScript -->
     <script src="script.js" defer></script>
@@ -156,7 +246,9 @@
     <!-- Footer -->
     <footer class="site-footer">
         <p data-i18n-key="copyright">© 2025 Luigi Vacchelli. Tutti i diritti riservati.</p>
-        </footer>
+    </footer>
     
 </body>
 </html>
+
+<!-- Created by Luigi Vacchelli on 20/11/25. -->
