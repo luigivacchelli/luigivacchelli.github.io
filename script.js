@@ -43,8 +43,21 @@
              // 4. Listen for the 'canplaythrough' event. This is the key.
              // It means the video has buffered enough to play to the end without stopping.
              virtualVideo.addEventListener('canplaythrough', () => {
-                 // 5. Once it's ready, swap the source of the *visible* video player
-                 videoPlayer.src = hiresSrc;
+                 // 1. Get the exact time of the lores video right before we swap.
+                         const currentTime = videoPlayer.currentTime;
+
+                         // 2. Add an event listener to the MAIN video player.
+                         // This will fire ONCE, as soon as the new (hires) video's metadata is loaded.
+                         videoPlayer.addEventListener('loadedmetadata', () => {
+                             // 3. Set the hires video's time to match the lores video's time.
+                             videoPlayer.currentTime = currentTime;
+                             
+                             // 4. Ensure the video continues playing.
+                             videoPlayer.play();
+                         }, { once: true });
+
+                         // 5. Now, perform the source swap. This will trigger the 'loadedmetadata' event above.
+                         videoPlayer.src = hiresSrc;
              }, { once: true }); // { once: true } automatically removes the listener after it runs
 
              // 6. Start loading the hires video in the background
