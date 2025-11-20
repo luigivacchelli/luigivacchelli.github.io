@@ -200,8 +200,47 @@
      function setupVideoToggle() {
          const container = document.getElementById('dolphin-toggle');
          if (!container) return;
+
+         const vNormal = container.querySelector('.video-normal');
+         const vPixel = container.querySelector('.video-pixelated');
+
+         if (!vNormal || !vPixel) return;
+
+         // 1. The Toggle Logic (Pure CSS Visuals, as you insisted)
          container.addEventListener('click', () => {
              container.classList.toggle('is-pixelated');
+         });
+
+         // 2. The "Cold Start" Sync Protocol
+         // We define a function that checks if BOTH are ready.
+         const attemptSyncStart = () => {
+             if (vNormal.readyState >= 3 && vPixel.readyState >= 3) {
+                 // Both have enough data. Lock timestamps to zero.
+                 vNormal.currentTime = 0;
+                 vPixel.currentTime = 0;
+                 
+                 // Fire simultaneously.
+                 Promise.all([vNormal.play(), vPixel.play()])
+                     .catch(e => console.warn("Automatic sync start failed:", e));
+             }
+         };
+
+         // 3. If they are already ready (cached), fire. If not, wait.
+         if (vNormal.readyState >= 3 && vPixel.readyState >= 3) {
+             attemptSyncStart();
+         } else {
+             // We add listeners to both. The function checks "Are WE both ready?" every time one finishes loading.
+             vNormal.addEventListener('canplay', attemptSyncStart, { once: true });
+             vPixel.addEventListener('canplay', attemptSyncStart, { once: true });
+         }
+         
+         // 4. Safety Loop (Optional but recommended for long sessions)
+         // If the loop ends, re-sync them.
+         vNormal.addEventListener('ended', () => {
+             vNormal.currentTime = 0;
+             vPixel.currentTime = 0;
+             vPixel.play();
+             vNormal.play();
          });
      }
      

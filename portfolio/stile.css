@@ -54,7 +54,7 @@
 }
 
 html, body {
-  min-height: 100vh;
+  min-height: 100dvh;
   font-family: sans-serif;
   background-color: var(--page-background);
 }
@@ -79,7 +79,7 @@ body {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   background-color: var(--page-background);
   z-index: var(--z-preloader);
   display: flex;
@@ -227,6 +227,7 @@ body.loading-finished #preloader p {
 .about-overlay {
     position: fixed;
     inset: 0;
+    height: 100dvh;
     background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -488,6 +489,7 @@ html.overlay-active { overflow: hidden !important; }
 #easter-egg-layer {
     position: fixed;
     inset: 0;
+    height: 100dvh;
     background-color: var(--page-background);
     z-index: var(--z-easter-egg);
     display: flex;
