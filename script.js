@@ -27,6 +27,30 @@
      const i18nElements = document.querySelectorAll('[data-i18n-key]'); // Cache the translatable elements
 
      
+     // === NEW: FUNCTION TO SWAP THE VIDEO ===
+         function swapToHiresVideo() {
+             // 1. Find the video element on the page
+             const videoPlayer = document.querySelector('.countdown-background-video');
+             if (!videoPlayer) return;
+
+             // 2. Get the path to the high-resolution video from the data attribute
+             const hiresSrc = videoPlayer.dataset.hiresSrc;
+             if (!hiresSrc) return;
+
+             // 3. Create a virtual video element in memory to preload the hires source
+             const virtualVideo = document.createElement('video');
+
+             // 4. Listen for the 'canplaythrough' event. This is the key.
+             // It means the video has buffered enough to play to the end without stopping.
+             virtualVideo.addEventListener('canplaythrough', () => {
+                 // 5. Once it's ready, swap the source of the *visible* video player
+                 videoPlayer.src = hiresSrc;
+             }, { once: true }); // { once: true } automatically removes the listener after it runs
+
+             // 6. Start loading the hires video in the background
+             virtualVideo.src = hiresSrc;
+         }
+     
      // === NEW: TRANSLATION FUNCTION ===
      function translatePage() {
          // Detect browser language ('en', 'it', etc.)
@@ -93,6 +117,8 @@
          translatePage();
          // Then, start the countdown
          startCountdown();
+         //Start hires swap
+         swapToHiresVideo();
      });
 
  })();
