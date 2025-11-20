@@ -10,29 +10,42 @@
 }
 
 :root {
-  /* --- Light Mode (Default) --- */
+  /* --- Colors --- */
   --color-primary: #070898;
   --color-secondary: #980807;
-  --color-secondary2: #D93B00; /* Bold yellow: F6C500 */
+  --color-secondary2: #D93B00;
   --color-hover: #079808;
   --mobile-padding: 5vw;
-  --page-background: #FFFFFF; /* Less harsh white #FAFAFA, Creamy white: #FFFCF1 */
+  --page-background: #FFFFFF;
   --border-color: #000000;
+
+  /* --- Z-Index Architecture --- */
+  --z-negative: -1;
+  --z-normal: 1;
+  --z-interactive: 2;
+  --z-spark: 5;
+  --z-easter-egg: 10;
+  --z-header: 1000;
+  --z-footer: 1000;
+  --z-overlay: 1001;
+  --z-overlay-content: 1002;
+  --z-webcam: 1003;
+  --z-preloader: 9999;
 }
 
-/* --- DARK MODE STYLES --- */
+/* --- DARK MODE --- */
 @media (prefers-color-scheme: dark) {
-  :root { /* Overwrite your default colors for dark mode */
+  :root {
     --color-primary: #205EA6;
     --color-secondary: #D14D41;
     --color-secondary2: #D0A215;
     --color-hover: #5BA32A;
-    --page-background: #000000; /* Less strong black #100F0F */
+    --page-background: #000000;
     --border-color: #FFFFFF;
   }
 
-  html .about-overlay { /* Specific adjustment for the blurred overlay in dark mode */
-    background: rgba(0, 0, 0, 0.6); /* A darker semi-transparent background */
+  html .about-overlay {
+    background: rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -45,8 +58,12 @@
 html, body {
   min-height: 100vh;
   font-family: sans-serif;
-  /* overflow is now handled by JS to prevent rendering bug */
   background-color: var(--page-background);
+}
+
+/* Default state: Desktop has dual scrolling columns, body is locked. */
+body {
+    overflow: hidden;
 }
 
 /* Preloader Styles */
@@ -57,7 +74,7 @@ html, body {
   width: 100%;
   height: 100%;
   background-color: var(--page-background);
-  z-index: 9999;
+  z-index: var(--z-preloader);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -146,7 +163,7 @@ body.loading-finished #preloader p {
   padding-right: 2rem;
   padding-bottom: 0.25rem;
   background: var(--page-background);
-  z-index: 1000;
+  z-index: var(--z-header);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -164,7 +181,6 @@ body.loading-finished #preloader p {
 .about-toggle {
     cursor: pointer;
     transition: color 0.3s ease;
-    /* Reset button styles */
     background: none;
     border: none;
     padding: 0;
@@ -184,7 +200,7 @@ body.loading-finished #preloader p {
   width: 100%;
   padding: 0.35rem 0;
   text-align: center;
-  z-index: 1000;
+  z-index: var(--z-footer);
   pointer-events: none;
   opacity: 0;
   transform: translateY(100%);
@@ -209,7 +225,7 @@ body.loading-finished #preloader p {
     background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    z-index: 1001;
+    z-index: var(--z-overlay);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -233,16 +249,16 @@ body.loading-finished #preloader p {
 .about-content-container {
     width: 100%;
     display: flex;
-    align-items: flex-start; /* Aligns tops of columns */
+    align-items: flex-start;
     gap: 1rem;
     padding: 2rem;
     box-sizing: border-box;
-    z-index: 1002;
-    pointer-events: none; /* Makes this container invisible to clicks */
+    z-index: var(--z-overlay-content);
+    pointer-events: none;
 }
 
 .about-column {
-    pointer-events: auto; /* Re-enables clicks for the columns and everything inside them */
+    pointer-events: auto;
     flex: 1;
 }
 
@@ -270,7 +286,7 @@ body.loading-finished #preloader p {
     transform: rotate(2.5deg);
     overflow: hidden;
     border-radius: 2px;
-    z-index: 1003;
+    z-index: var(--z-webcam);
 }
 
 #webcam {
@@ -313,39 +329,20 @@ body.loading-finished #preloader p {
   color: var(--color-hover);
 }
 
-.about-divider {
-  width: 100%;
-  border: none;
-  border-top: 2px solid var(--color-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.about-projects h4 {
-  margin: 0 0 1rem 0;
-}
-
-.about-projects a {
-  display: block;
-  margin-bottom: 0.75rem;
-  font-weight: bold;
-}
-
-.about-projects a:hover {
-  color: var(--color-hover);
-}
-
 /* Galleria */
 .container {
   display: flex;
   gap: 1rem;
   padding: 2rem 2rem 0rem 2rem;
-  min-height: calc(100vh - 2rem);
+  /* Use dvh for mobile accuracy */
+  min-height: calc(100dvh - 2rem);
 }
 
 .column {
   flex: 1;
   overflow-y: scroll;
-  height: calc(100vh - 2rem);
+  /* Use dvh for mobile accuracy */
+  height: calc(100dvh - 2rem);
   padding-bottom: 0.5rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -359,8 +356,6 @@ body.loading-finished #preloader p {
   display: block;
   margin-bottom: 1rem;
   position: relative;
-  /* border: 4px solid var(--border-color); */
-  /* box-sizing: border-box; */
 }
 
 .media-link img,
@@ -372,41 +367,22 @@ body.loading-finished #preloader p {
 }
 
 /* === AMBIENT SPARK STYLES === */
-
 .spark-canvas {
-    /* Position it perfectly on top of the media */
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    
-    /* Make it invisible to clicks so it doesn't block interaction */
     pointer-events: none;
-    
-    z-index: 5; /* Sit on top of the image/video but below other UI */
+    z-index: var(--z-spark);
 }
 
-/* === INSTAGRAM CAROUSEL STYLES === */
-/* === CAROUSEL PEEK-A-BOO ANIMATION === */
-
+/* === CAROUSEL === */
 @keyframes peek-a-boo {
-    /* Start (0%) and End (100%) are at the center */
-    0%, 100% {
-        transform: translateX(0);
-    }
-    /* 25% of the way through, move RIGHT by 20% */
-    25% {
-        transform: translateX(-20%);
-    }
-    /* 50% of the way through, move LEFT by 20% */
-    50% {
-        transform: translateX(20%);
-    }
-    /* Hold the LEFT position for a moment before returning to center */
-    75% {
-        transform: translateX(20%);
-    }
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-20%); }
+    50% { transform: translateX(20%); }
+    75% { transform: translateX(20%); }
 }
 
 .carousel-track.has-peeked {
@@ -417,7 +393,6 @@ body.loading-finished #preloader p {
     aspect-ratio: 1 / 1;
     overflow-x: scroll;
     overflow-y: hidden;
-    /* scroll-snap-type: x proximity; */
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -435,25 +410,19 @@ body.loading-finished #preloader p {
     width: 100%;
     height: 100%;
     scroll-snap-align: center;
-    /* This rule applies to both img and the video-container div */
 }
 
-/* Ensure images that are direct carousel items are styled correctly */
 img.carousel-item {
     object-fit: cover;
 }
-/* === END OF CAROUSEL STYLES === */
 
 /* === DOPLHINS STYLES === */
-/* --- 1. The Container --- */
 .video-toggle-container {
-    position: relative; /* Anchor for the videos inside */
-    aspect-ratio: 16 / 9; /* Or whatever the aspect ratio of your videos is */
+    position: relative;
+    aspect-ratio: 16 / 9;
 }
 
-/* --- 2. The Videos --- */
 .video-toggle-container video {
-    /* Make both videos fill the container */
     position: absolute;
     top: 0;
     left: 0;
@@ -463,105 +432,82 @@ img.carousel-item {
 }
 
 .video-pixelated {
-    z-index: 2;
+    z-index: var(--z-interactive);
+    opacity: 0;
 }
 
 .video-normal {
-    z-index: 1;
+    z-index: var(--z-normal);
 }
 
-/* --- 3. The Toggle Logic --- */
-
-/* By default, hide the pixelated video */
-.video-pixelated {
-    opacity:0;
-}
-
-/* When the container has the 'is-pixelated' class... */
 .video-toggle-container.is-pixelated .video-pixelated {
-    opacity: 1; /* Show the pixelated video */
+    opacity: 1;
 }
 .video-toggle-container video {
     transition: opacity 0.3s ease;
 }
 
 /* === POOL STYLES === */
-
 .image-to-video-container {
-    display: grid; /* Make the container a grid to prevent collapse */
+    display: grid;
     cursor: pointer;
 }
 
-/* Style for BOTH the image and the video */
 .image-to-video-container .pool-image,
 .image-to-video-container .pool-video {
-    /* This tells both elements to stack in the exact same grid cell */
     grid-area: 1 / 1;
-    
-    /* Make them fill the cell and maintain aspect ratio */
     width: 100%;
     height: auto;
-    
-    /* Add a transition for a smooth fade */
     transition: opacity 0.5s ease;
 }
 
-/* --- The Toggle Logic --- */
-
-/* By default, the video is on top but completely transparent */
 .pool-video {
     opacity: 0;
-    z-index: 2; /* Ensure video is physically on top of the image */
+    z-index: var(--z-interactive);
 }
 
-/* The image is underneath and visible */
 .pool-image {
     opacity: 1;
-    z-index: 1;
+    z-index: var(--z-normal);
 }
 
-/* When the container has the 'is-playing' class... */
 .image-to-video-container.is-playing .pool-video {
-    opacity: 1; /* Fade the video in */
+    opacity: 1;
 }
 
-/* --- Interactive Balls Styles --- */
+/* === INTERACTIVE BALLS STYLES === */
 .interactive-balls-container {
-    display: grid; /* Use grid for flicker-free stacking */
+    display: grid;
     cursor: pointer;
 }
 
-/* Position both the image and video in the same grid cell */
 .interactive-balls-container .balls-image,
 .interactive-balls-container .balls-video {
     grid-area: 1 / 1;
     width: 100%;
     height: auto;
-    transition: opacity 0.5s ease; /* Add a smooth fade */
+    transition: opacity 0.5s ease;
 }
 
-/* The video is on top, but hidden by default */
 .balls-video {
     opacity: 0;
-    z-index: 2;
+    z-index: var(--z-interactive);
 }
 
-/* The image is underneath and visible by default */
 .balls-image {
     opacity: 1;
-    z-index: 1;
+    z-index: var(--z-normal);
 }
 
-/* When the container has the 'is-playing' class... */
 .interactive-balls-container.is-playing .balls-video {
-    opacity: 1; /* Fade the video in */
+    opacity: 1;
 }
 
 html.overlay-active {
   overflow: hidden !important;
 }
 
-/* --- Easter egg image --- */
+/* === EASTER EGG === */
 .media-link::before {
   content: '';
   position: absolute;
@@ -569,7 +515,7 @@ html.overlay-active {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 10;
+  z-index: var(--z-easter-egg);
   background-image: url('lv/lores/sleepy.webp');
   background-size: cover;
   background-position: center;
@@ -592,19 +538,23 @@ body.easter-egg-active .about-toggle {
 
 /* Responsive layout for mobile */
 @media (max-width: 768px) {
-  html, body {
-    overflow: auto; /* Allow the main page to scroll */
+  /* Unlock the body on mobile so the single column can scroll naturally */
+  body {
+      overflow: auto;
   }
 
   .container {
     flex-direction: column;
     height: auto;
+    /* Use dvh */
+    min-height: auto;
     padding: 2rem var(--mobile-padding) 0.5rem;
     gap: 0;
   }
 
   .column {
     width: 100%;
+    /* Remove fixed height on mobile */
     height: auto;
     overflow: visible;
     padding-bottom: 0;
@@ -616,37 +566,37 @@ body.easter-egg-active .about-toggle {
   }
 
   .about-overlay {
-      align-items: center; /* On mobile, align the content to the top instead of the center */
-      overflow-y: auto; /* Allow the entire overlay to scroll if the content is too long */
+      align-items: center;
+      overflow-y: auto;
   }
 
   .about-content-container {
-      flex-direction: column; /* This is the key: stack the columns vertically */
-      padding: 5vh var(--mobile-padding) 1.5rem; /* Adjust padding to match your mobile page layout */
+      flex-direction: column;
+      padding: 5vh var(--mobile-padding) 1.5rem;
       gap: 1.5rem;
   }
   
   .about-image-column,
-  .about-text-column { /* Make both columns take up the full width when stacked */
-      flex: none; /* Reset the flex-grow property */
+  .about-text-column {
+      flex: none;
       width: 100%;
   }
 
   .about-text-column {
-      text-align: center; /* On mobile, center-align the text for better readability */
+      text-align: center;
   }
 
-  .about-text-column p { /* The bio text should be left-aligned, even if the parent is centered */
-      text-align: left; /* Or 'justify' if you prefer */
-      font-size: 1rem; /* A more appropriate size for mobile screens */
+  .about-text-column p {
+      text-align: left;
+      font-size: 1rem;
   }
 
-  .about-social-links { /* We don't need space-between on mobile. A centered gap looks better. */
+  .about-social-links {
       justify-content: center;
       gap: 1.5rem;
   }
   
-  #webcam { /* .webcam-container positioning is inherited from desktop */
+  #webcam {
     width: 100%;
     height: 100%;
     object-fit: cover;
