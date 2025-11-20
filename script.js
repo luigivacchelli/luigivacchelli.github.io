@@ -27,43 +27,6 @@
      const i18nElements = document.querySelectorAll('[data-i18n-key]'); // Cache the translatable elements
 
      
-     // === NEW: FUNCTION TO SWAP THE VIDEO ===
-         function swapToHiresVideo() {
-             // 1. Find the video element on the page
-             const videoPlayer = document.querySelector('.countdown-background-video');
-             if (!videoPlayer) return;
-
-             // 2. Get the path to the high-resolution video from the data attribute
-             const hiresSrc = videoPlayer.dataset.hiresSrc;
-             if (!hiresSrc) return;
-
-             // 3. Create a virtual video element in memory to preload the hires source
-             const virtualVideo = document.createElement('video');
-
-             // 4. Listen for the 'canplaythrough' event. This is the key.
-             // It means the video has buffered enough to play to the end without stopping.
-             virtualVideo.addEventListener('canplaythrough', () => {
-                 // 1. Get the exact time of the lores video right before we swap.
-                         const currentTime = videoPlayer.currentTime;
-
-                         // 2. Add an event listener to the MAIN video player.
-                         // This will fire ONCE, as soon as the new (hires) video's metadata is loaded.
-                         videoPlayer.addEventListener('loadedmetadata', () => {
-                             // 3. Set the hires video's time to match the lores video's time.
-                             videoPlayer.currentTime = currentTime;
-                             
-                             // 4. Ensure the video continues playing.
-                             videoPlayer.play();
-                         }, { once: true });
-
-                         // 5. Now, perform the source swap. This will trigger the 'loadedmetadata' event above.
-                         videoPlayer.src = hiresSrc;
-             }, { once: true }); // { once: true } automatically removes the listener after it runs
-
-             // 6. Start loading the hires video in the background
-             virtualVideo.src = hiresSrc;
-         }
-     
      // === NEW: TRANSLATION FUNCTION ===
      function translatePage() {
          // Detect browser language ('en', 'it', etc.)
@@ -130,8 +93,6 @@
          translatePage();
          // Then, start the countdown
          startCountdown();
-         //Start hires swap
-         swapToHiresVideo();
      });
 
  })();
