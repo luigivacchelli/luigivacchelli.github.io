@@ -392,6 +392,11 @@ color: var(--color-hover);
   display: block;
 }
 
+/* Identify images that are actually galleries */
+.media-link img[data-gallery] {
+    cursor: pointer;
+}
+
 /* === AMBIENT SPARK STYLES === */
 .spark-canvas {
     position: absolute; /* Position it perfectly on top of the media */
@@ -447,6 +452,7 @@ color: var(--color-hover);
 .video-toggle-container {
     position: relative;
     aspect-ratio: 16 / 9;
+    cursor: pointer;
 }
 
 .video-toggle-container video {
