@@ -1,4 +1,6 @@
  (() => {
+     "use strict";
+     
      // --- 1. CACHE DOM ELEMENTS ---
      const preloader = document.getElementById('preloader');
      const preloaderContent = document.querySelector('.preloader-content');
@@ -214,7 +216,7 @@
          // 2. The "Cold Start" Sync Protocol
          // We define a function that checks if BOTH are ready.
          const attemptSyncStart = () => {
-             if (vNormal.readyState >= 3 && vPixel.readyState >= 3) {
+             if (vNormal.readyState >= 7 && vPixel.readyState >= 7) {
                  // Both have enough data. Lock timestamps to zero.
                  vNormal.currentTime = 0;
                  vPixel.currentTime = 0;
@@ -357,7 +359,7 @@
              track.classList.remove('has-peeked');
              carouselElement.removeEventListener('scroll', cancelPeekAnimation);
          }
-         carouselElement.addEventListener('scroll', cancelPeekAnimation, { once: true });
+         carouselElement.addEventListener('scroll', cancelPeekAnimation, { once: true, passive: true });
          carouselElement.addEventListener('scroll', () => {
              checkAndLoadVisibleItems();
              if (isTeleporting) return;
@@ -377,7 +379,7 @@
                  track.style.transition = '';
                  setTimeout(() => { isTeleporting = false; }, 50);
              }
-         });
+         }, { passive: true });
      }
      
      function setupFooterObserver() {
