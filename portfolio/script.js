@@ -216,7 +216,7 @@
          // 2. The "Cold Start" Sync Protocol
          // We define a function that checks if BOTH are ready.
          const attemptSyncStart = () => {
-             if (vNormal.readyState >= 7 && vPixel.readyState >= 7) {
+             if (vNormal.readyState >= 3 && vPixel.readyState >= 3) {
                  // Both have enough data. Lock timestamps to zero.
                  vNormal.currentTime = 0;
                  vPixel.currentTime = 0;
