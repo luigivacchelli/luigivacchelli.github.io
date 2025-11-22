@@ -1,6 +1,6 @@
  (() => {
      // --- CONFIGURATION ---
-     const targetDate = '2025-11-30T23:59:59';
+     const targetDate = '2025-12-03T23:59:59';
 
      // === NEW: DICTIONARY FOR TRANSLATIONS ===
      const translations = {
