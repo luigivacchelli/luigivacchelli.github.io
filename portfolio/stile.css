@@ -428,8 +428,15 @@ color: var(--color-hover);
     /* scroll-snap-type: x proximity; */
     scrollbar-width: none;
     -ms-overflow-style: none;
-    /* will-change: scroll-position; */
+    will-change: scroll-position;
+    cursor: grab; /* Default cursor state */
 }
+
+.carousel-container.active-drag {
+    cursor: grabbing; /* Cursor during active drag state */
+    user-select: none; /* Prevents text selection on drag */
+}
+
 .carousel-container::-webkit-scrollbar {
     display: none;
 }

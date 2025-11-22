@@ -308,6 +308,9 @@
          const track = carouselElement.querySelector('.carousel-track');
          let items = Array.from(track.children);
          let isTeleporting = false;
+         let isDown = false; // --- NEW MOUSE DRAG VARIABLES ---
+         let startX;
+         let scrollLeft;
          function loadHires(item) {
              const img = item.tagName === 'IMG' ? item : item.querySelector('img');
              if (img && img.dataset.hiresSrc && !img.dataset.isSwapped) {
@@ -331,6 +334,42 @@
                  }
              });
          }
+         // --- MOUSE DRAG LOGIC ---
+         const dragMove = (e) => {
+             e.preventDefault();
+             const x = e.pageX - carouselElement.offsetLeft; // Still calculate relative to carousel
+             const walk = (x - startX);
+             carouselElement.scrollLeft = scrollLeft - walk;
+         };
+
+         const dragEnd = () => {
+             isDown = false;
+             carouselElement.classList.remove('active-drag');
+             
+             // REMOVE listeners from the DOCUMENT after the press is released
+             document.removeEventListener('mousemove', dragMove);
+             document.removeEventListener('mouseup', dragEnd);
+         };
+
+         carouselElement.addEventListener('mousedown', (e) => {
+             e.preventDefault(); // Stops the native browser drag action immediately
+             
+             isDown = true;
+             carouselElement.classList.add('active-drag');
+             startX = e.pageX - carouselElement.offsetLeft;
+             scrollLeft = carouselElement.scrollLeft;
+
+             // ATTACH listeners to the DOCUMENT only while dragging
+             document.addEventListener('mousemove', dragMove);
+             document.addEventListener('mouseup', dragEnd);
+         });
+
+         // Keep mouseleave on the carousel as a safety exit, though dragEnd is primary cleanup
+         carouselElement.addEventListener('mouseleave', () => {
+             if (isDown) dragEnd(); // If stuck, force a cleanup
+         });
+         // --- END MOUSE DRAG LOGIC ---
+         
          const firstClone = items[0].cloneNode(true);
          const lastClone = items[items.length - 1].cloneNode(true);
          firstClone.classList.add('clone');
