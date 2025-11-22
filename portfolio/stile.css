@@ -430,6 +430,7 @@ color: var(--color-hover);
     -ms-overflow-style: none;
     will-change: scroll-position;
     cursor: grab; /* Default cursor state */
+    user-select: none;
 }
 
 .carousel-container.active-drag {
