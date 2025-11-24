@@ -98,82 +98,30 @@
          });
      }
      
-     function setupAmbientSparks() {
-         const targets = document.querySelectorAll('.spark-on-scroll');
-         targets.forEach(target => {
-             const canvas = document.createElement('canvas');
-             canvas.className = 'spark-canvas';
-             target.appendChild(canvas);
-             const ctx = canvas.getContext('2d');
-             
-             const resizeCanvas = () => {
-                 canvas.width = canvas.offsetWidth;
-                 canvas.height = canvas.offsetHeight;
-             };
-             resizeCanvas();
-             
-             let sparks = [];
-             const sparkColor = '#F6C500';
-             const duration = 500;
-             const sparkCount = 8;
-             const sparkRadius = 30;
-             const sparkSize = 8;
-             let hasBeenClicked = false;
-             
-             function draw(timestamp) {
-                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                 for (let i = sparks.length - 1; i >= 0; i--) {
-                     const spark = sparks[i];
-                     const elapsed = timestamp - spark.startTime;
-                     if (elapsed >= duration) { sparks.splice(i, 1); continue; }
-                     const progress = elapsed / duration;
-                     const eased = progress * (2 - progress);
-                     const distance = eased * sparkRadius;
-                     const lineLength = sparkSize * (1 - eased);
-                     const x1 = spark.x + distance * Math.cos(spark.angle);
-                     const y1 = spark.y + distance * Math.sin(spark.angle);
-                     const x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle);
-                     const y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle);
-                     ctx.strokeStyle = sparkColor;
-                     ctx.lineWidth = 2;
-                     ctx.beginPath();
-                     ctx.moveTo(x1, y1);
-                     ctx.lineTo(x2, y2);
-                     ctx.stroke();
-                 }
-                 if (sparks.length > 0) { requestAnimationFrame(draw); }
-             }
-             
-             function createSparkBurst() {
-                 if (hasBeenClicked) return;
-                 const x = canvas.width / 2;
-                 const y = canvas.height / 2;
-                 const now = performance.now();
-                 for (let i = 0; i < sparkCount; i++) {
-                     sparks.push({
-                         x, y,
-                         angle: (2 * Math.PI * i) / sparkCount,
-                         startTime: now
-                     });
-                 }
-                 if (sparks.length === sparkCount) { requestAnimationFrame(draw); }
-             }
-             
-             target.addEventListener('click', () => { hasBeenClicked = true; }, { once: true });
-             const observer = new IntersectionObserver((entries, obs) => {
-                 entries.forEach(entry => {
-                     if (entry.isIntersecting) {
-                         setTimeout(createSparkBurst, 200);
-                         setTimeout(createSparkBurst, 700);
-                         setTimeout(createSparkBurst, 3200);
-                         setTimeout(createSparkBurst, 3700);
-                         obs.unobserve(target);
-                     }
-                 });
-             }, { threshold: 0.9 });
-             observer.observe(target);
-         });
-     }
+     function setupHandHint() {
+              const targets = document.querySelectorAll('.hand-on-scroll');
+              
+              if (targets.length === 0) return;
+
+              const observer = new IntersectionObserver((entries, obs) => {
+                  entries.forEach(entry => {
+                      if (entry.isIntersecting) {
+                          const target = entry.target;
+                          
+                          // Add the class that triggers the CSS animation
+                          // Small delay (500ms) so the user sees the image settle first
+                          setTimeout(() => {
+                              target.classList.add('show-hint');
+                          }, 500);
+
+                          // Stop watching (animation only runs once per session)
+                          obs.unobserve(target);
+                      }
+                  });
+              }, { threshold: 0.6 }); // Trigger when 60% visible
+
+              targets.forEach(target => observer.observe(target));
+          }
      
      function setupPoolAnimation() {
          const container = document.getElementById('pool-animation');
@@ -403,7 +351,7 @@
              carouselElement.scrollLeft = carouselElement.querySelector('.carousel-item:not(.clone)').offsetLeft;
              track.style.transition = '';
              checkAndLoadVisibleItems();
-         }, 50);
+         }, 75);
          let peekTimeout;
          const peekObserver = new IntersectionObserver((entries, obs) => {
              entries.forEach(entry => {
@@ -585,7 +533,7 @@
          if (preloaderContent) preloaderContent.classList.add('ready');
          translatePage();
          setupImageGallery();
-         setupAmbientSparks();
+         setupHandHint();
          setupVideoToggle();
          setupPoolAnimation();
          setupInteractiveBalls();
