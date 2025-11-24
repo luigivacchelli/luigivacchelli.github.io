@@ -198,15 +198,6 @@
              if (video) { video.pause(); container.classList.remove('is-playing'); }
          });
      }
-     
-     function setupVideoToggle() {
-         const container = document.getElementById('dolphin-toggle');
-         if (!container) return;
-
-         const vNormal = container.querySelector('.video-normal');
-         const vPixel = container.querySelector('.video-pixelated');
-
-         if (!vNormal || !vPixel) return;
 
          function setupVideoToggle() {
              const container = document.getElementById('dolphin-toggle');
