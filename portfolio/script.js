@@ -382,7 +382,7 @@
              carouselElement.scrollLeft = carouselElement.querySelector('.carousel-item:not(.clone)').offsetLeft;
              track.style.transition = '';
              checkAndLoadVisibleItems();
-         }, 0);
+         }, 50);
          let peekTimeout;
          const peekObserver = new IntersectionObserver((entries, obs) => {
              entries.forEach(entry => {
