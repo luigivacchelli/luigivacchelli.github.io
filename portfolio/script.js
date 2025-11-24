@@ -208,43 +208,73 @@
 
          if (!vNormal || !vPixel) return;
 
-         // 1. The Toggle Logic (Pure CSS Visuals, as you insisted)
-         container.addEventListener('click', () => {
-             container.classList.toggle('is-pixelated');
-         });
+         function setupVideoToggle() {
+             const container = document.getElementById('dolphin-toggle');
+             if (!container) return;
 
-         // 2. The "Cold Start" Sync Protocol
-         // We define a function that checks if BOTH are ready.
-         const attemptSyncStart = () => {
-             if (vNormal.readyState >= 3 && vPixel.readyState >= 3) {
-                 // Both have enough data. Lock timestamps to zero.
+             const vNormal = container.querySelector('.video-normal');
+             const vPixel = container.querySelector('.video-pixelated');
+
+             if (!vNormal || !vPixel) return;
+
+             // IMPROVEMENT 1: Force mute to ensure Autoplay works on all browsers
+             vNormal.muted = true;
+             vPixel.muted = true;
+             // IMPROVEMENT 2: specific for iPhones to play inline, not fullscreen
+             vNormal.playsInline = true;
+             vPixel.playsInline = true;
+
+             // --- 1. Toggle Logic ---
+             container.addEventListener('click', () => {
+                 container.classList.toggle('is-pixelated');
+             });
+
+             // --- Helper: Re-sync and Play ---
+             const syncAndPlay = () => {
+                 // Only run if BOTH are ready
+                 if (vNormal.readyState < 4 || vPixel.readyState < 4) return;
+
                  vNormal.currentTime = 0;
                  vPixel.currentTime = 0;
-                 
-                 // Fire simultaneously.
-                 Promise.all([vNormal.play(), vPixel.play()])
-                     .catch(e => console.warn("Automatic sync start failed:", e));
-             }
-         };
 
-         // 3. If they are already ready (cached), fire. If not, wait.
-         if (vNormal.readyState >= 3 && vPixel.readyState >= 3) {
-             attemptSyncStart();
-         } else {
-             // We add listeners to both. The function checks "Are WE both ready?" every time one finishes loading.
-             vNormal.addEventListener('canplay', attemptSyncStart, { once: true });
-             vPixel.addEventListener('canplay', attemptSyncStart, { once: true });
+                 Promise.all([vNormal.play(), vPixel.play()])
+                     .then(() => {
+                         // Clean up listeners
+                         vNormal.removeEventListener('canplaythrough', syncAndPlay);
+                         vPixel.removeEventListener('canplaythrough', syncAndPlay);
+                     })
+                     .catch(e => console.warn("Autoplay blocked (user didn't interact yet?):", e));
+             };
+
+             // --- 2. Initial Start ---
+             vNormal.addEventListener('canplaythrough', syncAndPlay);
+             vPixel.addEventListener('canplaythrough', syncAndPlay);
+
+             // Logic Fix: Use && (AND) to only start if BOTH are already cached/ready
+             if (vNormal.readyState >= 4 && vPixel.readyState >= 4) {
+                 syncAndPlay();
+             }
+
+             // --- 3. Loop End Sync ---
+             vNormal.addEventListener('ended', () => {
+                 vNormal.pause();
+                 vPixel.pause();
+                 syncAndPlay(); // Reuse the helper function
+             });
+
+             // --- 4. IMPROVEMENT 3: Handle Tab Switching ---
+             // If the user leaves the tab and comes back, force a re-sync so they match
+             document.addEventListener('visibilitychange', () => {
+                 if (!document.hidden) {
+                     // We just came back to the tab.
+                     // Align the Slave (Pixel) to the Master (Normal)
+                     vPixel.currentTime = vNormal.currentTime;
+                     
+                     // Ensure both are playing or both are paused
+                     if (!vNormal.paused) vPixel.play();
+                 }
+             });
          }
-         
-         // 4. Safety Loop (Optional but recommended for long sessions)
-         // If the loop ends, re-sync them.
-         vNormal.addEventListener('ended', () => {
-             vNormal.currentTime = 0;
-             vPixel.currentTime = 0;
-             vPixel.play();
-             vNormal.play();
-         });
-     }
      
      function setupInteractiveBalls() {
          const container = document.querySelector('.interactive-balls-container');
