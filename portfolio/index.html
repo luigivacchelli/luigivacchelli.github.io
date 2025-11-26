@@ -183,7 +183,10 @@
                 <img src="pictures/bw/lores/frame.webp" data-hires-src="pictures/bw/hires/frame.jpg" alt="An empty frame for a poster advertisment showing the city through it.">
             </div>
             <div class="media-link">
-                <video autoplay loop muted playsinline src="graphics/ghosts/lores/ghosts.mp4" poster="pictures/posters/ghosts_poster.webp"></video>
+                <video autoplay loop muted playsinline poster="pictures/posters/ghosts_poster.webp">
+                    <source src="videos/hires/ghosts.mp4" media="(min-width: 1200px)" type="video/mp4">
+                        <source src="videos/lores/ghosts.mp4" type="video/mp4">
+                </video>
             </div>
             <div class="media-link">
                 <img src="pictures/c41/lores/orangetrees.webp" data-hires-src="pictures/c41/hires/orangetrees.jpg" alt="Trees lit by sunlight and a seagull flying over the branches">
@@ -197,48 +200,107 @@
             <div class="media-link carousel-container" id="image-carousel-1">
                 <div class="carousel-track">
                     <img class="carousel-item" src="graphics/carousels/lores/1/1.webp" data-hires-src="graphics/carousels/hires/1/1.jpg" alt="Artistic collage of images overlapping">
-                        <img class="carousel-item" src="graphics/carousels/lores/1/2.webp" data-hires-src="graphics/carousels/hires/1/2.jpg" alt="Artistic collage of images overlapping">
-                            <img class="carousel-item" src="graphics/carousels/lores/1/3.webp" data-hires-src="graphics/carousels/hires/1/3.jpg" alt="Artistic collage of images overlapping">
-                                <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/4.webp" data-hires-src="graphics/carousels/hires/1/4.jpg" alt="Artistic collage of images overlapping">
-                                    <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/5.webp" data-hires-src="graphics/carousels/hires/1/5.jpg" alt="Artistic collage of images overlapping">
-                                        <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/6.webp" data-hires-src="graphics/carousels/hires/1/6.jpg" alt="Artistic collage of images overlapping">
-                                            <video class="carousel-item" src="graphics/carousels/lores/1/7.mp4" autoplay loop muted playsinline preload="none"></video>
-                                            <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/8.webp" data-hires-src="graphics/carousels/hires/1/8.jpg" alt="Artistic collage of images overlapping">
-                                                <video class="carousel-item" src="graphics/carousels/lores/1/9.mp4" autoplay loop muted playsinline preload="none"></video>
-                                                <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/10.webp" data-hires-src="graphics/carousels/hires/1/10.jpg" alt="Artistic collage of images overlapping">
+                    <img class="carousel-item" src="graphics/carousels/lores/1/2.webp" data-hires-src="graphics/carousels/hires/1/2.jpg" alt="Artistic collage of images overlapping">
+                    <img class="carousel-item" src="graphics/carousels/lores/1/3.webp" data-hires-src="graphics/carousels/hires/1/3.jpg" alt="Artistic collage of images overlapping">
+                    <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/4.webp" data-hires-src="graphics/carousels/hires/1/4.jpg" alt="Artistic collage of images overlapping">
+                    <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/5.webp" data-hires-src="graphics/carousels/hires/1/5.jpg" alt="Artistic collage of images overlapping">
+                    <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/6.webp" data-hires-src="graphics/carousels/hires/1/6.jpg" alt="Artistic collage of images overlapping">
+                    <video class="carousel-item" src="graphics/carousels/lores/1/7.mp4" autoplay loop muted playsinline preload="none"></video>
+                    <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/8.webp" data-hires-src="graphics/carousels/hires/1/8.jpg" alt="Artistic collage of images overlapping">
+                    <video class="carousel-item" src="graphics/carousels/lores/1/9.mp4" autoplay loop muted playsinline preload="none"></video>
+                    <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/10.webp" data-hires-src="graphics/carousels/hires/1/10.jpg" alt="Artistic collage of images overlapping">
                 </div>
             </div>
             <div class="media-link image-to-video-container hand-on-scroll" id="pool-animation">
                 <img loading="lazy" src="pictures/c41/lores/pool.webp" data-hires-src="pictures/c41/hires/pool.jpg" alt="Two hands holding a cue stick." class="pool-image">
-                    <video src="graphics/pool/lores/pool.mp4" playsinline class="pool-video" preload="none"></video>
+                <video class="pool-video" autoplay loop muted playsinline>
+                    <source src="videos/hires/pool.mp4" media="(min-width: 1200px)" type="video/mp4">
+                    <source src="videos/lores/pool.mp4" type="video/mp4">
+                </video>
             </div>
-            <div class="media-link"><img src="pictures/bw/lores/tent.webp" data-hires-src="pictures/bw/hires/tent.jpg" alt="A white tent in a field at night."></div>
-            <div class="media-link"><img src="pictures/c41/lores/sea.webp" data-hires-src="pictures/c41/hires/sea.jpg" alt="A rocky beach with red umbrellas."></div>
-            <div class="media-link"><video autoplay loop muted playsinline src="videos/lores/sun.mp4" poster="pictures/posters/sun_poster.webp" preload="none"></video></div>
-            <div class="media-link"><img loading="lazy" src="pictures/bw/lores/wip.webp" data-hires-src="pictures/bw/hires/wip.jpg" alt="A work in progress street sign." data-no-imageindex="true"></div>
-            <div class="media-link"><img loading="lazy" src="pictures/c41/lores/rock.webp" data-hires-src="pictures/c41/hires/rock.jpg" alt="A giant rock in the middle of the sea." data-no-imageindex="true"></div>
-            <div class="media-link"><img loading="lazy" src="pictures/bw/lores/tube.webp" data-hires-src="pictures/bw/hires/tube.jpg" alt="A fast moving subway train."></div>
+            <div class="media-link">
+                <img src="pictures/bw/lores/tent.webp" data-hires-src="pictures/bw/hires/tent.jpg" alt="A white tent in a field at night.">
+            </div>
+            <div class="media-link">
+                <img src="pictures/c41/lores/sea.webp" data-hires-src="pictures/c41/hires/sea.jpg" alt="A rocky beach with red umbrellas.">
+            </div>
+            <div class="media-link">
+                <video autoplay loop muted playsinline poster="pictures/posters/sun_poster.webp" preload="none">
+                    <source src="videos/hires/sun.mp4" media="(min-width: 1200px)" type="video/mp4">
+                    <source src="videos/lores/sun.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="pictures/bw/lores/wip.webp" data-hires-src="pictures/bw/hires/wip.jpg" alt="A work in progress street sign." data-no-imageindex="true">
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="pictures/c41/lores/rock.webp" data-hires-src="pictures/c41/hires/rock.jpg" alt="A giant rock in the middle of the sea." data-no-imageindex="true">
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="pictures/bw/lores/tube.webp" data-hires-src="pictures/bw/hires/tube.jpg" alt="A fast moving subway train.">
+            </div>
             <div class="scroll-trigger" data-column="left"></div>
         </div>
         <div class="column right">
-            <div class="media-link"><img src="pictures/c41/lores/track.webp" data-hires-src="pictures/c41/hires/track.jpg" alt="A sprinter track with statues."></div>
-            <div class="media-link"><img src="pictures/bw/lores/bike.webp" data-hires-src="pictures/bw/hires/bike.jpg" alt="A bike chained covered in a white plastic sheet chained to a pole."></div>
-            <div class="media-link"><video autoplay loop muted playsinline src="videos/lores/flares.mp4" poster="pictures/posters/flares_poster.webp"></video></div>
-            <div class="media-link"><img loading="lazy" src="scans/lores/cat.webp" data-hires-src="scans/hires/cat.jpg" alt="A cat drawn by a child on the page of a notebook." data-no-imageindex="true"></div>
-            <div class="media-link"><img loading="lazy" src="pictures/bw/lores/ambulance.webp" data-hires-src="pictures/bw/hires/ambulance.jpg" alt="A hearse parked in an ambulance parking spot."></div>
-            <div class="media-link video-toggle-container hand-on-scroll" id="dolphin-toggle">
-                <video src="videos/dolphins/lores/dolphins.mp4" autoplay loop muted playsinline class="video-normal" poster="pictures/posters/dolphins_poster.webp"></video>
-                <video src="videos/dolphins/lores/dolphinspxl.mp4" autoplay loop muted playsinline class="video-pixelated" aria-hidden="true"></video>
+            <div class="media-link">
+                <img src="pictures/c41/lores/track.webp" data-hires-src="pictures/c41/hires/track.jpg" alt="A sprinter track with statues.">
             </div>
-            <div class="media-link"><img loading="lazy" src="pictures/bw/lores/mirrors.webp" data-hires-src="pictures/bw/hires/mirrors.jpg" alt="A room with a giant mirror in it." data-no-imageindex="true"></div>
+            <div class="media-link">
+                <img src="pictures/bw/lores/bike.webp" data-hires-src="pictures/bw/hires/bike.jpg" alt="A bike chained covered in a white plastic sheet chained to a pole.">
+            </div>
+            <div class="media-link">
+                <video autoplay loop muted playsinline poster="pictures/posters/flares_poster.webp">
+                    <source src="videos/hires/flares.mp4" media="(min-width: 1200px)" type="video/mp4">
+                    <source src="videos/lores/flares.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="scans/lores/cat.webp" data-hires-src="scans/hires/cat.jpg" alt="A cat drawn by a child on the page of a notebook." data-no-imageindex="true">
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="pictures/bw/lores/ambulance.webp" data-hires-src="pictures/bw/hires/ambulance.jpg" alt="A hearse parked in an ambulance parking spot.">
+            </div>
+            <div class="media-link video-toggle-container hand-on-scroll" id="dolphin-toggle">
+                <video class="video-normal" autoplay loop muted playsinline poster="pictures/posters/dolphins_poster.webp">
+                    <source src="videos/dolphins/hires/dolphins.mp4" media="(min-width: 1200px)" type="video/mp4">
+                    <source src="videos/dolphins/lores/dolphins.mp4" type="video/mp4">
+                </video>
+                <video class="video-pixelated" autoplay loop muted playsinline aria-hidden="true">
+                    <source src="videos/dolphins/hires/dolphinspxl.mp4" media="(min-width: 1200px)" type="video/mp4">
+                    <source src="videos/dolphins/lores/dolphinspxl.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="pictures/bw/lores/mirrors.webp" data-hires-src="pictures/bw/hires/mirrors.jpg" alt="A room with a giant mirror in it." data-no-imageindex="true">
+            </div>
             <div class="media-link interactive-balls-container hand-on-scroll">
                 <img loading="lazy" src="pictures/bw/lores/balls.webp" data-hires-src="pictures/bw/hires/balls.jpg" alt="A guy juggling with plastic balls." class="balls-image">
-                    <video src="graphics/balls/lores/balls.mp4" muted playsinline class="balls-video" preload="none"></video>
+                <video class="balls-video" muted playsinline poster="pictures/posters/balls_poster.webp">
+                    <source src="videos/hires/balls.mp4" media="(min-width: 1200px)" type="video/mp4">
+                    <source src="videos/lores/balls.mp4" type="video/mp4">
+                </video>
             </div>
-            <div class="media-link"><img loading="lazy" src="pictures/c41/lores/greenhand.webp" data-hires-src="pictures/c41/hires/greenhand.jpg" alt="A hand lit by a green light on the street." data-no-imageindex="true"></div>
-            <div class="media-link"><video autoplay loop muted playsinline src="videos/lores/vulcano.mp4" poster="pictures/posters/vulcano_poster.webp" preload="none"></video></div>
-            <div class="media-link"><img loading="lazy" src="pictures/bw/lores/web.webp" data-hires-src="pictures/bw/hires/web.jpg" alt="A pole with metal wires connected to it." data-no-imageindex="true"></div>
-            <div class="media-link"><img loading="lazy" src="pictures/c41/lores/valviola.webp" data-hires-src="pictures/c41/hires/valviola.jpg" alt="Cows grazing by a lake in a sunny landscape."></div>
+            <div class="media-link">
+                <video autoplay loop muted playsinline poster="pictures/posters/vulcano_poster.webp" preload="none">
+                    <source src="videos/hires/vulcano.mp4" media="(min-width: 1200px)" type="video/mp4">
+                    <source src="videos/lores/vulcano.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="pictures/c41/lores/greenhand.webp" data-hires-src="pictures/c41/hires/greenhand.jpg" alt="A hand lit by a green light on the street." data-no-imageindex="true">
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="pictures/bw/lores/web.webp" data-hires-src="pictures/bw/hires/web.jpg" alt="A pole with metal wires connected to it." data-no-imageindex="true">
+            </div>
+            <div class="media-link">
+                <video autoplay loop muted playsinline poster="pictures/posters/rainbow_poster.webp">
+                    <source src="videos/hires/rainbow.mp4" media="(min-width: 1200px)" type="video/mp4">
+                    <source src="videos/lores/rainbow.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="media-link">
+                <img loading="lazy" src="pictures/c41/lores/valviola.webp" data-hires-src="pictures/c41/hires/valviola.jpg" alt="Cows grazing by a lake in a sunny landscape.">
+            </div>
             <div class="scroll-trigger" data-column="right"></div>
         </div>
     </main>
@@ -254,4 +316,4 @@
 </body>
 </html>
 
-<!-- Created by Luigi Vacchelli on 20/11/25. -->
+<!-- Created by Luigi Vacchelli on 26/11/25. -->

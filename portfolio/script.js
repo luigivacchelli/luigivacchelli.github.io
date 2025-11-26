@@ -99,7 +99,9 @@
      }
      
      function setupHandHint() {
-              const targets = document.querySelectorAll('.hand-on-scroll');
+         if (!window.matchMedia('(max-width: 768px)').matches) return;
+         
+         const targets = document.querySelectorAll('.hand-on-scroll');
               
               if (targets.length === 0) return;
 
@@ -580,4 +582,4 @@
      
  })();
 
-//  Created by Luigi Vacchelli on 20/11/25.
+//  Created by Luigi Vacchelli on 26/11/25.
