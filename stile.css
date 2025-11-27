@@ -3,13 +3,50 @@
   src: url('./fonts/Kirome/Kirome.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
 .font-display {
   font-family: 'Kirome', sans-serif;
 }
 
-/* Basic reset */
+:root {
+    /* --- Light Mode (Default) --- */
+  --color-primary: #070898;
+  --color-secondary: #980807;
+  --color-secondary2: #D93B00; /* Bold yellow #F6C500 */
+  --color-hover: #079808;
+  --page-background: #FFFFFF; /* Less harsh white #FAFAFA, Creamy white: #FFFCF1 */
+  --border-color: #000000;
+  --mobile-padding: 5vw;
+  
+  /* --- Z-Index Architecture --- */
+  --z-base: 1;
+  --z-media-top: 5;
+  --z-hand: 10;
+  --z-easter-egg: 50;
+  --z-header: 100;
+  --z-footer: 100;
+  --z-overlay: 200;
+  --z-overlay-content: 201;
+  --z-preloader: 999;
+}
+
+/* --- DARK MODE --- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #205EA6;
+    --color-secondary: #D14D41;
+    --color-secondary2: #D0A215;
+    --color-hover: #5BA32A;
+    --page-background: #000000; /* Less strong black #100F0F */
+    --border-color: #FFFFFF;
+  }
+  html .about-overlay {
+    background: rgba(0, 0, 0, 0.6);
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -17,143 +54,582 @@
 }
 
 html, body {
-  height: 100%;
+  min-height: 100dvh;
   font-family: sans-serif;
+  background-color: var(--page-background);
 }
 
-/* === COUNTDOWN STYLES === */
+/* --- LAYOUT LOCKING --- */
+/* Default: Mobile behavior (scrolling body) */
+body {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 
-#countdown-container {
+/* Desktop: Lock body, let columns scroll */
+@media (min-width: 769px) {
+    body.layout-ready {
+        overflow: hidden;
+    }
+}
+
+/* Preloader Styles */
+#preloader {
   position: fixed;
-  inset: 0;
-  background-color: #070898; /* Dark fallback color */
-  overflow: hidden;
-  
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  background-color: var(--page-background);
+  z-index: var(--z-preloader);
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
+}
+
+.preloader-content {
   text-align: center;
-  
-  isolation: isolate;
-}
-
-.countdown-background-video {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  min-width: 100%;
-  min-height: 100%;
-  width: auto;
-  height: auto;
-  
-  z-index: -1;
-  
-  filter: brightness(0.8);
-}
-
-.countdown-content {
-  position: relative;
-  z-index: 1;
-  padding: 0.5rem;
-  color: white;
-}
-
-.countdown-content h1 {
-  font-size: clamp(2.5rem, 8vw, 4rem);
-  margin-bottom: 0.5rem;
-}
-
-#timer {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 3rem;
-  color: #980807;
-}
-
-.time-unit {
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 1;
+  gap: 25px;
+  opacity: 0;
+  transition: opacity 0.4s ease-in;
 }
 
-.time-unit span {
-  font-size: clamp(3rem, 12vw, 6rem);
-  text-shadow: 0 0 3px #980807,
-                 0 0 6px #980807,
-                 0 0 9px #980807;
+.preloader-content.ready {
+    opacity: 1;
 }
 
-.time-unit label {
-  font-family: sans-serif; /* Use standard font for readability */
-  font-size: 0.9rem;
-  text-transform: lowercase;
-  letter-spacing: 1px;
-  color: #980807;
-  margin-top: -0.5rem;
-  text-shadow: 0 0 3px #980807;
+.loader-icon {
+  width: 150px;
+  height: 150px;
+  animation: spin 2s linear infinite;
 }
 
-/* --- Mobile Adjustments for Countdown --- */
-@media screen and (orientation: portrait) and (max-width: 768px) {
-        
-        .time-unit label {
-            margin-top: -0.2rem;
-        }
-        
-        .countdown-background-video {
-            /* --- 1. Reset the Centering Logic --- */
-            left: auto; /* Remove the 50% left positioning */
-            top: 50%;   /* Keep the vertical centering */
-            
-            /* --- 2. Pin to the Right Edge --- */
-            right: -20%; /* This is your desired positioning */
-            
-            /* --- 3. Reset the Transform --- */
-            transform: translateY(-50%); /* Only translate on the Y-axis for vertical centering */
-            
-            /* --- 4. The "Zoom" Effect (with the fix) --- */
-            width: auto;
-            
-            /* THE FIX: Change height from 100% to 100svh */
-            height: 100svh; /* This fills the visible area, even with mobile toolbars */
-            
-            /* These properties are no longer needed for this view */
-            min-width: unset;
-            min-height: unset;
-        }
+#preloader p {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  max-width: 1200px;
+  line-height: 1.5;
+  background: linear-gradient(to right, var(--color-hover) 50%, var(--color-primary) 50%);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  will-change: background-position;
+  animation: loading-progress-animation 4s ease-in-out forwards;
+}
+
+@keyframes loading-progress-animation {
+  0%, 25% { background-position: 100% 0; }
+  50% { background-position: 63% 0; }
+  97% { background-position: 23% 0; }
+  100% { background-position: 7% 0; }
+}
+
+body.loading-finished #preloader p {
+  animation: none;
+  background-position: 0% 0;
+  transition: background-position 1s ease-in-out;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+#preloader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Header & Container Fade Logic */
+.page-header, .container {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 1s ease-in;
+}
+
+.page-header.visible, .container.visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Header */
+.page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 0.25rem;
+  background: var(--page-background);
+  z-index: var(--z-header);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.header-left,
+.header-right,
+.about-toggle {
+  font-size: 1rem;
+  font-weight: normal;
+  color: var(--color-primary);
+  transition: color 0.3s ease-out, opacity 2s ease-out;
+}
+
+.about-toggle {
+    cursor: pointer;
+    transition: color 0.3s ease;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.about-toggle:hover {
+    color: var(--color-hover);
+}
+
+/* Footer */
+.site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0.35rem 0;
+  text-align: center;
+  z-index: var(--z-footer);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.25s linear, transform 0.2s linear;
+}
+
+.site-footer.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.site-footer p {
+  font-size: 0.70rem;
+  font-weight: bold;
+  color: var(--color-secondary);
+}
+
+/* Overlay */
+.about-overlay {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: var(--z-overlay);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 1s ease, visibility 0s linear 1s, pointer-events 0s linear 1s;
+    display: flex;
+    align-items: center;
+}
+
+.about-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 1s ease, visibility 0s linear 0s, pointer-events 0s linear 0s;
+}
+
+.about-background {
+    position: absolute;
+    inset: 0;
+}
+
+.about-content-container {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 2rem;
+    box-sizing: border-box;
+    z-index: var(--z-overlay-content);
+    pointer-events: none;
+}
+
+.about-column {
+    pointer-events: auto; /* Re-enables clicks for the columns and everything inside them */
+    flex: 1;
+}
+
+.about-text-column {
+    color: var(--color-primary);
+}
+
+.about-card {
+    position: relative;
+}
+
+.about-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 4px solid var(--color-primary);
+}
+
+.webcam-container {
+    position: absolute;
+    top: 49.7%;
+    left: 43.8%;
+    width: 12.2%;
+    aspect-ratio: 91.5 / 55;
+    transform: rotate(2.5deg);
+    overflow: hidden;
+    border-radius: 2px;
+    z-index: var(--z-media-top);
+}
+
+#webcam {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+    transform: scaleX(-1);
+}
+
+.about-text-column p {
+  font-weight: bold;
+  margin: 0 0 1.5rem 0;
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  text-align: justify;
+}
+
+.about-text-column a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+.about-text-column a:hover {
+color: var(--color-hover);
+}
+
+.about-social-links {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.about-social-links a {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.about-divider {
+    width: 100%;
+    border: none;
+    border-top: 2px solid var(--color-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.about-projects h4 {
+    margin: 0 0 1rem 0;
+}
+
+.about-projects a {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: bold;
+}
+
+.about-projects a:hover {
+    color: var(--color-hover);
+}
+
+
+/* Galleria */
+.container {
+  display: flex;
+  gap: 1rem;
+  padding: 2rem 2rem 0rem 2rem;
+  /* CRITICAL FIX: Using dvh to prevent mobile URL bar overlap */
+  min-height: calc(100dvh - 2rem);
+}
+
+.column {
+  flex: 1;
+  overflow-y: scroll;
+  /* CRITICAL FIX: Using dvh here too */
+  height: calc(100dvh - 2rem);
+  padding-bottom: 0.5rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  will-change: transform;
+}
+
+.column::-webkit-scrollbar {
+    display: none;
+}
+
+.media-link {
+  display: block;
+  margin-bottom: 1rem;
+  position: relative;
+  /* border: 4px solid var(--border-color); */
+  /* box-sizing: border-box; */
+}
+
+.media-link img,
+.media-link video {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  display: block;
+}
+
+/* Identify images that are actually galleries */
+.media-link img[data-gallery] {
+    cursor: pointer;
+}
+
+/* === CAROUSEL STYLE === */
+@keyframes peek-a-boo {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-20%); }
+    50% { transform: translateX(20%); }
+    75% { transform: translateX(20%); }
+}
+
+.carousel-track.has-peeked {
+    animation: peek-a-boo 5s ease-in-out;
+}
+
+.carousel-container {
+    aspect-ratio: 1 / 1;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    /* scroll-snap-type: x proximity; */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    will-change: scroll-position;
+    cursor: grab; /* Default cursor state */
+    user-select: none;
+}
+
+.carousel-container.active-drag {
+    cursor: grabbing; /* Cursor during active drag state */
+    user-select: none; /* Prevents text selection on drag */
+}
+
+.carousel-container::-webkit-scrollbar {
+    display: none;
+}
+
+.carousel-track {
+    display: flex;
+    height: 100%;
+}
+
+.carousel-item {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: center; /* This rule applies to both img and the video-container div */
+    object-fit: cover;
+}
+/* === END OF CAROUSEL STYLES === */
+
+/* === DOPLHINS STYLES === */
+/* --- 1. The Container --- */
+.video-toggle-container {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    cursor: pointer;
+}
+
+.video-toggle-container video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.7s ease;
+}
+
+.video-pixelated { z-index: var(--z-media-top); opacity: 0.001; }
+.video-normal { z-index: var(--z-base); }
+.video-toggle-container.is-pixelated .video-pixelated { opacity: 1; }
+
+/* === POOL STYLES === */
+.image-to-video-container, .interactive-balls-container { display: grid; cursor: pointer; }
+.pool-image, .pool-video, .balls-image, .balls-video {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: auto;
+    transition: opacity 0.5s ease;
+}
+.pool-video, .balls-video { opacity: 0; z-index: var(--z-media-top); }
+.pool-image, .balls-image { opacity: 1; z-index: var(--z-base); }
+.image-to-video-container.is-playing .pool-video,
+.interactive-balls-container.is-playing .balls-video { opacity: 1; }
+
+html.overlay-active { overflow: hidden !important; }
+
+/* === EASTER EGG LAYER === */
+#easter-egg-layer {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    background-color: var(--page-background);
+    z-index: var(--z-easter-egg);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 2rem;
+    padding-bottom: 1rem;
+    pointer-events: all;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1.5s ease, visibility 0s linear 1.5s;
+}
+
+#easter-egg-layer.active {
+    opacity: 1;
+    visibility: visible;
+    transition: none;
+}
+
+#easter-egg-layer img {
+    width: 100%;
+    max-width: 540px;
+    /* Use dvh here just in case, though vh is usually fine for overlays */
+    max-height: calc(100dvh - 3rem);
+    height: auto;
+    object-fit: contain;
+    border: 4px solid var(--color-secondary2);
+}
+
+body.easter-egg-active .header-left,
+body.easter-egg-active .about-toggle {
+  color: var(--color-secondary2);
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Responsive layout for mobile */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+/* Reset min-height on mobile wrapper to avoid gaps */
+    min-height: auto;
+    padding: 2rem var(--mobile-padding) 0.5rem;
+    gap: 0;
+  }
+  
+  .column {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+  
+  .page-header { padding: 0 var(--mobile-padding) 0.25rem; }
+  .about-overlay { align-items: center; overflow-y: auto; }
+  .about-content-container {
+      flex-direction: column;
+      padding: 5vh var(--mobile-padding) 1.5rem;
+      gap: 1.5rem;
+  }
+  
+  .about-image-column,
+  .about-text-column { flex: none; width: 100%; }
+  .about-text-column { text-align: center; }
+  .about-text-column p { text-align: left; font-size: 1rem; }
+  .about-social-links { justify-content: center; gap: 1.5rem; }
+  
+  #webcam { width: 100%; height: 100%; }
+}
+
+/* === INTERACTION HINT === */
+
+.hand-on-scroll {
+    position: relative;
+}
+
+/* The Interaction Icon (Base Definition) */
+.hand-on-scroll::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    
+    /* Your Custom Cursor SVG (White) */
+    background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools --%3E%3Csvg fill='%23ffffff' width='800px' height='800px' viewBox='-32 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M358.182 179.361c-19.493-24.768-52.679-31.945-79.872-19.098-15.127-15.687-36.182-22.487-56.595-19.629V67c0-36.944-29.736-67-66.286-67S89.143 30.056 89.143 67v161.129c-19.909-7.41-43.272-5.094-62.083 8.872-29.355 21.795-35.793 63.333-14.55 93.152l109.699 154.001C134.632 501.59 154.741 512 176 512h178.286c30.802 0 57.574-21.5 64.557-51.797l27.429-118.999A67.873 67.873 0 0 0 448 326v-84c0-46.844-46.625-79.273-89.818-62.639zM80.985 279.697l27.126 38.079c8.995 12.626 29.031 6.287 29.031-9.283V67c0-25.12 36.571-25.16 36.571 0v175c0 8.836 7.163 16 16 16h6.857c8.837 0 16-7.164 16-16v-35c0-25.12 36.571-25.16 36.571 0v35c0 8.836 7.163 16 16 16H272c8.837 0 16-7.164 16-16v-21c0-25.12 36.571-25.16 36.571 0v21c0 8.836 7.163 16 16 16h6.857c8.837 0 16-7.164 16-16 0-25.121 36.571-25.16 36.571 0v84c0 1.488-.169 2.977-.502 4.423l-27.43 119.001c-1.978 8.582-9.29 14.576-17.782 14.576H176c-5.769 0-11.263-2.878-14.697-7.697l-109.712-154c-14.406-20.223 14.994-42.818 29.394-22.606zM176.143 400v-96c0-8.837 6.268-16 14-16h6c7.732 0 14 7.163 14 16v96c0 8.837-6.268 16-14 16h-6c-7.733 0-14-7.163-14-16zm75.428 0v-96c0-8.837 6.268-16 14-16h6c7.732 0 14 7.163 14 16v96c0 8.837-6.268 16-14 16h-6c-7.732 0-14-7.163-14-16zM327 400v-96c0-8.837 6.268-16 14-16h6c7.732 0 14 7.163 14 16v96c0 8.837-6.268 16-14 16h-6c-7.732 0-14-7.163-14-16z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    
+    transform: translate(-50%, -50%) scale(1) rotate(-45deg);
+    filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.6));
+    z-index: var(--z-hand);
+    pointer-events: none;
+    
+    /* HIDDEN BY DEFAULT (Desktop) */
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* --- MOBILE ONLY LOGIC (< 768px) --- */
+@media (max-width: 768px) {
+    
+    /* Allow the icon to exist on mobile */
+    .hand-on-scroll::after {
+        display: block;
     }
 
-@media screen and (orientation: landscape) and (max-height: 600px) {
-
-    #timer {
-        /* 1. Arrange the time units in a row to fit the wide screen */
-        flex-direction: row;
-        
-        /* 2. Adjust the gap for a horizontal layout */
-        gap: 1.5rem; /* Or adjust as you see fit */
-        align-items: baseline; /* Aligns the numbers and labels nicely */
-    }
-
-    .time-unit span {
-        /*
-         *  THE KEY FIX: Use 'vh' (viewport height) for the font size.
-         *  On a short, wide screen, this keeps the text from getting too big.
-         *  '20vh' means 20% of the viewport's height. Adjust if needed.
-        */
-        font-size: clamp(2rem, 20vh, 3.5rem);
-    }
-
-    .time-unit label {
-        /* Adjust the label margin and font size for the new layout */
-        margin-top: 0.5rem;
-        font-size: 0.8rem;
-    }
-
-    .countdown-background-video {
-        /* You can also add specific video styles for landscape if needed,
-           but the default desktop styles should work well here. */
+    /* Trigger the animation only on mobile */
+    .hand-on-scroll.show-hint::after {
+        visibility: visible;
+        animation: tap-minimal 0.7s ease-in-out forwards;
     }
 }
+
+/* The Animation */
+@keyframes tap-minimal {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(-45deg) scale(1);
+    }
+    40% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(-45deg) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) rotate(-45deg) scale(0.85); /* Click */
+    }
+    60% {
+        transform: translate(-50%, -50%) rotate(-45deg) scale(1); /* Release */
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(-45deg) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(-45deg) scale(1);
+    }
+}
+
+/* Created by Luigi Vacchelli on 26/11/25. */
