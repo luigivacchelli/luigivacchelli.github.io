@@ -91,9 +91,8 @@ body {
     .carousel-track.has-peeked {
         animation: none;
     }
-    .hand-on-scroll.show-hint::after {
+    .hand-on-scroll::after {
         animation: none;
-        opacity: 0;
     }
     /* Shorten all transitions to be imperceptible */
     .page-header,
@@ -643,15 +642,24 @@ body.easter-egg-active .about-toggle {
 /* --- MOBILE ONLY (< 768px) --- */
 @media (max-width: 768px) {
 
-    /* Show the icon on mobile */
+    /* Show the icon on mobile with a looping click animation */
     .hand-on-scroll::after {
         display: block;
+        animation: hint-click 2.5s ease-in-out infinite;
     }
 
     /* Hide permanently once the user has interacted */
     .hand-on-scroll.hint-used::after {
         display: none;
+        animation: none;
     }
+}
+
+/* Looping click animation — taps down and releases, then pauses before repeating */
+@keyframes hint-click {
+    0%,  100% { transform: rotate(-45deg) scale(1);    }
+    6%         { transform: rotate(-45deg) scale(0.75); }
+    12%        { transform: rotate(-45deg) scale(1);    }
 }
 
 /* Created by Luigi Vacchelli on 26/11/25. */
