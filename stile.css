@@ -642,10 +642,11 @@ body.easter-egg-active .about-toggle {
 /* --- MOBILE ONLY (< 768px) --- */
 @media (max-width: 768px) {
 
-    /* Show the icon on mobile with a looping click animation */
+    /* Show the icon on mobile with a looping double-click animation */
     .hand-on-scroll::after {
         display: block;
-        animation: hint-click 2.5s ease-in-out infinite;
+        opacity: 0;
+        animation: hint-click 3s ease-in-out infinite;
     }
 
     /* Hide permanently once the user has interacted */
@@ -655,11 +656,22 @@ body.easter-egg-active .about-toggle {
     }
 }
 
-/* Looping click animation — taps down and releases, then pauses before repeating */
+/* Looping double-click animation:
+   0–12%  : fade in
+   12–42% : double tap (two scale-down/up pairs)
+   42–67% : hold visible
+   67–83% : fade out
+   83–100%: invisible pause (0.5s) before next loop */
 @keyframes hint-click {
-    0%,  100% { transform: rotate(-45deg) scale(1);    }
-    6%         { transform: rotate(-45deg) scale(0.75); }
-    12%        { transform: rotate(-45deg) scale(1);    }
+    0%   { opacity: 0;    transform: rotate(-45deg) scale(1);    }
+    12%  { opacity: 1;    transform: rotate(-45deg) scale(1);    }
+    20%  { opacity: 1;    transform: rotate(-45deg) scale(0.75); }
+    27%  { opacity: 1;    transform: rotate(-45deg) scale(1);    }
+    35%  { opacity: 1;    transform: rotate(-45deg) scale(0.75); }
+    42%  { opacity: 1;    transform: rotate(-45deg) scale(1);    }
+    67%  { opacity: 1;    transform: rotate(-45deg) scale(1);    }
+    83%  { opacity: 0;    transform: rotate(-45deg) scale(1);    }
+    100% { opacity: 0;    transform: rotate(-45deg) scale(1);    }
 }
 
 /* Created by Luigi Vacchelli on 26/11/25. */
