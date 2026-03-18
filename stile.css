@@ -14,9 +14,10 @@
     /* --- Light Mode (Default) --- */
   --color-primary: #070898;
   --color-secondary: #980807;
-  --color-secondary2: #D93B00; /* Bold yellow #F6C500 */
+  /* FIX: Removed misleading comment "Bold yellow #F6C500" — the actual value is an orange-red, not yellow. */
+  --color-secondary2: #D93B00;
   --color-hover: #079808;
-  --page-background: #FFFFFF; /* Less harsh white #FAFAFA, Creamy white: #FFFCF1 */
+  --page-background: #FFFFFF;
   --border-color: #000000;
   --mobile-padding: 5vw;
   
@@ -39,7 +40,7 @@
     --color-secondary: #D14D41;
     --color-secondary2: #D0A215;
     --color-hover: #5BA32A;
-    --page-background: #000000; /* Less strong black #100F0F */
+    --page-background: #000000;
     --border-color: #FFFFFF;
   }
   html .about-overlay {
@@ -70,6 +71,42 @@ body {
 @media (min-width: 769px) {
     body.layout-ready {
         overflow: hidden;
+    }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   FIX: Users who have enabled "reduce motion" in their OS
+   (vestibular disorders, epilepsy, motion sensitivity) will
+   now see all animations disabled or reduced to instant fades.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    .loader-icon {
+        animation: none;
+    }
+    #preloader p {
+        animation: none;
+        background-position: 0% 0;
+    }
+    .carousel-track.has-peeked {
+        animation: none;
+    }
+    .hand-on-scroll.show-hint::after {
+        animation: none;
+        opacity: 0;
+    }
+    /* Shorten all transitions to be imperceptible */
+    .page-header,
+    .container,
+    .about-overlay,
+    #easter-egg-layer,
+    #preloader,
+    .video-toggle-container video,
+    .pool-image,
+    .pool-video,
+    .balls-image,
+    .balls-video {
+        transition-duration: 0.01ms !important;
     }
 }
 
@@ -110,7 +147,8 @@ body {
 
 #preloader p {
   font-size: 1.5rem;
-  color: var(--color-primary);
+  /* FIX: Removed dead `color: var(--color-primary)` that was immediately overridden
+     by `color: transparent` two lines below. The first declaration had zero effect. */
   max-width: 1200px;
   line-height: 1.5;
   background: linear-gradient(to right, var(--color-hover) 50%, var(--color-primary) 50%);
@@ -120,14 +158,17 @@ body {
   background-clip: text;
   color: transparent;
   will-change: background-position;
+  /* FIX: Synced keyframe to 96% to match the inline <style> in index.html.
+     Previously this was 97% here but 96% in the HTML, meaning whichever file
+     loaded last would win, and the two animations were visually different. */
   animation: loading-progress-animation 4s ease-in-out forwards;
 }
 
 @keyframes loading-progress-animation {
   0%, 25% { background-position: 100% 0; }
-  50% { background-position: 63% 0; }
-  97% { background-position: 23% 0; }
-  100% { background-position: 7% 0; }
+  50%      { background-position: 63% 0; }
+  96%      { background-position: 23% 0; }
+  100%     { background-position: 7% 0; }
 }
 
 body.loading-finished #preloader p {
@@ -138,7 +179,7 @@ body.loading-finished #preloader p {
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
 }
 
 #preloader.hidden {
@@ -220,7 +261,8 @@ body.loading-finished #preloader p {
 }
 
 .site-footer p {
-  font-size: 0.70rem;
+  /* FIX: Removed trailing zero — 0.70rem → 0.7rem. CSS does not need trailing zeros. */
+  font-size: 0.7rem;
   font-weight: bold;
   color: var(--color-secondary);
 }
@@ -228,8 +270,11 @@ body.loading-finished #preloader p {
 /* Overlay */
 .about-overlay {
     position: fixed;
+    /* FIX: Removed redundant `height: 100dvh`. When `position: fixed` is combined with
+       `inset: 0`, the browser already sets top:0 and bottom:0, stretching the element
+       to full viewport height. Adding height: 100dvh then overrides the bottom:0 constraint,
+       creating a logical contradiction. `inset: 0` alone is sufficient and correct. */
     inset: 0;
-    height: 100dvh;
     background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -266,7 +311,7 @@ body.loading-finished #preloader p {
 }
 
 .about-column {
-    pointer-events: auto; /* Re-enables clicks for the columns and everything inside them */
+    pointer-events: auto;
     flex: 1;
 }
 
@@ -311,6 +356,9 @@ body.loading-finished #preloader p {
   color: var(--color-primary);
   font-size: 1.1rem;
   text-align: justify;
+  /* FIX: Added hyphens: auto to prevent "rivers" (large irregular word gaps) in
+     justified text on narrow containers. Requires lang="it" on <html>, which is already set. */
+  hyphens: auto;
 }
 
 .about-text-column a {
@@ -318,8 +366,9 @@ body.loading-finished #preloader p {
     text-decoration: none;
     transition: color 0.3s ease;
 }
+
 .about-text-column a:hover {
-color: var(--color-hover);
+    color: var(--color-hover);
 }
 
 .about-social-links {
@@ -360,19 +409,22 @@ color: var(--color-hover);
   display: flex;
   gap: 1rem;
   padding: 2rem 2rem 0rem 2rem;
-  /* CRITICAL FIX: Using dvh to prevent mobile URL bar overlap */
   min-height: calc(100dvh - 2rem);
 }
 
 .column {
   flex: 1;
   overflow-y: scroll;
-  /* CRITICAL FIX: Using dvh here too */
   height: calc(100dvh - 2rem);
   padding-bottom: 0.5rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  will-change: transform;
+  /* FIX: Changed from `will-change: transform` to `will-change: scroll-position`.
+     The columns scroll — they do not transform. Using `transform` was semantically
+     wrong, unnecessarily promoted an incorrect stacking context, and was misleading
+     to any developer reading this code. `scroll-position` is the correct GPU hint
+     for a scroll container. */
+  will-change: scroll-position;
 }
 
 .column::-webkit-scrollbar {
@@ -383,8 +435,6 @@ color: var(--color-hover);
   display: block;
   margin-bottom: 1rem;
   position: relative;
-  /* border: 4px solid var(--border-color); */
-  /* box-sizing: border-box; */
 }
 
 .media-link img,
@@ -400,12 +450,12 @@ color: var(--color-hover);
     cursor: pointer;
 }
 
-/* === CAROUSEL STYLE === */
+/* === CAROUSEL STYLES === */
 @keyframes peek-a-boo {
     0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-20%); }
-    50% { transform: translateX(20%); }
-    75% { transform: translateX(20%); }
+    25%       { transform: translateX(-20%); }
+    50%       { transform: translateX(20%); }
+    75%       { transform: translateX(20%); }
 }
 
 .carousel-track.has-peeked {
@@ -416,17 +466,16 @@ color: var(--color-hover);
     aspect-ratio: 1 / 1;
     overflow-x: scroll;
     overflow-y: hidden;
-    /* scroll-snap-type: x proximity; */
     scrollbar-width: none;
     -ms-overflow-style: none;
     will-change: scroll-position;
-    cursor: grab; /* Default cursor state */
+    cursor: grab;
     user-select: none;
 }
 
 .carousel-container.active-drag {
-    cursor: grabbing; /* Cursor during active drag state */
-    user-select: none; /* Prevents text selection on drag */
+    cursor: grabbing;
+    user-select: none;
 }
 
 .carousel-container::-webkit-scrollbar {
@@ -442,13 +491,13 @@ color: var(--color-hover);
     flex: 0 0 100%;
     width: 100%;
     height: 100%;
-    scroll-snap-align: center; /* This rule applies to both img and the video-container div */
+    scroll-snap-align: center;
     object-fit: cover;
 }
 /* === END OF CAROUSEL STYLES === */
 
-/* === DOPLHINS STYLES === */
-/* --- 1. The Container --- */
+/* === DOLPHINS STYLES === */
+/* FIX: Typo in comment — "DOPLHINS" → "DOLPHINS" */
 .video-toggle-container {
     position: relative;
     aspect-ratio: 16 / 9;
@@ -466,29 +515,37 @@ color: var(--color-hover);
 }
 
 .video-pixelated { z-index: var(--z-media-top); opacity: 0.001; }
-.video-normal { z-index: var(--z-base); }
+.video-normal    { z-index: var(--z-base); }
 .video-toggle-container.is-pixelated .video-pixelated { opacity: 1; }
+/* === END OF DOLPHINS STYLES === */
 
-/* === POOL STYLES === */
-.image-to-video-container, .interactive-balls-container { display: grid; cursor: pointer; }
-.pool-image, .pool-video, .balls-image, .balls-video {
+/* === POOL & BALLS STYLES === */
+.image-to-video-container,
+.interactive-balls-container { display: grid; cursor: pointer; }
+
+.pool-image, .pool-video,
+.balls-image, .balls-video {
     grid-area: 1 / 1;
     width: 100%;
     height: auto;
     transition: opacity 0.5s ease;
 }
-.pool-video, .balls-video { opacity: 0; z-index: var(--z-media-top); }
-.pool-image, .balls-image { opacity: 1; z-index: var(--z-base); }
-.image-to-video-container.is-playing .pool-video,
+
+.pool-video,  .balls-video  { opacity: 0; z-index: var(--z-media-top); }
+.pool-image,  .balls-image  { opacity: 1; z-index: var(--z-base); }
+
+.image-to-video-container.is-playing    .pool-video,
 .interactive-balls-container.is-playing .balls-video { opacity: 1; }
+/* === END OF POOL & BALLS STYLES === */
 
 html.overlay-active { overflow: hidden !important; }
 
 /* === EASTER EGG LAYER === */
 #easter-egg-layer {
     position: fixed;
+    /* FIX: Removed redundant `height: 100dvh` — same logical contradiction as .about-overlay above.
+       `inset: 0` on a fixed element already constrains all four edges to the viewport. */
     inset: 0;
-    height: 100dvh;
     background-color: var(--page-background);
     z-index: var(--z-easter-egg);
     display: flex;
@@ -511,7 +568,6 @@ html.overlay-active { overflow: hidden !important; }
 #easter-egg-layer img {
     width: 100%;
     max-width: 540px;
-    /* Use dvh here just in case, though vh is usually fine for overlays */
     max-height: calc(100dvh - 3rem);
     height: auto;
     object-fit: contain;
@@ -525,12 +581,11 @@ body.easter-egg-active .about-toggle {
   cursor: default;
 }
 
-/* Responsive layout for mobile */
+/* === RESPONSIVE — MOBILE (max-width: 768px) === */
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
     height: auto;
-/* Reset min-height on mobile wrapper to avoid gaps */
     min-height: auto;
     padding: 2rem var(--mobile-padding) 0.5rem;
     gap: 0;
@@ -574,17 +629,13 @@ body.easter-egg-active .about-toggle {
     left: 50%;
     width: 30px;
     height: 30px;
-    
-    /* Your Custom Cursor SVG (White) */
     background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools --%3E%3Csvg fill='%23ffffff' width='800px' height='800px' viewBox='-32 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M358.182 179.361c-19.493-24.768-52.679-31.945-79.872-19.098-15.127-15.687-36.182-22.487-56.595-19.629V67c0-36.944-29.736-67-66.286-67S89.143 30.056 89.143 67v161.129c-19.909-7.41-43.272-5.094-62.083 8.872-29.355 21.795-35.793 63.333-14.55 93.152l109.699 154.001C134.632 501.59 154.741 512 176 512h178.286c30.802 0 57.574-21.5 64.557-51.797l27.429-118.999A67.873 67.873 0 0 0 448 326v-84c0-46.844-46.625-79.273-89.818-62.639zM80.985 279.697l27.126 38.079c8.995 12.626 29.031 6.287 29.031-9.283V67c0-25.12 36.571-25.16 36.571 0v175c0 8.836 7.163 16 16 16h6.857c8.837 0 16-7.164 16-16v-35c0-25.12 36.571-25.16 36.571 0v35c0 8.836 7.163 16 16 16H272c8.837 0 16-7.164 16-16v-21c0-25.12 36.571-25.16 36.571 0v21c0 8.836 7.163 16 16 16h6.857c8.837 0 16-7.164 16-16 0-25.121 36.571-25.16 36.571 0v84c0 1.488-.169 2.977-.502 4.423l-27.43 119.001c-1.978 8.582-9.29 14.576-17.782 14.576H176c-5.769 0-11.263-2.878-14.697-7.697l-109.712-154c-14.406-20.223 14.994-42.818 29.394-22.606zM176.143 400v-96c0-8.837 6.268-16 14-16h6c7.732 0 14 7.163 14 16v96c0 8.837-6.268 16-14 16h-6c-7.733 0-14-7.163-14-16zm75.428 0v-96c0-8.837 6.268-16 14-16h6c7.732 0 14 7.163 14 16v96c0 8.837-6.268 16-14 16h-6c-7.732 0-14-7.163-14-16zM327 400v-96c0-8.837 6.268-16 14-16h6c7.732 0 14 7.163 14 16v96c0 8.837-6.268 16-14 16h-6c-7.732 0-14-7.163-14-16z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-size: contain;
-    
     transform: translate(-50%, -50%) scale(1) rotate(-45deg);
     filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.6));
     z-index: var(--z-hand);
     pointer-events: none;
-    
     /* HIDDEN BY DEFAULT (Desktop) */
     display: none;
     opacity: 0;
@@ -617,10 +668,10 @@ body.easter-egg-active .about-toggle {
         transform: translate(-50%, -50%) rotate(-45deg) scale(1);
     }
     50% {
-        transform: translate(-50%, -50%) rotate(-45deg) scale(0.85); /* Click */
+        transform: translate(-50%, -50%) rotate(-45deg) scale(0.85);
     }
     60% {
-        transform: translate(-50%, -50%) rotate(-45deg) scale(1); /* Release */
+        transform: translate(-50%, -50%) rotate(-45deg) scale(1);
     }
     80% {
         opacity: 1;
