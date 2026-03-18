@@ -111,23 +111,24 @@
     
     function setupHandHint() {
         if (!window.matchMedia('(max-width: 768px)').matches) return;
-        
+
         const targets = document.querySelectorAll('.hand-on-scroll');
         if (targets.length === 0) return;
 
-        const observer = new IntersectionObserver((entries, obs) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const target = entry.target;
-                    setTimeout(() => {
-                        target.classList.add('show-hint');
-                    }, 500);
-                    obs.unobserve(target);
-                }
-            });
-        }, { threshold: 0.6 });
+        targets.forEach(target => {
+            // Hide the icon permanently on first touch interaction.
+            target.addEventListener('touchstart', () => {
+                target.classList.add('hint-used');
+            }, { once: true, passive: true });
 
-        targets.forEach(target => observer.observe(target));
+            // For the carousel specifically, also hide on scroll
+            // since the user may drag rather than tap.
+            if (target.classList.contains('carousel-container')) {
+                target.addEventListener('scroll', () => {
+                    target.classList.add('hint-used');
+                }, { once: true, passive: true });
+            }
+        });
     }
     
     function setupPoolAnimation() {
