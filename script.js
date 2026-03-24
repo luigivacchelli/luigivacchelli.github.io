@@ -180,8 +180,11 @@
 
         // --- Synchronised Start ---
         // autoplay is intentionally absent from the HTML on both videos.
-        // Neither video plays until BOTH have fired canplaythrough, guaranteeing
-        // they start from frame 0 at the same moment on every page load.
+        // Neither video plays until BOTH are ready, guaranteeing they start
+        // from frame 0 at the same moment on every page load — including
+        // cached reloads, where canplaythrough may have already fired before
+        // the listeners are attached. We therefore check readyState immediately
+        // and only fall back to the event listener if the video isn't ready yet.
         let normalReady = false;
         let pixelReady  = false;
 
@@ -193,8 +196,16 @@
                 .catch(e => console.warn("Dolphin autoplay blocked:", e));
         }
 
-        vNormal.addEventListener('canplaythrough', () => { normalReady = true; tryPlay(); }, { once: true });
-        vPixel.addEventListener('canplaythrough',  () => { pixelReady  = true; tryPlay(); }, { once: true });
+        function markNormalReady() { if (!normalReady) { normalReady = true; tryPlay(); } }
+        function markPixelReady()  { if (!pixelReady)  { pixelReady  = true; tryPlay(); } }
+
+        // readyState >= 3 (HAVE_FUTURE_DATA) means the browser has enough data
+        // to start playback. On cached reloads this is already true when JS runs.
+        if (vNormal.readyState >= 3) { markNormalReady(); }
+        else { vNormal.addEventListener('canplaythrough', markNormalReady, { once: true }); }
+
+        if (vPixel.readyState >= 3)  { markPixelReady(); }
+        else { vPixel.addEventListener('canplaythrough', markPixelReady, { once: true }); }
 
         // --- Tab Switching ---
         // Re-align the pixelated video to the normal one when the user returns to the tab.
