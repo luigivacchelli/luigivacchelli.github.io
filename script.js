@@ -21,6 +21,7 @@
     const easterEggLayer    = document.getElementById('easter-egg-layer');
     let webcamStream = null;
     let webcamRequestPending = false;
+    let pageIsLeaving = false;
     
     // --- DICTIONARY FOR TRANSLATIONS ---
     const translations = {
@@ -66,7 +67,7 @@
             aboutOverlay.classList.remove('is-open');
             document.documentElement.classList.remove('overlay-active');
             aboutOverlay.setAttribute('aria-hidden', 'true');
-            stopWebcam();
+            // Keep the granted stream ready so the feed is present on the next open.
         }
     }
     
@@ -82,7 +83,14 @@
     }
     
     function requestWebcamAccess() {
-        if (!webcamVideo || !webcamContainer || webcamStream || webcamRequestPending) return;
+        if (!webcamVideo || !webcamContainer || webcamRequestPending) return;
+        webcamContainer.style.removeProperty('display');
+        if (webcamStream?.getVideoTracks().some(track => track.readyState === 'live')) {
+            if (webcamVideo.srcObject !== webcamStream) webcamVideo.srcObject = webcamStream;
+            webcamVideo.play().catch(() => {});
+            return;
+        }
+        webcamStream = null;
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             webcamContainer.style.display = 'none';
             return;
@@ -91,12 +99,21 @@
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 webcamRequestPending = false;
-                if (!aboutOverlay || !aboutOverlay.classList.contains('is-open')) {
+                if (pageIsLeaving) {
                     stream.getTracks().forEach(track => track.stop());
                     return;
                 }
                 webcamStream = stream;
                 webcamVideo.srcObject = stream;
+                webcamVideo.play().catch(() => {});
+                stream.getVideoTracks().forEach(track => {
+                    track.addEventListener('ended', () => {
+                        if (webcamStream !== stream) return;
+                        webcamStream = null;
+                        webcamVideo.srcObject = null;
+                        webcamContainer.style.display = 'none';
+                    }, { once: true });
+                });
             })
             .catch(() => {
                 webcamRequestPending = false;
@@ -227,10 +244,11 @@
         const scrollTargets = new Set();
         const desiredPositions = new WeakMap();
         const expectedPositions = new WeakMap();
-        const animations = new WeakMap();
         const activeTargets = new Set();
         const frameCallbacks = new Set();
         let animationFrame = 0;
+        let previousFrameTime = 0;
+        const referenceWorldHeight = 2 * 5 * Math.tan(Math.PI / 8);
 
         const readPosition = target => target === window ? window.scrollY : target.scrollTop;
         const writePosition = (target, position) => {
@@ -251,7 +269,6 @@
         function addDelta(target, delta) {
             const desired = (desiredPositions.get(target) ?? readPosition(target)) + delta;
             desiredPositions.set(target, desired);
-            animations.set(target, { from: readPosition(target), started: performance.now() });
             activeTargets.add(target);
             requestFrame();
         }
@@ -263,12 +280,11 @@
             if (mobileQuery.matches && source && !mainContainer.contains(source)) return;
 
             const target = event.currentTarget;
-            const multiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE
-                ? 100 / 6
-                : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1;
-            // Bound a single burst so the DOM recycler can process each passed item.
-            const delta = Math.max(-150, Math.min(150, event.deltaY * multiplier));
-            if (!delta) return;
+            // Match the reference homepage's wheel cap and world-space travel, then
+            // convert its virtual distance back into this DOM gallery's CSS pixels.
+            const input = Math.max(-150, Math.min(150, event.deltaY));
+            const delta = input * 0.01 * window.innerHeight / referenceWorldHeight;
+            if (Math.abs(delta) < 0.01) return;
 
             event.preventDefault();
             addDelta(target, delta);
@@ -292,26 +308,24 @@
             }
 
             desiredPositions.set(target, actual);
-            animations.delete(target);
             activeTargets.delete(target);
         }
 
         function animate(now) {
             animationFrame = 0;
+            const elapsedFrames = previousFrameTime
+                ? Math.max(0.5, (now - previousFrameTime) / 16.67)
+                : 1;
+            previousFrameTime = now;
+            const easing = 1 - Math.pow(0.95, elapsedFrames);
 
             activeTargets.forEach(target => {
                 const actual = readPosition(target);
                 const desired = desiredPositions.get(target) ?? actual;
-                const animation = animations.get(target) ?? { from: actual, started: now };
-                const progress = Math.min(1, Math.max(0, (now - animation.started) / 1200));
-                const eased = progress >= 1 ? 1 : Math.min(1, 1.001 - Math.pow(2, -10 * progress));
-                const next = animation.from + (desired - animation.from) * eased;
+                const difference = desired - actual;
+                const next = Math.abs(difference) < 0.4 ? desired : actual + difference * easing;
                 writePosition(target, next);
-                if (progress >= 1) {
-                    writePosition(target, desired);
-                    animations.delete(target);
-                    activeTargets.delete(target);
-                }
+                if (Math.abs(difference) < 0.4) activeTargets.delete(target);
             });
 
             let callbackNeedsFrame = false;
@@ -319,6 +333,7 @@
                 if (callback(now)) callbackNeedsFrame = true;
             });
             if (activeTargets.size || callbackNeedsFrame) requestFrame();
+            else previousFrameTime = 0;
         }
 
         function bindTargets() {
@@ -336,7 +351,6 @@
                 scrollTargets.add(target);
                 desiredPositions.set(target, readPosition(target));
                 expectedPositions.delete(target);
-                animations.delete(target);
                 target.addEventListener('wheel', onWheel, { passive: false });
                 target.addEventListener('scroll', onScroll, { passive: true });
             });
@@ -347,10 +361,7 @@
             if (desiredPositions.has(target)) desiredPositions.set(target, desiredPositions.get(target) + delta);
             else desiredPositions.set(target, actual);
             expectedPositions.set(target, actual);
-            if (activeTargets.has(target)) {
-                animations.set(target, { from: actual, started: performance.now() });
-                requestFrame();
-            }
+            if (activeTargets.has(target)) requestFrame();
         }
 
         mobileQuery.addEventListener('change', bindTargets);
@@ -1945,6 +1956,16 @@
             isContentLoaded = true;
             finishLoading();
         }
+    });
+
+    window.addEventListener('pagehide', () => {
+        pageIsLeaving = true;
+        stopWebcam();
+    });
+
+    window.addEventListener('pageshow', () => {
+        pageIsLeaving = false;
+        if (aboutOverlay?.classList.contains('is-open')) requestWebcamAccess();
     });
 
 })();
