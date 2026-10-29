@@ -133,26 +133,51 @@
         });
     }
     
-    function setupHandHint() {
-        if (!window.matchMedia('(max-width: 768px)').matches) return;
+    function setupResponsiveGalleryOrder() {
+        if (!mainContainer) return;
+        const leftColumn = mainContainer.querySelector('.column.left');
+        const rightColumn = mainContainer.querySelector('.column.right');
+        if (!leftColumn || !rightColumn) return;
 
-        const targets = document.querySelectorAll('.hand-on-scroll');
-        if (targets.length === 0) return;
+        const leftItems = Array.from(leftColumn.querySelectorAll('.media-link'));
+        const rightItems = Array.from(rightColumn.querySelectorAll('.media-link'));
+        const leftTrigger = leftColumn.querySelector('.scroll-trigger');
+        const rightTrigger = rightColumn.querySelector('.scroll-trigger');
+        const mobileQuery = window.matchMedia('(max-width: 768px)');
+        let mobileColumn = null;
 
-        targets.forEach(target => {
-            // Hide the icon permanently on first touch interaction.
-            target.addEventListener('touchstart', () => {
-                target.classList.add('hint-used');
-            }, { once: true, passive: true });
-
-            // For the carousel specifically, also hide on scroll
-            // since the user may drag rather than tap.
-            if (target.classList.contains('carousel-container')) {
-                target.addEventListener('scroll', () => {
-                    target.classList.add('hint-used');
-                }, { once: true, passive: true });
+        function applyOrder(isMobile) {
+            if (isMobile) {
+                if (!mobileColumn) {
+                    mobileColumn = document.createElement('div');
+                    mobileColumn.className = 'column mobile-column';
+                    mainContainer.appendChild(mobileColumn);
+                }
+                const orderedItems = [];
+                const itemCount = Math.max(leftItems.length, rightItems.length);
+                for (let index = 0; index < itemCount; index++) {
+                    if (leftItems[index]) orderedItems.push(leftItems[index]);
+                    if (rightItems[index]) orderedItems.push(rightItems[index]);
+                }
+                orderedItems.forEach(item => mobileColumn.appendChild(item));
+                if (leftTrigger) mobileColumn.appendChild(leftTrigger);
+                if (rightTrigger) mobileColumn.appendChild(rightTrigger);
+                mainContainer.classList.add('mobile-stacked');
+                return;
             }
-        });
+
+            mainContainer.classList.remove('mobile-stacked');
+            if (!mobileColumn) return;
+            leftItems.forEach(item => leftColumn.appendChild(item));
+            if (leftTrigger) leftColumn.appendChild(leftTrigger);
+            rightItems.forEach(item => rightColumn.appendChild(item));
+            if (rightTrigger) rightColumn.appendChild(rightTrigger);
+            mobileColumn.remove();
+            mobileColumn = null;
+        }
+
+        applyOrder(mobileQuery.matches);
+        mobileQuery.addEventListener('change', event => applyOrder(event.matches));
     }
     
     function setupPoolAnimation() {
@@ -624,8 +649,8 @@
     document.addEventListener('DOMContentLoaded', () => {
         if (preloaderContent) preloaderContent.classList.add('ready');
         translatePage();
+        setupResponsiveGalleryOrder();
         setupImageGallery();
-        setupHandHint();
         setupVideoLoading();
         setupVideoToggle();
         setupPoolAnimation();
