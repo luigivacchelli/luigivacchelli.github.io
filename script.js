@@ -180,6 +180,46 @@
         mobileQuery.addEventListener('change', event => applyOrder(event.matches));
     }
 
+    function setupGalleryImageLoading() {
+        const images = Array.from(galleryImages).filter(image => image.loading === 'lazy');
+        if (!images.length) return;
+        if (!('IntersectionObserver' in window)) {
+            images.forEach(image => { image.loading = 'eager'; });
+            return;
+        }
+
+        const mobileQuery = window.matchMedia('(max-width: 768px)');
+        let observers = [];
+
+        function bindObservers() {
+            observers.forEach(observer => observer.disconnect());
+            observers = [];
+            const surfaces = mobileQuery.matches
+                ? [{ element: mainContainer.querySelector('.mobile-column'), root: null }]
+                : Array.from(mainContainer.querySelectorAll(':scope > .column:not(.mobile-column)'))
+                    .map(element => ({ element, root: element }));
+            const rootMargin = `${Math.max(900, Math.round(window.innerHeight * 1.5))}px 0px`;
+
+            surfaces.forEach(({ element, root }) => {
+                if (!element) return;
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (!entry.isIntersecting) return;
+                        const image = entry.target;
+                        image.loading = 'eager';
+                        observer.unobserve(image);
+                        if (typeof image.decode === 'function') image.decode().catch(() => {});
+                    });
+                }, { root, rootMargin });
+                element.querySelectorAll('img[loading="lazy"]').forEach(image => observer.observe(image));
+                observers.push(observer);
+            });
+        }
+
+        bindObservers();
+        mobileQuery.addEventListener('change', bindObservers);
+    }
+
     function setupSmoothScroll() {
         if (!mainContainer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
 
@@ -187,10 +227,10 @@
         const scrollTargets = new Set();
         const desiredPositions = new WeakMap();
         const expectedPositions = new WeakMap();
+        const animations = new WeakMap();
         const activeTargets = new Set();
         const frameCallbacks = new Set();
         let animationFrame = 0;
-        let previousFrameTime = 0;
 
         const readPosition = target => target === window ? window.scrollY : target.scrollTop;
         const writePosition = (target, position) => {
@@ -209,7 +249,9 @@
         }
 
         function addDelta(target, delta) {
-            desiredPositions.set(target, (desiredPositions.get(target) ?? readPosition(target)) + delta);
+            const desired = (desiredPositions.get(target) ?? readPosition(target)) + delta;
+            desiredPositions.set(target, desired);
+            animations.set(target, { from: readPosition(target), started: performance.now() });
             activeTargets.add(target);
             requestFrame();
         }
@@ -222,9 +264,10 @@
 
             const target = event.currentTarget;
             const multiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE
-                ? 16
+                ? 100 / 6
                 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1;
-            const delta = event.deltaY * multiplier;
+            // Bound a single burst so the DOM recycler can process each passed item.
+            const delta = Math.max(-150, Math.min(150, event.deltaY * multiplier));
             if (!delta) return;
 
             event.preventDefault();
@@ -237,25 +280,38 @@
             const expected = expectedPositions.get(target);
             if (activeTargets.has(target) && expected !== undefined && Math.abs(actual - expected) <= 1.5) return;
 
+            const desired = desiredPositions.get(target) ?? actual;
+            const maximum = target === window
+                ? Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+                : Math.max(0, target.scrollHeight - target.clientHeight);
+            const isWaitingForRecycle = activeTargets.has(target) &&
+                ((actual >= maximum - 1 && desired > actual) || (actual <= 1 && desired < actual));
+            if (isWaitingForRecycle) {
+                requestFrame();
+                return;
+            }
+
             desiredPositions.set(target, actual);
+            animations.delete(target);
             activeTargets.delete(target);
         }
 
         function animate(now) {
             animationFrame = 0;
-            const elapsed = previousFrameTime ? Math.min(48, now - previousFrameTime) : 16.67;
-            const frameScale = elapsed / 16.67;
-            previousFrameTime = now;
-            const easing = 1 - Math.pow(0.9, frameScale);
 
             activeTargets.forEach(target => {
                 const actual = readPosition(target);
                 const desired = desiredPositions.get(target) ?? actual;
-
-                const difference = desired - actual;
-                const next = Math.abs(difference) < 0.4 ? desired : actual + difference * easing;
+                const animation = animations.get(target) ?? { from: actual, started: now };
+                const progress = Math.min(1, Math.max(0, (now - animation.started) / 1200));
+                const eased = progress >= 1 ? 1 : Math.min(1, 1.001 - Math.pow(2, -10 * progress));
+                const next = animation.from + (desired - animation.from) * eased;
                 writePosition(target, next);
-                if (Math.abs(difference) < 0.4) activeTargets.delete(target);
+                if (progress >= 1) {
+                    writePosition(target, desired);
+                    animations.delete(target);
+                    activeTargets.delete(target);
+                }
             });
 
             let callbackNeedsFrame = false;
@@ -263,7 +319,6 @@
                 if (callback(now)) callbackNeedsFrame = true;
             });
             if (activeTargets.size || callbackNeedsFrame) requestFrame();
-            else previousFrameTime = 0;
         }
 
         function bindTargets() {
@@ -281,6 +336,7 @@
                 scrollTargets.add(target);
                 desiredPositions.set(target, readPosition(target));
                 expectedPositions.delete(target);
+                animations.delete(target);
                 target.addEventListener('wheel', onWheel, { passive: false });
                 target.addEventListener('scroll', onScroll, { passive: true });
             });
@@ -291,7 +347,10 @@
             if (desiredPositions.has(target)) desiredPositions.set(target, desiredPositions.get(target) + delta);
             else desiredPositions.set(target, actual);
             expectedPositions.set(target, actual);
-            if (activeTargets.has(target)) requestFrame();
+            if (activeTargets.has(target)) {
+                animations.set(target, { from: actual, started: performance.now() });
+                requestFrame();
+            }
         }
 
         mobileQuery.addEventListener('change', bindTargets);
@@ -425,6 +484,8 @@
     function setupVideoLoading() {
         const videos = Array.from(document.querySelectorAll('main video'));
         const waitingToPlay = new WeakSet();
+        const mobileQuery = window.matchMedia('(max-width: 768px)');
+        let preloadObservers = [];
 
         function loadVideo(video) {
             if (video.dataset.mediaLoaded === 'true') return;
@@ -474,14 +535,29 @@
             return;
         }
 
-        const preloadObserver = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    loadVideo(entry.target);
-                    preloadObserver.unobserve(entry.target);
-                }
+        function bindPreloadObservers() {
+            preloadObservers.forEach(observer => observer.disconnect());
+            preloadObservers = [];
+            const groupedVideos = new Map();
+            videos.forEach(video => {
+                const root = mobileQuery.matches
+                    ? null
+                    : video.closest('main > .column:not(.mobile-column)');
+                if (!groupedVideos.has(root)) groupedVideos.set(root, []);
+                groupedVideos.get(root).push(video);
             });
-        }, { rootMargin: '900px 0px' });
+            groupedVideos.forEach((items, root) => {
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (!entry.isIntersecting) return;
+                        loadVideo(entry.target);
+                        observer.unobserve(entry.target);
+                    });
+                }, { root, rootMargin: '900px 0px' });
+                items.forEach(video => observer.observe(video));
+                preloadObservers.push(observer);
+            });
+        }
 
         const playbackObserver = new IntersectionObserver(entries => {
             entries.forEach(entry => {
@@ -497,9 +573,10 @@
         }, { threshold: 0.1 });
 
         videos.forEach(video => {
-            preloadObserver.observe(video);
             if (video.dataset.autoplay === 'true') playbackObserver.observe(video);
         });
+        bindPreloadObservers();
+        mobileQuery.addEventListener('change', bindPreloadObservers);
     }
 
     function setupScrollPixelationLegacy() {
@@ -944,6 +1021,7 @@
         const renderedMedia = new Set();
         const hiddenMedia = new Map();
         const lastPositions = new WeakMap();
+        let rendererDisabled = false;
         let sceneTarget;
         let frameTarget;
         let previousTarget;
@@ -1090,6 +1168,19 @@
             });
             hiddenMedia.clear();
         }
+
+        function disableRenderer(error) {
+            if (rendererDisabled) return;
+            rendererDisabled = true;
+            restoreMedia();
+            canvas.style.visibility = 'hidden';
+            if (error) console.warn('Scroll pixelation stopped; showing the original media.', error);
+        }
+
+        canvas.addEventListener('webglcontextlost', event => {
+            event.preventDefault();
+            disableRenderer();
+        });
 
         function hideRenderedMedia() {
             renderedMedia.forEach(element => {
@@ -1323,6 +1414,7 @@
 
         function clearFeedback() {
             restoreMedia();
+            if (rendererDisabled || gl.isContextLost()) return;
             [frameTarget, previousTarget].forEach(clearTarget);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.clearColor(0, 0, 0, 0);
@@ -1330,11 +1422,25 @@
         }
 
         function requestRender() {
+            if (rendererDisabled) return;
             if (scrollPhysics?.requestFrame) scrollPhysics.requestFrame();
             else if (!raf) raf = requestAnimationFrame(render);
         }
 
         function render(now) {
+            if (rendererDisabled || gl.isContextLost()) {
+                disableRenderer();
+                return false;
+            }
+            try {
+                return renderFrame(now);
+            } catch (error) {
+                disableRenderer(error);
+                return false;
+            }
+        }
+
+        function renderFrame(now) {
             raf = 0;
             const elapsedFrames = lastTime ? Math.max(0.5, (now - lastTime) / 16.67) : 1;
             lastTime = now;
@@ -1807,6 +1913,7 @@
         if (preloaderContent) preloaderContent.classList.add('ready');
         translatePage();
         setupResponsiveGalleryOrder();
+        setupGalleryImageLoading();
         const scrollPhysics = setupSmoothScroll();
         setupInfiniteGallery(scrollPhysics);
         setupImageGallery();
