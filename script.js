@@ -300,8 +300,6 @@
             const target = event.currentTarget;
             const actual = readPosition(target);
             const expected = expectedPositions.get(target);
-            if (activeTargets.has(target) && expected !== undefined && Math.abs(actual - expected) <= 1.5) return;
-
             const desired = desiredPositions.get(target) ?? actual;
             const maximum = target === window
                 ? Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
@@ -309,6 +307,18 @@
             const isWaitingForRecycle = activeTargets.has(target) &&
                 ((actual >= maximum - 1 && desired > actual) || (actual <= 1 && desired < actual));
             if (isWaitingForRecycle) {
+                requestFrame();
+                return;
+            }
+
+            if (activeTargets.has(target) && expected !== undefined) {
+                const nativeDelta = actual - expected;
+                if (Math.abs(nativeDelta) <= 1.5) return;
+
+                // Safari can deliver non-cancelable trackpad momentum scrolls. Fold
+                // those native pixels into the target instead of aborting the easing.
+                desiredPositions.set(target, desired + nativeDelta);
+                expectedPositions.set(target, actual);
                 requestFrame();
                 return;
             }
