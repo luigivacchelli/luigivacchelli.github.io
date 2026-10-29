@@ -180,7 +180,201 @@
         mobileQuery.addEventListener('change', event => applyOrder(event.matches));
     }
 
-    function setupInfiniteGallery() {
+    function setupSmoothScroll() {
+        if (!mainContainer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
+
+        const mobileQuery = window.matchMedia('(max-width: 768px)');
+        const scrollTargets = new Set();
+        const desiredPositions = new WeakMap();
+        const expectedPositions = new WeakMap();
+        const momentum = new WeakMap();
+        const activeTargets = new Set();
+        let animationFrame = 0;
+        let previousFrameTime = 0;
+        let activeTouch = null;
+
+        const readPosition = target => target === window ? window.scrollY : target.scrollTop;
+        const writePosition = (target, position) => {
+            expectedPositions.set(target, position);
+            if (target === window) window.scrollTo(window.scrollX, position);
+            else target.scrollTop = position;
+        };
+
+        function requestFrame() {
+            if (!animationFrame) animationFrame = window.requestAnimationFrame(animate);
+        }
+
+        function addDelta(target, delta) {
+            desiredPositions.set(target, (desiredPositions.get(target) ?? readPosition(target)) + delta);
+            momentum.set(target, 0);
+            activeTargets.add(target);
+            requestFrame();
+        }
+
+        function onWheel(event) {
+            if (event.ctrlKey || event.metaKey || event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY) || !event.cancelable) return;
+            const source = event.target instanceof Element ? event.target : null;
+            if (source?.closest('.about-overlay, [data-native-scroll]')) return;
+            if (mobileQuery.matches && source && !mainContainer.contains(source)) return;
+
+            const target = event.currentTarget;
+            const multiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+                ? 16
+                : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1;
+            const delta = Math.max(-150, Math.min(150, event.deltaY * multiplier));
+            if (!delta) return;
+
+            event.preventDefault();
+            addDelta(target, delta);
+        }
+
+        function onScroll(event) {
+            const target = event.currentTarget;
+            const actual = readPosition(target);
+            const expected = expectedPositions.get(target);
+            if (activeTargets.has(target) && expected !== undefined && Math.abs(actual - expected) <= 1.5) return;
+
+            desiredPositions.set(target, actual);
+            momentum.set(target, 0);
+            activeTargets.delete(target);
+        }
+
+        function animate(now) {
+            animationFrame = 0;
+            const elapsed = previousFrameTime ? Math.min(48, now - previousFrameTime) : 16.67;
+            const frameScale = elapsed / 16.67;
+            previousFrameTime = now;
+            const easing = 1 - Math.pow(0.86, frameScale);
+
+            activeTargets.forEach(target => {
+                const actual = readPosition(target);
+                let desired = desiredPositions.get(target) ?? actual;
+                let speed = momentum.get(target) || 0;
+                if (Math.abs(speed) > 0.008) {
+                    desired += speed * elapsed;
+                    desiredPositions.set(target, desired);
+                    speed *= Math.pow(0.95, frameScale);
+                    momentum.set(target, speed);
+                } else {
+                    momentum.set(target, 0);
+                }
+
+                const difference = desired - actual;
+                const next = Math.abs(difference) < 0.4 ? desired : actual + difference * easing;
+                writePosition(target, next);
+                if (Math.abs(difference) < 0.4 && Math.abs(speed) <= 0.008) activeTargets.delete(target);
+            });
+
+            if (activeTargets.size) requestFrame();
+            else previousFrameTime = 0;
+        }
+
+        function onTouchStart(event) {
+            if (event.touches.length !== 1 || !mainContainer.contains(event.target)) {
+                activeTouch = null;
+                return;
+            }
+            const column = event.target instanceof Element
+                ? event.target.closest('main > .column:not(.mobile-column)')
+                : null;
+            const target = mobileQuery.matches ? window : column;
+            if (!target) {
+                activeTouch = null;
+                return;
+            }
+            activeTouch = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY,
+                lastY: event.touches[0].clientY,
+                target,
+                horizontalCarousel: Boolean(event.target.closest('.carousel-container')),
+                samples: [{ y: event.touches[0].clientY, time: event.timeStamp }],
+                scrolling: false,
+                nativeHorizontal: false
+            };
+        }
+
+        function onTouchMove(event) {
+            if (!activeTouch || event.touches.length !== 1) return;
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - activeTouch.x;
+            const deltaY = touch.clientY - activeTouch.y;
+            if (!activeTouch.scrolling && !activeTouch.nativeHorizontal &&
+                Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY) && activeTouch.horizontalCarousel) {
+                activeTouch.nativeHorizontal = true;
+                return;
+            }
+            if (activeTouch.nativeHorizontal || (!activeTouch.scrolling && Math.abs(deltaY) < 8)) return;
+
+            activeTouch.scrolling = true;
+            if (event.cancelable) event.preventDefault();
+            const movement = activeTouch.lastY - touch.clientY;
+            activeTouch.lastY = touch.clientY;
+            if (movement) addDelta(activeTouch.target, movement);
+
+            activeTouch.samples.push({ y: touch.clientY, time: event.timeStamp });
+            while (activeTouch.samples.length > 2 && event.timeStamp - activeTouch.samples[0].time > 120) {
+                activeTouch.samples.shift();
+            }
+        }
+
+        function onTouchEnd(event) {
+            if (!activeTouch) return;
+            if (activeTouch.scrolling && activeTouch.samples.length > 1) {
+                const first = activeTouch.samples[0];
+                const last = activeTouch.samples[activeTouch.samples.length - 1];
+                const duration = last.time - first.time;
+                if (duration > 0) {
+                    const speed = Math.max(-1.8, Math.min(1.8, (first.y - last.y) / duration));
+                    if (Math.abs(speed) > 0.08) {
+                        momentum.set(activeTouch.target, speed);
+                        activeTargets.add(activeTouch.target);
+                        requestFrame();
+                    }
+                }
+            }
+            activeTouch = null;
+        }
+
+        function bindTargets() {
+            scrollTargets.forEach(target => {
+                target.removeEventListener('wheel', onWheel);
+                target.removeEventListener('scroll', onScroll);
+            });
+            scrollTargets.clear();
+            activeTargets.clear();
+            const targets = mobileQuery.matches
+                ? [window]
+                : Array.from(mainContainer.querySelectorAll(':scope > .column:not(.mobile-column)'));
+
+            targets.forEach(target => {
+                scrollTargets.add(target);
+                desiredPositions.set(target, readPosition(target));
+                expectedPositions.delete(target);
+                momentum.set(target, 0);
+                target.addEventListener('wheel', onWheel, { passive: false });
+                target.addEventListener('scroll', onScroll, { passive: true });
+            });
+        }
+
+        function adjust(target, delta) {
+            const actual = readPosition(target);
+            if (desiredPositions.has(target)) desiredPositions.set(target, desiredPositions.get(target) + delta);
+            else desiredPositions.set(target, actual);
+            expectedPositions.set(target, actual);
+            if (activeTargets.has(target)) requestFrame();
+        }
+
+        window.addEventListener('touchstart', onTouchStart, { passive: true });
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('touchend', onTouchEnd, { passive: true });
+        window.addEventListener('touchcancel', () => { activeTouch = null; }, { passive: true });
+        mobileQuery.addEventListener('change', bindTargets);
+        bindTargets();
+        return { adjust };
+    }
+
+    function setupInfiniteGallery(scrollPhysics) {
         if (!mainContainer) return;
 
         mainContainer.classList.add('infinite-gallery');
@@ -211,8 +405,10 @@
 
                 if (isWindow) {
                     window.scrollTo(window.scrollX, Math.max(0, window.scrollY - shift));
+                    scrollPhysics?.adjust(scrollTarget, -shift);
                 } else {
                     scrollTarget.scrollTop = Math.max(0, scrollTarget.scrollTop - shift);
+                    scrollPhysics?.adjust(scrollTarget, -shift);
                 }
                 rotations++;
             }
@@ -885,7 +1081,7 @@
                 float jitter = hash(blockUv) - 0.5;
                 vec2 displacement = uOffset * (1.2 + jitter * 1.6);
                 float horizontalJitter = hash(blockUv + vec2(3.7, 9.2)) - 0.5;
-                displacement.x += horizontalJitter * abs(uOffset.y) * 0.3;
+                displacement.x += horizontalJitter * abs(uOffset.y) * 1.4;
                 vec4 shifted = texture(uCurrent, vUv - displacement);
                 vec4 previous = texture(uPrev, vUv);
                 float trailAlpha = previous.a * uDecay;
@@ -1616,7 +1812,8 @@
         if (preloaderContent) preloaderContent.classList.add('ready');
         translatePage();
         setupResponsiveGalleryOrder();
-        setupInfiniteGallery();
+        const scrollPhysics = setupSmoothScroll();
+        setupInfiniteGallery(scrollPhysics);
         setupImageGallery();
         setupVideoLoading();
         setupScrollPixelation();
