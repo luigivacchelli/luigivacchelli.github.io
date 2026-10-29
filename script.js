@@ -179,6 +179,93 @@
         applyOrder(mobileQuery.matches);
         mobileQuery.addEventListener('change', event => applyOrder(event.matches));
     }
+
+    function setupInfiniteGallery() {
+        if (!mainContainer) return;
+
+        mainContainer.classList.add('infinite-gallery');
+        const mobileQuery = window.matchMedia('(max-width: 768px)');
+        const bindings = [];
+        const scheduledFrames = new Map();
+
+        function recyclePassedItems(surface, scrollTarget) {
+            const isWindow = scrollTarget === window;
+            const viewportTop = isWindow ? 0 : surface.getBoundingClientRect().top;
+            let rotations = 0;
+
+            while (rotations < 24) {
+                const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
+                if (items.length < 2) return;
+
+                const first = items[0];
+                const next = items[1];
+                const firstRect = first.getBoundingClientRect();
+                if (firstRect.bottom > viewportTop + 1) return;
+
+                const nextRect = next.getBoundingClientRect();
+                const shift = nextRect.top - firstRect.top;
+                if (shift <= 1) return;
+
+                const trigger = surface.querySelector(':scope > .scroll-trigger');
+                surface.insertBefore(first, trigger);
+
+                if (isWindow) {
+                    window.scrollTo(window.scrollX, Math.max(0, window.scrollY - shift));
+                } else {
+                    scrollTarget.scrollTop = Math.max(0, scrollTarget.scrollTop - shift);
+                }
+                rotations++;
+            }
+        }
+
+        function scheduleRecycle(surface, scrollTarget) {
+            if (scheduledFrames.has(scrollTarget)) return;
+            const frame = window.requestAnimationFrame(() => {
+                scheduledFrames.delete(scrollTarget);
+                recyclePassedItems(surface, scrollTarget);
+            });
+            scheduledFrames.set(scrollTarget, frame);
+        }
+
+        function bindScrollSurfaces() {
+            bindings.forEach(({ target, handler }) => {
+                target.removeEventListener('scroll', handler);
+                target.removeEventListener('scrollend', handler);
+            });
+            bindings.length = 0;
+
+            const surfaces = mobileQuery.matches
+                ? [{ surface: mainContainer.querySelector('.mobile-column'), target: window }]
+                : Array.from(mainContainer.querySelectorAll(':scope > .column:not(.mobile-column)'))
+                    .map(surface => ({ surface, target: surface }));
+
+            surfaces.forEach(({ surface, target }) => {
+                if (!surface) return;
+                const handler = () => scheduleRecycle(surface, target);
+                target.addEventListener('scroll', handler, { passive: true });
+                target.addEventListener('scrollend', handler, { passive: true });
+                bindings.push({ target, handler });
+            });
+        }
+
+        // Scroll events can be coalesced during a fast fling. The sentinels provide
+        // a second chance to recycle the corresponding column before its end is reached.
+        if ('IntersectionObserver' in window) {
+            const sentinelObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const surface = entry.target.parentElement;
+                    scheduleRecycle(surface, mobileQuery.matches ? window : surface);
+                });
+            }, { rootMargin: '100% 0px' });
+            mainContainer.querySelectorAll('.scroll-trigger').forEach(trigger => sentinelObserver.observe(trigger));
+        }
+
+        // The footer trigger remains in each column for the existing footer workflow.
+        // Recycling media before it reaches the viewport intentionally keeps the footer hidden.
+        bindScrollSurfaces();
+        mobileQuery.addEventListener('change', bindScrollSurfaces);
+    }
     
     function setupPoolAnimation() {
         const container = document.getElementById('pool-animation');
@@ -936,6 +1023,12 @@
                 if (entry.target.dataset.column === 'left')  isLeftAtEnd  = entry.isIntersecting;
                 if (entry.target.dataset.column === 'right') isRightAtEnd = entry.isIntersecting;
             });
+            // Keep the original footer observer for a future finite-gallery mode, but
+            // never reveal the footer while media recycling keeps the gallery endless.
+            if (mainContainer?.classList.contains('infinite-gallery')) {
+                footer.classList.remove('visible');
+                return;
+            }
             const isDesktop = window.matchMedia('(min-width: 769px)').matches;
             if (isDesktop) {
                 footer.classList.toggle('visible', isLeftAtEnd && isRightAtEnd);
@@ -1071,6 +1164,7 @@
         if (preloaderContent) preloaderContent.classList.add('ready');
         translatePage();
         setupResponsiveGalleryOrder();
+        setupInfiniteGallery();
         setupImageGallery();
         setupVideoLoading();
         setupScrollPixelation();
