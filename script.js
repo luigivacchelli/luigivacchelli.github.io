@@ -240,7 +240,13 @@
             if (video.dataset.inView !== 'true') return;
             const play = () => {
                 waitingToPlay.delete(video);
-                if (video.dataset.inView === 'true') video.play().catch(() => {});
+                if (video.dataset.inView === 'true') {
+                    video.play().catch(error => {
+                        if (error.name !== 'AbortError') {
+                            console.warn('Inline video playback was blocked:', error.name, video.currentSrc || video.src);
+                        }
+                    });
+                }
             };
             if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) play();
             else if (!waitingToPlay.has(video)) {
