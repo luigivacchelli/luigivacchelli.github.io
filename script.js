@@ -187,11 +187,10 @@
         const scrollTargets = new Set();
         const desiredPositions = new WeakMap();
         const expectedPositions = new WeakMap();
-        const momentum = new WeakMap();
         const activeTargets = new Set();
+        const frameCallbacks = new Set();
         let animationFrame = 0;
         let previousFrameTime = 0;
-        let activeTouch = null;
 
         const readPosition = target => target === window ? window.scrollY : target.scrollTop;
         const writePosition = (target, position) => {
@@ -204,9 +203,13 @@
             if (!animationFrame) animationFrame = window.requestAnimationFrame(animate);
         }
 
+        function subscribeFrame(callback) {
+            frameCallbacks.add(callback);
+            return () => frameCallbacks.delete(callback);
+        }
+
         function addDelta(target, delta) {
             desiredPositions.set(target, (desiredPositions.get(target) ?? readPosition(target)) + delta);
-            momentum.set(target, 0);
             activeTargets.add(target);
             requestFrame();
         }
@@ -221,7 +224,7 @@
             const multiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE
                 ? 16
                 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1;
-            const delta = Math.max(-150, Math.min(150, event.deltaY * multiplier));
+            const delta = event.deltaY * multiplier;
             if (!delta) return;
 
             event.preventDefault();
@@ -235,7 +238,6 @@
             if (activeTargets.has(target) && expected !== undefined && Math.abs(actual - expected) <= 1.5) return;
 
             desiredPositions.set(target, actual);
-            momentum.set(target, 0);
             activeTargets.delete(target);
         }
 
@@ -244,96 +246,24 @@
             const elapsed = previousFrameTime ? Math.min(48, now - previousFrameTime) : 16.67;
             const frameScale = elapsed / 16.67;
             previousFrameTime = now;
-            const easing = 1 - Math.pow(0.86, frameScale);
+            const easing = 1 - Math.pow(0.9, frameScale);
 
             activeTargets.forEach(target => {
                 const actual = readPosition(target);
-                let desired = desiredPositions.get(target) ?? actual;
-                let speed = momentum.get(target) || 0;
-                if (Math.abs(speed) > 0.008) {
-                    desired += speed * elapsed;
-                    desiredPositions.set(target, desired);
-                    speed *= Math.pow(0.95, frameScale);
-                    momentum.set(target, speed);
-                } else {
-                    momentum.set(target, 0);
-                }
+                const desired = desiredPositions.get(target) ?? actual;
 
                 const difference = desired - actual;
                 const next = Math.abs(difference) < 0.4 ? desired : actual + difference * easing;
                 writePosition(target, next);
-                if (Math.abs(difference) < 0.4 && Math.abs(speed) <= 0.008) activeTargets.delete(target);
+                if (Math.abs(difference) < 0.4) activeTargets.delete(target);
             });
 
-            if (activeTargets.size) requestFrame();
+            let callbackNeedsFrame = false;
+            frameCallbacks.forEach(callback => {
+                if (callback(now)) callbackNeedsFrame = true;
+            });
+            if (activeTargets.size || callbackNeedsFrame) requestFrame();
             else previousFrameTime = 0;
-        }
-
-        function onTouchStart(event) {
-            if (event.touches.length !== 1 || !mainContainer.contains(event.target)) {
-                activeTouch = null;
-                return;
-            }
-            const column = event.target instanceof Element
-                ? event.target.closest('main > .column:not(.mobile-column)')
-                : null;
-            const target = mobileQuery.matches ? window : column;
-            if (!target) {
-                activeTouch = null;
-                return;
-            }
-            activeTouch = {
-                x: event.touches[0].clientX,
-                y: event.touches[0].clientY,
-                lastY: event.touches[0].clientY,
-                target,
-                horizontalCarousel: Boolean(event.target.closest('.carousel-container')),
-                samples: [{ y: event.touches[0].clientY, time: event.timeStamp }],
-                scrolling: false,
-                nativeHorizontal: false
-            };
-        }
-
-        function onTouchMove(event) {
-            if (!activeTouch || event.touches.length !== 1) return;
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - activeTouch.x;
-            const deltaY = touch.clientY - activeTouch.y;
-            if (!activeTouch.scrolling && !activeTouch.nativeHorizontal &&
-                Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY) && activeTouch.horizontalCarousel) {
-                activeTouch.nativeHorizontal = true;
-                return;
-            }
-            if (activeTouch.nativeHorizontal || (!activeTouch.scrolling && Math.abs(deltaY) < 8)) return;
-
-            activeTouch.scrolling = true;
-            if (event.cancelable) event.preventDefault();
-            const movement = activeTouch.lastY - touch.clientY;
-            activeTouch.lastY = touch.clientY;
-            if (movement) addDelta(activeTouch.target, movement);
-
-            activeTouch.samples.push({ y: touch.clientY, time: event.timeStamp });
-            while (activeTouch.samples.length > 2 && event.timeStamp - activeTouch.samples[0].time > 120) {
-                activeTouch.samples.shift();
-            }
-        }
-
-        function onTouchEnd(event) {
-            if (!activeTouch) return;
-            if (activeTouch.scrolling && activeTouch.samples.length > 1) {
-                const first = activeTouch.samples[0];
-                const last = activeTouch.samples[activeTouch.samples.length - 1];
-                const duration = last.time - first.time;
-                if (duration > 0) {
-                    const speed = Math.max(-1.8, Math.min(1.8, (first.y - last.y) / duration));
-                    if (Math.abs(speed) > 0.08) {
-                        momentum.set(activeTouch.target, speed);
-                        activeTargets.add(activeTouch.target);
-                        requestFrame();
-                    }
-                }
-            }
-            activeTouch = null;
         }
 
         function bindTargets() {
@@ -351,7 +281,6 @@
                 scrollTargets.add(target);
                 desiredPositions.set(target, readPosition(target));
                 expectedPositions.delete(target);
-                momentum.set(target, 0);
                 target.addEventListener('wheel', onWheel, { passive: false });
                 target.addEventListener('scroll', onScroll, { passive: true });
             });
@@ -365,13 +294,9 @@
             if (activeTargets.has(target)) requestFrame();
         }
 
-        window.addEventListener('touchstart', onTouchStart, { passive: true });
-        window.addEventListener('touchmove', onTouchMove, { passive: false });
-        window.addEventListener('touchend', onTouchEnd, { passive: true });
-        window.addEventListener('touchcancel', () => { activeTouch = null; }, { passive: true });
         mobileQuery.addEventListener('change', bindTargets);
         bindTargets();
-        return { adjust };
+        return { adjust, requestFrame, subscribeFrame };
     }
 
     function setupInfiniteGallery(scrollPhysics) {
@@ -992,7 +917,7 @@
         bindScrollTargets();
     }
 
-    function setupScrollPixelation() {
+    function setupScrollPixelation(scrollPhysics) {
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
         const canvas = document.getElementById('scroll-pixelation');
@@ -1015,21 +940,23 @@
 
         const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         const textures = new Map();
-        const sourceVersions = new WeakMap();
         const visibleMedia = new Set();
+        const renderedMedia = new Set();
+        const hiddenMedia = new Map();
         const lastPositions = new WeakMap();
         let sceneTarget;
         let frameTarget;
         let previousTarget;
         let outputTarget;
         let activeTarget = null;
-        const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+        const maxTextureSize = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), 1536);
         let strength = 0;
-        let velocity = 0;
-        let direction = 0;
+        let visualStrength = 0;
+        let targetRate = 0;
+        let smoothedRate = 0;
         let lastTime = 0;
         let raf = 0;
-        let lastInputTime = performance.now();
+        let lastInputTime = 0;
 
         const quad = new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]);
         const tileVertex = `#version 300 es
@@ -1068,6 +995,7 @@
             uniform float uDecay;
             uniform vec2 uOffset;
             uniform float uVelocity;
+            uniform float uHorizontalScale;
             uniform vec4 uClip;
             in vec2 vUv;
             out vec4 color;
@@ -1081,7 +1009,7 @@
                 float jitter = hash(blockUv) - 0.5;
                 vec2 displacement = uOffset * (1.2 + jitter * 1.6);
                 float horizontalJitter = hash(blockUv + vec2(3.7, 9.2)) - 0.5;
-                displacement.x += horizontalJitter * abs(uOffset.y) * 1.4;
+                displacement.x += horizontalJitter * abs(uOffset.y) * uHorizontalScale;
                 vec4 shifted = texture(uCurrent, vUv - displacement);
                 vec4 previous = texture(uPrev, vUv);
                 float trailAlpha = previous.a * uDecay;
@@ -1155,10 +1083,29 @@
             gl.clear(gl.COLOR_BUFFER_BIT);
         }
 
+        function restoreMedia() {
+            hiddenMedia.forEach((style, element) => {
+                if (style.visibility) element.style.setProperty('visibility', style.visibility, style.priority);
+                else element.style.removeProperty('visibility');
+            });
+            hiddenMedia.clear();
+        }
+
+        function hideRenderedMedia() {
+            renderedMedia.forEach(element => {
+                if (hiddenMedia.has(element)) return;
+                hiddenMedia.set(element, {
+                    visibility: element.style.getPropertyValue('visibility'),
+                    priority: element.style.getPropertyPriority('visibility')
+                });
+                element.style.setProperty('visibility', 'hidden');
+            });
+        }
+
         let tile, feedback, blit, vertexBuffer;
         try {
             tile = program(tileVertex, tileFragment, ['uRect', 'uResolution', 'uCrop', 'uOpacity', 'uImage']);
-            feedback = program(fullscreenVertex, feedbackFragment, ['uCurrent', 'uPrev', 'uDecay', 'uOffset', 'uVelocity', 'uClip']);
+            feedback = program(fullscreenVertex, feedbackFragment, ['uCurrent', 'uPrev', 'uDecay', 'uOffset', 'uVelocity', 'uHorizontalScale', 'uClip']);
             blit = program(fullscreenVertex, blitFragment, ['uImage']);
             vertexBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -1171,6 +1118,7 @@
         }
 
         function resize() {
+            restoreMedia();
             canvas.width = Math.max(1, Math.round(window.innerWidth * dpr));
             canvas.height = Math.max(1, Math.round(window.innerHeight * dpr));
             [sceneTarget, frameTarget, previousTarget].forEach(value => {
@@ -1191,31 +1139,50 @@
             const source = element.tagName === 'VIDEO' ? 'video' : element.currentSrc;
             let entry = textures.get(element);
             if (!entry) {
-                entry = gl.createTexture();
-                gl.bindTexture(gl.TEXTURE_2D, entry);
+                entry = { texture: gl.createTexture(), width: 0, height: 0, source: '', scaledCanvas: null };
+                gl.bindTexture(gl.TEXTURE_2D, entry.texture);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                 textures.set(element, entry);
-            } else if (element.tagName === 'IMG' && sourceVersions.get(element) === source) {
-                return;
+            } else if (element.tagName === 'IMG' && entry.source === source) {
+                return entry;
             }
-            gl.bindTexture(gl.TEXTURE_2D, entry);
+            gl.bindTexture(gl.TEXTURE_2D, entry.texture);
             let uploadSource = element;
+            let uploadWidth = element.tagName === 'VIDEO' ? element.videoWidth : element.naturalWidth;
+            let uploadHeight = element.tagName === 'VIDEO' ? element.videoHeight : element.naturalHeight;
             if (element.videoWidth > maxTextureSize || element.videoHeight > maxTextureSize ||
                 element.naturalWidth > maxTextureSize || element.naturalHeight > maxTextureSize) {
-                const sourceWidth = element.videoWidth || element.naturalWidth;
-                const sourceHeight = element.videoHeight || element.naturalHeight;
-                const scale = maxTextureSize / Math.max(sourceWidth, sourceHeight);
-                const scaled = document.createElement('canvas');
-                scaled.width = Math.max(1, Math.floor(sourceWidth * scale));
-                scaled.height = Math.max(1, Math.floor(sourceHeight * scale));
-                scaled.getContext('2d').drawImage(element, 0, 0, scaled.width, scaled.height);
-                uploadSource = scaled;
+                const scale = maxTextureSize / Math.max(uploadWidth, uploadHeight);
+                uploadWidth = Math.max(1, Math.floor(uploadWidth * scale));
+                uploadHeight = Math.max(1, Math.floor(uploadHeight * scale));
+                if (!entry.scaledCanvas || entry.scaledCanvas.width !== uploadWidth || entry.scaledCanvas.height !== uploadHeight) {
+                    entry.scaledCanvas = document.createElement('canvas');
+                    entry.scaledCanvas.width = uploadWidth;
+                    entry.scaledCanvas.height = uploadHeight;
+                }
+                entry.scaledCanvas.getContext('2d').drawImage(element, 0, 0, uploadWidth, uploadHeight);
+                uploadSource = entry.scaledCanvas;
             }
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, gl.RGBA, gl.UNSIGNED_BYTE, uploadSource);
-            sourceVersions.set(element, source);
+            try {
+                if (entry.width === uploadWidth && entry.height === uploadHeight) {
+                    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, uploadSource);
+                } else {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, gl.RGBA, gl.UNSIGNED_BYTE, uploadSource);
+                    entry.width = uploadWidth;
+                    entry.height = uploadHeight;
+                }
+            } catch (error) {
+                if (!entry.warned) {
+                    console.warn('Unable to upload gallery media to WebGL:', error.message);
+                    entry.warned = true;
+                }
+                return;
+            }
+            entry.source = source;
+            return entry;
         }
 
         function getVisibleRect(element) {
@@ -1256,8 +1223,8 @@
             const clipRight = Math.min(right, clip.right), clipBottom = Math.min(bottom, clip.bottom);
             if (clipRight <= clipLeft || clipBottom <= clipTop) return;
 
-            upload(element);
-            const texture = textures.get(element);
+            const textureEntry = upload(element);
+            const texture = textureEntry?.texture;
             const width = element.tagName === 'VIDEO' ? element.videoWidth : element.naturalWidth;
             const height = element.tagName === 'VIDEO' ? element.videoHeight : element.naturalHeight;
             if (!texture || !width || !height) return;
@@ -1295,6 +1262,7 @@
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
             gl.disable(gl.BLEND);
             gl.disable(gl.SCISSOR_TEST);
+            renderedMedia.add(element);
         }
 
         function drawEffect() {
@@ -1315,12 +1283,14 @@
             gl.uniform1i(feedback.locations.uPrev, 1);
             gl.uniform4f(feedback.locations.uClip, clip.left / window.innerWidth, bottomClip, clip.right / window.innerWidth, topClip);
             const mobileFactor = window.matchMedia('(max-width: 768px)').matches ? 1.6 : 1;
-            const normalizedVelocity = Math.min(0.53, velocity * 0.5 * mobileFactor);
-            const decayProgress = Math.min(1, strength / 0.05);
+            const normalizedVelocity = Math.min(0.53, visualStrength * 0.5 * mobileFactor);
+            const horizontalScale = Math.max(0.8, Math.min(5.5, 2.4 * window.innerHeight / window.innerWidth));
+            const decayProgress = Math.min(1, visualStrength / 0.05);
             const easedDecay = decayProgress * decayProgress * (3 - 2 * decayProgress);
             gl.uniform1f(feedback.locations.uDecay, 0.2 + easedDecay * 0.15);
-            gl.uniform2f(feedback.locations.uOffset, 0, -direction * 0.04 * strength * mobileFactor);
+            gl.uniform2f(feedback.locations.uOffset, 0, -smoothedRate * 0.04 * mobileFactor);
             gl.uniform1f(feedback.locations.uVelocity, normalizedVelocity);
+            gl.uniform1f(feedback.locations.uHorizontalScale, horizontalScale);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -1352,16 +1322,28 @@
         }
 
         function clearFeedback() {
+            restoreMedia();
             [frameTarget, previousTarget].forEach(clearTarget);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
         }
 
+        function requestRender() {
+            if (scrollPhysics?.requestFrame) scrollPhysics.requestFrame();
+            else if (!raf) raf = requestAnimationFrame(render);
+        }
+
         function render(now) {
             raf = 0;
             const elapsedFrames = lastTime ? Math.max(0.5, (now - lastTime) / 16.67) : 1;
             lastTime = now;
+            const smoothing = 1 - Math.pow(0.9, elapsedFrames);
+            const rateTarget = now - lastInputTime < 48 ? targetRate : 0;
+            smoothedRate += (rateTarget - smoothedRate) * smoothing;
+            visualStrength += (strength - visualStrength) * smoothing;
+            restoreMedia();
+            renderedMedia.clear();
             gl.bindFramebuffer(gl.FRAMEBUFFER, sceneTarget.framebuffer);
             gl.viewport(0, 0, canvas.width, canvas.height);
             gl.clearColor(0, 0, 0, 0);
@@ -1370,16 +1352,20 @@
             gl.bindFramebuffer(gl.FRAMEBUFFER, frameTarget.framebuffer);
             gl.viewport(0, 0, canvas.width, canvas.height);
             drawEffect();
+            hideRenderedMedia();
             strength *= Math.pow(0.94, elapsedFrames);
-            velocity *= Math.pow(0.88, elapsedFrames);
-            if (strength > 0.008 || velocity > 0.08) {
-                raf = requestAnimationFrame(render);
+            if (strength > 0.008 || visualStrength > 0.008 || Math.abs(smoothedRate) > 0.001) {
+                if (!scrollPhysics?.subscribeFrame) raf = requestAnimationFrame(render);
+                return true;
             } else {
-                strength = velocity = direction = 0;
+                strength = visualStrength = targetRate = smoothedRate = 0;
                 lastTime = 0;
                 clearFeedback();
+                return false;
             }
         }
+
+        if (scrollPhysics?.subscribeFrame) scrollPhysics.subscribeFrame(render);
 
         function onScroll(event) {
             const target = event.currentTarget;
@@ -1391,15 +1377,17 @@
                 if (activeTarget !== target) {
                     activeTarget = target;
                     clearFeedback();
+                    strength = visualStrength = targetRate = smoothedRate = 0;
+                    lastTime = 0;
                 }
-                direction = Math.sign(delta);
                 strength = Math.min(1, strength + Math.min(Math.abs(delta), 150) * 0.001);
-                const interval = Math.max(8, now - lastInputTime);
-                velocity = velocity * 0.55 + Math.abs(delta) / interval * 0.45;
+                const interval = Math.max(8, now - (lastInputTime || now - 16.67));
+                const referenceWorldHeight = 2 * 5 * Math.tan(Math.PI / 8);
+                targetRate = Math.max(-1, Math.min(1, delta / interval * 1000 * referenceWorldHeight / window.innerHeight * 0.1));
                 lastInputTime = now;
             }
             lastPositions.set(target, position);
-            if (!raf) raf = requestAnimationFrame(render);
+            requestRender();
         }
 
         if ('IntersectionObserver' in window) {
@@ -1408,7 +1396,14 @@
                     if (entry.isIntersecting) {
                         visibleMedia.add(entry.target);
                         upload(entry.target);
-                    } else visibleMedia.delete(entry.target);
+                    } else {
+                        visibleMedia.delete(entry.target);
+                        const texture = textures.get(entry.target);
+                        if (texture) {
+                            gl.deleteTexture(texture.texture);
+                            textures.delete(entry.target);
+                        }
+                    }
                 });
             }, { rootMargin: '80px' });
             media.forEach(element => {
@@ -1816,7 +1811,7 @@
         setupInfiniteGallery(scrollPhysics);
         setupImageGallery();
         setupVideoLoading();
-        setupScrollPixelation();
+        setupScrollPixelation(scrollPhysics);
         setupVideoToggle();
         setupPoolAnimation();
         setupInteractiveBalls();
