@@ -1954,11 +1954,10 @@
         translatePage();
         setupResponsiveGalleryOrder();
         setupGalleryImageLoading();
-        const scrollPhysics = setupSmoothScroll();
-        setupInfiniteGallery(scrollPhysics);
+        // Native scrolling is restored while the reference-matching experiment is paused.
+        setupInfiniteGallery(null);
         setupImageGallery();
         setupVideoLoading();
-        setupScrollPixelation(scrollPhysics);
         setupVideoToggle();
         setupPoolAnimation();
         setupInteractiveBalls();
