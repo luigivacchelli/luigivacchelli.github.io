@@ -19,6 +19,8 @@
     const aboutOverlay      = document.getElementById('about-overlay');
     const aboutBackground   = document.getElementById('about-background');
     const easterEggLayer    = document.getElementById('easter-egg-layer');
+    let webcamStream = null;
+    let webcamRequestPending = false;
     
     // --- DICTIONARY FOR TRANSLATIONS ---
     const translations = {
@@ -55,6 +57,7 @@
             document.documentElement.classList.add('overlay-active');
             aboutOverlay.setAttribute('aria-hidden', 'false');
             upgradeOverlayImage();
+            requestWebcamAccess();
         }
     }
     
@@ -63,6 +66,7 @@
             aboutOverlay.classList.remove('is-open');
             document.documentElement.classList.remove('overlay-active');
             aboutOverlay.setAttribute('aria-hidden', 'true');
+            stopWebcam();
         }
     }
     
@@ -78,14 +82,34 @@
     }
     
     function requestWebcamAccess() {
-        if (!webcamVideo || !webcamContainer) return;
+        if (!webcamVideo || !webcamContainer || webcamStream || webcamRequestPending) return;
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             webcamContainer.style.display = 'none';
             return;
         }
+        webcamRequestPending = true;
         navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream  => { webcamVideo.srcObject = stream; })
-            .catch(()     => { webcamContainer.style.display = 'none'; });
+            .then(stream => {
+                webcamRequestPending = false;
+                if (!aboutOverlay || !aboutOverlay.classList.contains('is-open')) {
+                    stream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+                webcamStream = stream;
+                webcamVideo.srcObject = stream;
+            })
+            .catch(() => {
+                webcamRequestPending = false;
+                webcamContainer.style.display = 'none';
+            });
+    }
+
+    function stopWebcam() {
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(track => track.stop());
+            webcamStream = null;
+        }
+        if (webcamVideo) webcamVideo.srcObject = null;
     }
     
     function setupImageGallery() {
@@ -165,6 +189,80 @@
         });
     }
 
+    function setupVideoLoading() {
+        const videos = Array.from(document.querySelectorAll('main video'));
+        const waitingToPlay = new WeakSet();
+
+        function loadVideo(video) {
+            if (video.dataset.mediaLoaded === 'true') return;
+            let hasSource = false;
+            if (video.dataset.src) {
+                video.src = video.dataset.src;
+                hasSource = true;
+            }
+            video.querySelectorAll('source[data-src]').forEach(source => {
+                source.src = source.dataset.src;
+                source.removeAttribute('data-src');
+                hasSource = true;
+            });
+            if (!hasSource) return;
+            video.dataset.mediaLoaded = 'true';
+            video.preload = 'auto';
+            video.load();
+        }
+
+        function playWhenReady(video) {
+            if (video.dataset.inView !== 'true') return;
+            const play = () => {
+                waitingToPlay.delete(video);
+                if (video.dataset.inView === 'true') video.play().catch(() => {});
+            };
+            if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) play();
+            else if (!waitingToPlay.has(video)) {
+                waitingToPlay.add(video);
+                video.addEventListener('canplay', play, { once: true });
+            }
+        }
+
+        if (!('IntersectionObserver' in window)) {
+            videos.forEach(video => {
+                loadVideo(video);
+                if (video.dataset.autoplay === 'true') {
+                    video.dataset.inView = 'true';
+                    playWhenReady(video);
+                }
+            });
+            return;
+        }
+
+        const preloadObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadVideo(entry.target);
+                    preloadObserver.unobserve(entry.target);
+                }
+            });
+        }, { rootMargin: '900px 0px' });
+
+        const playbackObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                const video = entry.target;
+                video.dataset.inView = String(entry.isIntersecting);
+                if (entry.isIntersecting) {
+                    loadVideo(video);
+                    if (video.dataset.autoplay === 'true') playWhenReady(video);
+                } else if (video.dataset.autoplay === 'true') {
+                    video.pause();
+                }
+            });
+        }, { threshold: 0.1 });
+
+        videos.forEach(video => {
+            preloadObserver.observe(video);
+            if (video.dataset.autoplay === 'true') playbackObserver.observe(video);
+        });
+    }
+
     function setupVideoToggle() {
         const container = document.getElementById('dolphin-toggle');
         if (!container) return;
@@ -178,43 +276,6 @@
             container.classList.toggle('is-pixelated');
         });
 
-        // --- Synchronised Start ---
-        // autoplay is intentionally absent from the HTML on both videos.
-        // Neither video plays until BOTH are ready, guaranteeing they start
-        // from frame 0 at the same moment on every page load — including
-        // cached reloads, where canplaythrough may have already fired before
-        // the listeners are attached. We therefore check readyState immediately
-        // and only fall back to the event listener if the video isn't ready yet.
-        let normalReady = false;
-        let pixelReady  = false;
-
-        function tryPlay() {
-            if (!normalReady || !pixelReady) return;
-            vNormal.currentTime = 0;
-            vPixel.currentTime  = 0;
-            Promise.all([vNormal.play(), vPixel.play()])
-                .catch(e => console.warn("Dolphin autoplay blocked:", e));
-        }
-
-        function markNormalReady() { if (!normalReady) { normalReady = true; tryPlay(); } }
-        function markPixelReady()  { if (!pixelReady)  { pixelReady  = true; tryPlay(); } }
-
-        // readyState >= 3 (HAVE_FUTURE_DATA) means the browser has enough data
-        // to start playback. On cached reloads this is already true when JS runs.
-        if (vNormal.readyState >= 3) { markNormalReady(); }
-        else { vNormal.addEventListener('canplaythrough', markNormalReady, { once: true }); }
-
-        if (vPixel.readyState >= 3)  { markPixelReady(); }
-        else { vPixel.addEventListener('canplaythrough', markPixelReady, { once: true }); }
-
-        // --- Tab Switching ---
-        // Re-align the pixelated video to the normal one when the user returns to the tab.
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && !vNormal.paused) {
-                vPixel.currentTime = vNormal.currentTime;
-                vPixel.play().catch(() => {});
-            }
-        });
     }
     
     function setupInteractiveBalls() {
@@ -490,7 +551,6 @@
                 easterEggLayer.classList.remove('active');
                 easterEggLayer.setAttribute('aria-hidden', 'true');
                 
-                requestWebcamAccess();
             }, 6000);
             
             return true;
@@ -505,24 +565,26 @@
         if (isContentLoaded && isTimerFinished) {
             document.body.classList.add('loading-finished');
             document.body.classList.add('layout-ready');
-            
-            setTimeout(() => {
-                if (preloader) {
-                    preloader.classList.add('hidden');
-                    preloader.setAttribute('aria-hidden', 'true');
-                }
-                
-                const easterEggActive = checkForEasterEgg();
-                
-                if (mainContainer) mainContainer.classList.add('visible');
-                
-                if (!easterEggActive) {
-                    if (pageHeader) pageHeader.classList.add('visible');
-                    requestWebcamAccess();
-                }
 
-                setupHiresSwapping();
-            }, 1100);
+            if (preloader) {
+                const requestAfterFade = event => {
+                    if (event.target === preloader && event.propertyName === 'opacity') {
+                        preloader.removeEventListener('transitionend', requestAfterFade);
+                        requestWebcamAccess();
+                    }
+                };
+                preloader.addEventListener('transitionend', requestAfterFade);
+                preloader.classList.add('hidden');
+                preloader.setAttribute('aria-hidden', 'true');
+            } else {
+                requestWebcamAccess();
+            }
+
+            const easterEggActive = checkForEasterEgg();
+
+            if (mainContainer) mainContainer.classList.add('visible');
+            if (!easterEggActive && pageHeader) pageHeader.classList.add('visible');
+            setupHiresSwapping();
         }
     }
     
@@ -564,6 +626,7 @@
         translatePage();
         setupImageGallery();
         setupHandHint();
+        setupVideoLoading();
         setupVideoToggle();
         setupPoolAnimation();
         setupInteractiveBalls();
