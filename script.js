@@ -246,6 +246,7 @@
         const expectedPositions = new WeakMap();
         const activeTargets = new Set();
         const frameCallbacks = new Set();
+        const adjustmentCallbacks = new Set();
         let animationFrame = 0;
         let previousFrameTime = 0;
         const referenceWorldHeight = 2 * 5 * Math.tan(Math.PI / 8);
@@ -264,6 +265,11 @@
         function subscribeFrame(callback) {
             frameCallbacks.add(callback);
             return () => frameCallbacks.delete(callback);
+        }
+
+        function subscribeAdjustment(callback) {
+            adjustmentCallbacks.add(callback);
+            return () => adjustmentCallbacks.delete(callback);
         }
 
         function addDelta(target, delta) {
@@ -361,12 +367,13 @@
             if (desiredPositions.has(target)) desiredPositions.set(target, desiredPositions.get(target) + delta);
             else desiredPositions.set(target, actual);
             expectedPositions.set(target, actual);
+            adjustmentCallbacks.forEach(callback => callback(target, actual));
             if (activeTargets.has(target)) requestFrame();
         }
 
         mobileQuery.addEventListener('change', bindTargets);
         bindTargets();
-        return { adjust, requestFrame, subscribeFrame };
+        return { adjust, requestFrame, subscribeFrame, subscribeAdjustment };
     }
 
     function setupInfiniteGallery(scrollPhysics) {
@@ -590,7 +597,7 @@
         mobileQuery.addEventListener('change', bindPreloadObservers);
     }
 
-    function setupScrollPixelationLegacy() {
+    function setupScrollPixelationLegacy(scrollPhysics) {
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
         const canvas = document.getElementById('scroll-pixelation');
@@ -616,6 +623,7 @@
         let scrollDirection = 0;
         let animationFrame = 0;
         const lastPositions = new WeakMap();
+        scrollPhysics?.subscribeAdjustment?.((target, position) => lastPositions.set(target, position));
         let lastFrameTime = 0;
         let pixelatedFrame;
         let previousFrame;
@@ -1022,7 +1030,7 @@
             failIfMajorPerformanceCaveat: false
         });
         if (!gl) {
-            setupScrollPixelationLegacy();
+            setupScrollPixelationLegacy(scrollPhysics);
             return;
         }
 
@@ -1032,6 +1040,7 @@
         const renderedMedia = new Set();
         const hiddenMedia = new Map();
         const lastPositions = new WeakMap();
+        scrollPhysics?.subscribeAdjustment?.((target, position) => lastPositions.set(target, position));
         let rendererDisabled = false;
         let sceneTarget;
         let frameTarget;
@@ -1255,6 +1264,11 @@
             let uploadSource = element;
             let uploadWidth = element.tagName === 'VIDEO' ? element.videoWidth : element.naturalWidth;
             let uploadHeight = element.tagName === 'VIDEO' ? element.videoHeight : element.naturalHeight;
+            const videoTime = element.tagName === 'VIDEO' ? element.currentTime : null;
+            if (videoTime !== null && entry.source === 'video' &&
+                entry.videoTime === videoTime &&
+                entry.sourceWidth === uploadWidth && entry.sourceHeight === uploadHeight) return entry;
+            const sourceWidth = uploadWidth, sourceHeight = uploadHeight;
             if (element.videoWidth > maxTextureSize || element.videoHeight > maxTextureSize ||
                 element.naturalWidth > maxTextureSize || element.naturalHeight > maxTextureSize) {
                 const scale = maxTextureSize / Math.max(uploadWidth, uploadHeight);
@@ -1284,6 +1298,11 @@
                 return;
             }
             entry.source = source;
+            if (videoTime !== null) {
+                entry.videoTime = videoTime;
+                entry.sourceWidth = sourceWidth;
+                entry.sourceHeight = sourceHeight;
+            }
             return entry;
         }
 
