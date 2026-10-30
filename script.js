@@ -397,7 +397,32 @@
         function recyclePassedItems(surface, scrollTarget) {
             const isWindow = scrollTarget === window;
             const viewportTop = isWindow ? 0 : surface.getBoundingClientRect().top;
+            const position = isWindow ? window.scrollY : scrollTarget.scrollTop;
             let rotations = 0;
+
+            // When native scrolling reaches its top boundary, prepend the last item
+            // and compensate the offset so upward scrolling can continue seamlessly.
+            if (position <= 1) {
+                const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
+                if (items.length > 1) {
+                    const first = items[0];
+                    const last = items[items.length - 1];
+                    const firstRect = first.getBoundingClientRect();
+                    const lastRect = last.getBoundingClientRect();
+                    const shift = firstRect.top - lastRect.top;
+
+                    if (shift > 1) {
+                        surface.insertBefore(last, first);
+                        if (isWindow) {
+                            window.scrollTo(window.scrollX, window.scrollY + shift);
+                            scrollPhysics?.adjust(scrollTarget, shift);
+                        } else {
+                            scrollTarget.scrollTop += shift;
+                            scrollPhysics?.adjust(scrollTarget, shift);
+                        }
+                    }
+                }
+            }
 
             while (rotations < 24) {
                 const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
