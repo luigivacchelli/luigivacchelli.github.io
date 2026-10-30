@@ -390,6 +390,15 @@
     function setupInfiniteGallery(scrollPhysics) {
         if (!mainContainer) return;
 
+        // The screen stylesheet is enabled asynchronously; wait before measuring scroll offsets.
+        const galleryStylesheet = document.querySelector('link[rel="stylesheet"][href*="stile.css"]');
+        if (galleryStylesheet && galleryStylesheet.media !== 'all') {
+            galleryStylesheet.addEventListener('load', () => {
+                requestAnimationFrame(() => setupInfiniteGallery(scrollPhysics));
+            }, { once: true });
+            return;
+        }
+
         mainContainer.classList.add('infinite-gallery');
         const mobileQuery = window.matchMedia('(max-width: 768px)');
         const bindings = [];
@@ -420,8 +429,13 @@
             const shift = first.getBoundingClientRect().top - firstTopBefore;
 
             if (shift > 1) {
-                writePosition(scrollTarget, readPosition(scrollTarget) + shift);
-                scrollPhysics?.adjust(scrollTarget, shift);
+                const positionBeforeShift = readPosition(scrollTarget);
+                writePosition(scrollTarget, positionBeforeShift + shift);
+                const remainingOffset = first.getBoundingClientRect().top - firstTopBefore;
+                if (Math.abs(remainingOffset) > 1) {
+                    writePosition(scrollTarget, readPosition(scrollTarget) + remainingOffset);
+                }
+                scrollPhysics?.adjust(scrollTarget, readPosition(scrollTarget) - positionBeforeShift);
             } else {
                 surface.insertBefore(last, trigger);
             }
