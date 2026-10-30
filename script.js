@@ -393,36 +393,46 @@
         const mobileQuery = window.matchMedia('(max-width: 768px)');
         const bindings = [];
         const scheduledFrames = new Map();
+        const lastPositions = new WeakMap();
+        const lastDirections = new WeakMap();
 
-        function recyclePassedItems(surface, scrollTarget) {
+        const readPosition = target => target === window ? window.scrollY : target.scrollTop;
+
+        function writePosition(target, position) {
+            if (target === window) window.scrollTo(window.scrollX, position);
+            else target.scrollTop = position;
+            lastPositions.set(target, readPosition(target));
+            lastDirections.set(target, 0);
+        }
+
+        function recyclePassedItems(surface, scrollTarget, direction) {
             const isWindow = scrollTarget === window;
             const viewportTop = isWindow ? 0 : surface.getBoundingClientRect().top;
-            const position = isWindow ? window.scrollY : scrollTarget.scrollTop;
+            const position = readPosition(scrollTarget);
             let rotations = 0;
 
             // When native scrolling reaches its top boundary, prepend the last item
             // and compensate the offset so upward scrolling can continue seamlessly.
-            if (position <= 1) {
+            if (direction < 0 && position <= 1) {
                 const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
                 if (items.length > 1) {
                     const first = items[0];
                     const last = items[items.length - 1];
-                    const firstRect = first.getBoundingClientRect();
-                    const lastRect = last.getBoundingClientRect();
-                    const shift = firstRect.top - lastRect.top;
+                    const firstTopBefore = first.getBoundingClientRect().top;
+                    const trigger = surface.querySelector(':scope > .scroll-trigger');
+                    surface.insertBefore(last, first);
+                    const shift = first.getBoundingClientRect().top - firstTopBefore;
 
                     if (shift > 1) {
-                        surface.insertBefore(last, first);
-                        if (isWindow) {
-                            window.scrollTo(window.scrollX, window.scrollY + shift);
-                            scrollPhysics?.adjust(scrollTarget, shift);
-                        } else {
-                            scrollTarget.scrollTop += shift;
-                            scrollPhysics?.adjust(scrollTarget, shift);
-                        }
+                        writePosition(scrollTarget, position + shift);
+                        scrollPhysics?.adjust(scrollTarget, shift);
+                        return;
                     }
+                    surface.insertBefore(last, trigger);
                 }
             }
+
+            if (direction <= 0) return;
 
             while (rotations < 24) {
                 const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
@@ -440,22 +450,23 @@
                 const trigger = surface.querySelector(':scope > .scroll-trigger');
                 surface.insertBefore(first, trigger);
 
-                if (isWindow) {
-                    window.scrollTo(window.scrollX, Math.max(0, window.scrollY - shift));
-                    scrollPhysics?.adjust(scrollTarget, -shift);
-                } else {
-                    scrollTarget.scrollTop = Math.max(0, scrollTarget.scrollTop - shift);
-                    scrollPhysics?.adjust(scrollTarget, -shift);
-                }
+                writePosition(scrollTarget, Math.max(0, readPosition(scrollTarget) - shift));
+                scrollPhysics?.adjust(scrollTarget, -shift);
                 rotations++;
             }
         }
 
         function scheduleRecycle(surface, scrollTarget) {
+            const position = readPosition(scrollTarget);
+            const previous = lastPositions.get(scrollTarget);
+            if (previous !== undefined && Math.abs(position - previous) > 0.5) {
+                lastDirections.set(scrollTarget, Math.sign(position - previous));
+            }
+            lastPositions.set(scrollTarget, position);
             if (scheduledFrames.has(scrollTarget)) return;
             const frame = window.requestAnimationFrame(() => {
                 scheduledFrames.delete(scrollTarget);
-                recyclePassedItems(surface, scrollTarget);
+                recyclePassedItems(surface, scrollTarget, lastDirections.get(scrollTarget) || 0);
             });
             scheduledFrames.set(scrollTarget, frame);
         }
@@ -474,6 +485,8 @@
 
             surfaces.forEach(({ surface, target }) => {
                 if (!surface) return;
+                lastPositions.set(target, readPosition(target));
+                lastDirections.set(target, 0);
                 const handler = () => scheduleRecycle(surface, target);
                 target.addEventListener('scroll', handler, { passive: true });
                 target.addEventListener('scrollend', handler, { passive: true });
@@ -585,7 +598,7 @@
                     playWhenReady(video);
                 }
             });
-            return;
+            return loadVideo;
         }
 
         function bindPreloadObservers() {
@@ -630,6 +643,7 @@
         });
         bindPreloadObservers();
         mobileQuery.addEventListener('change', bindPreloadObservers);
+        return loadVideo;
     }
 
     function setupScrollPixelationLegacy(scrollPhysics) {
@@ -1913,6 +1927,7 @@
     
     let isContentLoaded = false;
     let isTimerFinished = false;
+    let criticalContentFallback = null;
     
     function finishLoading() {
         if (isContentLoaded && isTimerFinished) {
@@ -1941,36 +1956,75 @@
         }
     }
     
-    function trackCriticalContent() {
-        const leftMedia  = Array.from(document.querySelectorAll('.column.left .media-link img, .column.left .media-link video')).slice(0, 3);
-        const rightMedia = Array.from(document.querySelectorAll('.column.right .media-link img, .column.right .media-link video')).slice(0, 3);
-        const criticalItems = [...leftMedia, ...rightMedia];
+    function markContentLoaded() {
+        if (isContentLoaded) return;
+        isContentLoaded = true;
+        if (criticalContentFallback) clearTimeout(criticalContentFallback);
+        finishLoading();
+    }
+
+    function trackCriticalContent(prepareVideo) {
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        const surfaces = isMobile
+            ? [mainContainer.querySelector('.mobile-column')]
+            : [mainContainer.querySelector('.column.left'), mainContainer.querySelector('.column.right')];
+        const cardsPerSurface = isMobile ? 6 : 3;
+        const criticalItems = surfaces.flatMap(surface => {
+            if (!surface) return [];
+            return Array.from(surface.querySelectorAll(':scope > .media-link'))
+                .slice(0, cardsPerSurface)
+                .map(card => card.querySelector('img, video'))
+                .filter(Boolean);
+        });
 
         if (criticalItems.length === 0) {
-            isContentLoaded = true;
-            finishLoading();
+            markContentLoaded();
             return;
         }
 
         const promises = criticalItems.map(media => {
-            return new Promise((resolve) => {
-                if ((media.tagName === 'IMG'   && media.complete)         ||
-                    (media.tagName === 'VIDEO' && media.readyState >= 3)) {
+            return new Promise(resolve => {
+                let settled = false;
+                const finish = async () => {
+                    if (settled) return;
+                    settled = true;
+                    media.removeEventListener('load', onImageLoad);
+                    media.removeEventListener('error', onError);
+                    media.removeEventListener('canplay', onCanPlay);
+                    if (media.tagName === 'IMG' && media.naturalWidth > 0 && typeof media.decode === 'function') {
+                        await media.decode().catch(() => {});
+                    }
                     resolve();
-                } else {
-                    media.addEventListener('load',    resolve, { once: true });
-                    media.addEventListener('canplay', resolve, { once: true });
-                    media.addEventListener('error',   resolve, { once: true });
+                };
+                const onImageLoad = () => finish();
+                const onCanPlay = () => finish();
+                const onError = () => finish();
+
+                if (media.tagName === 'IMG') {
+                    media.loading = 'eager';
+                    media.addEventListener('load', onImageLoad, { once: true });
+                    media.addEventListener('error', onError, { once: true });
+                    if (media.complete) finish();
+                    return;
+                }
+
+                media.addEventListener('canplay', onCanPlay, { once: true });
+                media.addEventListener('error', onError, { once: true });
+                if (media.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) finish();
+                else {
+                    prepareVideo?.(media);
+                    if (media.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) finish();
                 }
             });
         });
 
-        Promise.all(promises).then(() => {
+        Promise.all(promises).then(markContentLoaded);
+        criticalContentFallback = setTimeout(() => {
             if (!isContentLoaded) {
-                isContentLoaded = true;
-                finishLoading();
+                console.warn('Critical media readiness timed out; showing the portfolio with available posters and images.');
+                markContentLoaded();
             }
-        });
+        }, 8000);
     }
     
     // --- MAIN EVENT LISTENERS ---
@@ -1982,11 +2036,11 @@
         // Native scrolling is restored while the reference-matching experiment is paused.
         setupInfiniteGallery(null);
         setupImageGallery();
-        setupVideoLoading();
+        const prepareVideo = setupVideoLoading();
         setupVideoToggle();
         setupPoolAnimation();
         setupInteractiveBalls();
-        trackCriticalContent();
+        trackCriticalContent(prepareVideo);
         const allCarousels = document.querySelectorAll('.carousel-container');
         allCarousels.forEach(setupInfiniteCarousel);
         setupFooterObserver();
@@ -2004,13 +2058,6 @@
         finishLoading();
     }, 4000);
     
-    window.addEventListener('load', () => {
-        if (!isContentLoaded) {
-            isContentLoaded = true;
-            finishLoading();
-        }
-    });
-
     window.addEventListener('pagehide', () => {
         pageIsLeaving = true;
         stopWebcam();
