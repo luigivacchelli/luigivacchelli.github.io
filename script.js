@@ -137,6 +137,7 @@
             let index = 0;
             if (loresGallery.length === 0) return;
             img.addEventListener('click', () => {
+                cancelPendingImageUpgrade(img);
                 index = (index + 1) % (loresGallery.length + 1);
                 let targetSrc;
                 if (index === 0) {
@@ -405,6 +406,27 @@
             lastDirections.set(target, 0);
         }
 
+        function seedTopBuffer(surface, scrollTarget) {
+            if (readPosition(scrollTarget) > 1) return;
+            const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
+            if (items.length < 2) return;
+
+            // Provide scrollable content above the initial position without moving the visible first card.
+            const first = items[0];
+            const last = items[items.length - 1];
+            const firstTopBefore = first.getBoundingClientRect().top;
+            const trigger = surface.querySelector(':scope > .scroll-trigger');
+            surface.insertBefore(last, first);
+            const shift = first.getBoundingClientRect().top - firstTopBefore;
+
+            if (shift > 1) {
+                writePosition(scrollTarget, readPosition(scrollTarget) + shift);
+                scrollPhysics?.adjust(scrollTarget, shift);
+            } else {
+                surface.insertBefore(last, trigger);
+            }
+        }
+
         function recyclePassedItems(surface, scrollTarget, direction) {
             const isWindow = scrollTarget === window;
             const viewportTop = isWindow ? 0 : surface.getBoundingClientRect().top;
@@ -485,6 +507,7 @@
 
             surfaces.forEach(({ surface, target }) => {
                 if (!surface) return;
+                seedTopBuffer(surface, target);
                 lastPositions.set(target, readPosition(target));
                 lastDirections.set(target, 0);
                 const handler = () => scheduleRecycle(surface, target);
@@ -1683,6 +1706,43 @@
         });
     }
     
+    const pendingImageUpgrades = new WeakMap();
+
+    function cancelPendingImageUpgrade(img) {
+        pendingImageUpgrades.delete(img);
+    }
+
+    function swapImageWhenDecoded(img, source) {
+        if (pendingImageUpgrades.get(img)?.source === source) return;
+        const request = {};
+        request.source = source;
+        const hiresImage = new Image();
+        pendingImageUpgrades.set(img, request);
+        hiresImage.onload = async () => {
+            if (pendingImageUpgrades.get(img) !== request) return;
+            if (hiresImage.naturalWidth === 0) {
+                pendingImageUpgrades.delete(img);
+                return;
+            }
+            if (typeof hiresImage.decode === 'function') {
+                try {
+                    await hiresImage.decode();
+                } catch {
+                    if (pendingImageUpgrades.get(img) === request) pendingImageUpgrades.delete(img);
+                    return;
+                }
+            }
+            if (pendingImageUpgrades.get(img) !== request) return;
+            img.src = source;
+            img.dataset.isSwapped = 'true';
+            pendingImageUpgrades.delete(img);
+        };
+        hiresImage.onerror = () => {
+            if (pendingImageUpgrades.get(img) === request) pendingImageUpgrades.delete(img);
+        };
+        hiresImage.src = source;
+    }
+
     function setupHiresSwapping() {
         if (!('IntersectionObserver' in window)) return;
         const observerCallback = (entries, observer) => {
@@ -1691,12 +1751,7 @@
                     const img      = entry.target;
                     const hiresSrc = img.dataset.hiresSrc;
                     if (hiresSrc && !img.dataset.isSwapped) {
-                        const hiresImage   = new Image();
-                        hiresImage.src     = hiresSrc;
-                        hiresImage.onload  = () => {
-                            img.src                = hiresSrc;
-                            img.dataset.isSwapped  = 'true';
-                        };
+                        swapImageWhenDecoded(img, hiresSrc);
                         observer.unobserve(img);
                     }
                 }
@@ -1711,13 +1766,7 @@
     function upgradeOverlayImage() {
         const overlayImage = document.querySelector('.about-image');
         if (!overlayImage || !overlayImage.dataset.hiresSrc || overlayImage.dataset.isSwapped === 'true') return;
-        const hiresSrc       = overlayImage.dataset.hiresSrc;
-        const hiresImage     = new Image();
-        hiresImage.src       = hiresSrc;
-        hiresImage.onload    = () => {
-            overlayImage.src               = hiresSrc;
-            overlayImage.dataset.isSwapped = 'true';
-        };
+        swapImageWhenDecoded(overlayImage, overlayImage.dataset.hiresSrc);
     }
     
     function setupInfiniteCarousel(carouselElement) {
@@ -1732,13 +1781,7 @@
         function loadHires(item) {
             const img = item.tagName === 'IMG' ? item : item.querySelector('img');
             if (img && img.dataset.hiresSrc && !img.dataset.isSwapped) {
-                const hiresSrc   = img.dataset.hiresSrc;
-                const hiresImage = new Image();
-                hiresImage.src   = hiresSrc;
-                hiresImage.onload = () => {
-                    img.src                = hiresSrc;
-                    img.dataset.isSwapped  = 'true';
-                };
+                swapImageWhenDecoded(img, img.dataset.hiresSrc);
             }
         }
 
@@ -1801,22 +1844,41 @@
         }, 75);
 
         let peekTimeout;
+        let peekPlayed = carouselElement.dataset.peekPlayed === 'true';
         const peekObserver = new IntersectionObserver((entries, obs) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    peekTimeout = setTimeout(() => { track.classList.add('has-peeked'); }, 500);
-                    obs.unobserve(carouselElement);
-                }
+                if (!entry.isIntersecting) return;
+                obs.unobserve(carouselElement);
+                if (peekPlayed || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                peekTimeout = setTimeout(() => {
+                    peekTimeout = null;
+                    if (peekPlayed || !carouselElement.isConnected) return;
+                    peekPlayed = true;
+                    carouselElement.dataset.peekPlayed = 'true';
+                    track.classList.add('has-peeked');
+                }, 500);
             });
         }, { threshold: 0.75 });
         peekObserver.observe(carouselElement);
 
         function cancelPeekAnimation() {
             if (peekTimeout) clearTimeout(peekTimeout);
+            peekTimeout = null;
+            peekPlayed = true;
+            carouselElement.dataset.peekPlayed = 'true';
             track.classList.remove('has-peeked');
-            carouselElement.removeEventListener('scroll', cancelPeekAnimation);
+            carouselElement.removeEventListener('pointerdown', cancelPeekAnimation);
+            carouselElement.removeEventListener('wheel', cancelPeekAnimation);
+            carouselElement.removeEventListener('keydown', cancelPeekAnimation);
         }
-        carouselElement.addEventListener('scroll', cancelPeekAnimation, { once: true, passive: true });
+        carouselElement.addEventListener('pointerdown', cancelPeekAnimation, { once: true, passive: true });
+        carouselElement.addEventListener('wheel', cancelPeekAnimation, { once: true, passive: true });
+        carouselElement.addEventListener('keydown', cancelPeekAnimation, { once: true });
+        const clearPeekClass = event => {
+            if (event.animationName === 'peek-a-boo') track.classList.remove('has-peeked');
+        };
+        track.addEventListener('animationend', clearPeekClass, { once: true });
+        track.addEventListener('animationcancel', clearPeekClass, { once: true });
 
         carouselElement.addEventListener('scroll', () => {
             checkAndLoadVisibleItems();
