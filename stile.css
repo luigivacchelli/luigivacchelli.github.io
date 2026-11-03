@@ -262,6 +262,18 @@ body.loading-finished #preloader p {
   color: var(--color-secondary);
 }
 
+.about-image-footer {
+    margin-top: 0.35rem;
+    text-align: left;
+}
+
+.about-image-footer p {
+    margin: 0;
+    color: var(--color-secondary);
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
 /* Overlay */
 .about-overlay {
     position: fixed;
@@ -442,15 +454,6 @@ body.loading-finished #preloader p {
   height: auto;
   object-fit: cover;
   display: block;
-}
-
-#scroll-pixelation {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  width: 100vw;
-  height: 100dvh;
-  pointer-events: none;
 }
 
 /* Identify images that are actually galleries */
