@@ -22,6 +22,7 @@
     let webcamStream = null;
     let webcamRequestPending = false;
     let pageIsLeaving = false;
+    const loadingStartedAt = performance.now();
     
     // --- DICTIONARY FOR TRANSLATIONS ---
     const translations = {
@@ -395,9 +396,18 @@
     function setupVideoLoading() {
         const videos = Array.from(document.querySelectorAll('main video'));
         const waitingToPlay = new WeakSet();
+        const startedVideos = new WeakSet();
+        const columnQueues = new Map();
+        const activeLoads = new Map();
+        const maxLoadsPerColumn = 2;
 
-        function loadVideo(video) {
-            if (video.dataset.mediaLoaded === 'true') return;
+        document.querySelectorAll('main .column').forEach(column => {
+            columnQueues.set(column, Array.from(column.querySelectorAll('video')));
+            activeLoads.set(column, 0);
+        });
+
+        function startVideo(video, column) {
+            if (startedVideos.has(video)) return;
             let hasSource = false;
             if (video.dataset.src) {
                 video.src = video.dataset.src;
@@ -409,9 +419,52 @@
                 hasSource = true;
             });
             if (!hasSource) return;
+            startedVideos.add(video);
             video.dataset.mediaLoaded = 'true';
             video.preload = 'auto';
+            if (column) activeLoads.set(column, activeLoads.get(column) + 1);
+
+            if (column) {
+                let released = false;
+                const releaseSlot = () => {
+                    if (released) return;
+                    released = true;
+                    video.removeEventListener('canplay', releaseSlot);
+                    video.removeEventListener('error', releaseSlot);
+                    activeLoads.set(column, activeLoads.get(column) - 1);
+                    loadNextInColumn(column);
+                };
+                video.addEventListener('canplay', releaseSlot, { once: true });
+                video.addEventListener('error', releaseSlot, { once: true });
+            }
             video.load();
+        }
+
+        function loadNextInColumn(column) {
+            const queue = columnQueues.get(column);
+            if (!queue) return;
+            while (activeLoads.get(column) < maxLoadsPerColumn && queue.length) {
+                const video = queue.shift();
+                if (startedVideos.has(video)) continue;
+                startVideo(video, column);
+            }
+        }
+
+        function loadVideo(video) {
+            if (startedVideos.has(video)) return;
+            const column = video.closest('.column');
+            if (!column || !columnQueues.has(column)) {
+                startVideo(video, null);
+                return;
+            }
+
+            const queue = columnQueues.get(column);
+            const queuedIndex = queue.indexOf(video);
+            if (video.dataset.inView === 'true' && queuedIndex > 0) {
+                queue.splice(queuedIndex, 1);
+                queue.unshift(video);
+            }
+            loadNextInColumn(column);
         }
 
         function playWhenReady(video) {
@@ -433,7 +486,7 @@
             }
         }
 
-        videos.forEach(loadVideo);
+        columnQueues.forEach((_, column) => loadNextInColumn(column));
 
         const playbackObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
             entries.forEach(entry => {
@@ -521,38 +574,47 @@
     const pendingImageUpgrades = new WeakMap();
 
     function cancelPendingImageUpgrade(img) {
+        const request = pendingImageUpgrades.get(img);
+        if (!request) return;
         pendingImageUpgrades.delete(img);
+        request.resolve(false);
     }
 
     function swapImageWhenDecoded(img, source) {
-        if (pendingImageUpgrades.get(img)?.source === source) return;
+        const pending = pendingImageUpgrades.get(img);
+        if (pending?.source === source) return pending.promise;
         const request = {};
         request.source = source;
+        request.promise = new Promise(resolve => { request.resolve = resolve; });
         const hiresImage = new Image();
         pendingImageUpgrades.set(img, request);
+        const finish = swapped => {
+            if (pendingImageUpgrades.get(img) === request) pendingImageUpgrades.delete(img);
+            request.resolve(swapped);
+        };
         hiresImage.onload = async () => {
-            if (pendingImageUpgrades.get(img) !== request) return;
             if (hiresImage.naturalWidth === 0) {
-                pendingImageUpgrades.delete(img);
+                finish(false);
                 return;
             }
             if (typeof hiresImage.decode === 'function') {
                 try {
                     await hiresImage.decode();
                 } catch {
-                    if (pendingImageUpgrades.get(img) === request) pendingImageUpgrades.delete(img);
+                    finish(false);
                     return;
                 }
             }
             if (pendingImageUpgrades.get(img) !== request) return;
             img.src = source;
             img.dataset.isSwapped = 'true';
-            pendingImageUpgrades.delete(img);
+            finish(true);
         };
         hiresImage.onerror = () => {
-            if (pendingImageUpgrades.get(img) === request) pendingImageUpgrades.delete(img);
+            finish(false);
         };
         hiresImage.src = source;
+        return request.promise;
     }
 
     function setupHiresSwapping() {
@@ -801,10 +863,34 @@
     
     let isContentLoaded = false;
     let isTimerFinished = false;
-    let criticalContentFallback = null;
+    let isInitialHiresReady = false;
+    let initialHiresStarted = false;
+    let hasFinishedLoading = false;
+    let loadingDeadline = null;
+
+    function startInitialHiresLoading() {
+        if (initialHiresStarted) return;
+        initialHiresStarted = true;
+        setupHiresSwapping();
+
+        const initialImages = Array.from(galleryImages).filter(img => {
+            if (!img.dataset.hiresSrc || img.dataset.isSwapped === 'true') return false;
+            const rect = img.getBoundingClientRect();
+            return rect.bottom > 0 && rect.top < window.innerHeight &&
+                rect.right > 0 && rect.left < window.innerWidth;
+        });
+
+        Promise.all(initialImages.map(img => swapImageWhenDecoded(img, img.dataset.hiresSrc)))
+            .then(() => {
+                isInitialHiresReady = true;
+                finishLoading();
+            });
+    }
     
     function finishLoading() {
-        if (isContentLoaded && isTimerFinished) {
+        if (!hasFinishedLoading && isContentLoaded && isTimerFinished && isInitialHiresReady) {
+            hasFinishedLoading = true;
+            if (loadingDeadline) clearTimeout(loadingDeadline);
             document.body.classList.add('loading-finished');
             document.body.classList.add('layout-ready');
 
@@ -826,14 +912,12 @@
 
             if (mainContainer) mainContainer.classList.add('visible');
             if (!easterEggActive && pageHeader) pageHeader.classList.add('visible');
-            setupHiresSwapping();
         }
     }
     
     function markContentLoaded() {
         if (isContentLoaded) return;
         isContentLoaded = true;
-        if (criticalContentFallback) clearTimeout(criticalContentFallback);
         finishLoading();
     }
 
@@ -884,12 +968,6 @@
         });
 
         Promise.all(promises).then(markContentLoaded);
-        criticalContentFallback = setTimeout(() => {
-            if (!isContentLoaded) {
-                console.warn('Full media preloading timed out; showing the portfolio with media ready so far.');
-                markContentLoaded();
-            }
-        }, 45000);
     }
     
     // --- MAIN EVENT LISTENERS ---
@@ -918,8 +996,18 @@
     
     setTimeout(() => {
         isTimerFinished = true;
+        startInitialHiresLoading();
         finishLoading();
     }, 4000);
+
+    loadingDeadline = setTimeout(() => {
+        if (!isContentLoaded || !isInitialHiresReady) {
+            console.warn('Portfolio loading reached the 10-second limit; showing media ready so far.');
+        }
+        isContentLoaded = true;
+        isInitialHiresReady = true;
+        finishLoading();
+    }, Math.max(0, 10000 - (performance.now() - loadingStartedAt)));
     
     window.addEventListener('pagehide', () => {
         pageIsLeaving = true;
