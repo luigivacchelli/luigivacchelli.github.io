@@ -611,6 +611,7 @@
         let transitionFrom = [1, 0, 0];
         let transitionTo = [1, 0, 0];
         let targetColor = 'blue';
+        let previousColor = null;
         let transitionStartedAt = 0;
         let nextColorChangeAt = -Infinity;
         let tileVisible = false;
@@ -630,12 +631,14 @@
             green.style.opacity = greenShare.toFixed(4);
         };
 
-        function chooseRandomColor() {
+        function chooseNextColor() {
             if (aboutIsOpen()) return false;
             const now = performance.now();
             if (now < nextColorChangeAt) return false;
-            const choices = colorTargets.filter(color => color.name !== targetColor);
+            const choices = colorTargets.filter(color =>
+                color.name !== targetColor && color.name !== previousColor);
             const next = choices[Math.floor(Math.random() * choices.length)];
+            previousColor = targetColor;
             targetColor = next.name;
             transitionFrom = [...currentWeights];
             transitionTo = [...next.weights];
@@ -655,7 +658,7 @@
             if (event.pointerType === 'touch' || aboutIsOpen()) return;
             if (pointerPosition) {
                 pointerTravel += Math.hypot(event.clientX - pointerPosition.x, event.clientY - pointerPosition.y);
-                if (pointerTravel >= settings.pointerThreshold && chooseRandomColor()) pointerTravel = 0;
+                if (pointerTravel >= settings.pointerThreshold && chooseNextColor()) pointerTravel = 0;
             }
             pointerPosition = { x: event.clientX, y: event.clientY };
         }, { passive: true });
@@ -664,7 +667,7 @@
         window.addEventListener('wheel', event => {
             if (aboutIsOpen()) return;
             wheelTravel += Math.abs(event.deltaX) + Math.abs(event.deltaY);
-            if (wheelTravel >= settings.wheelThreshold && chooseRandomColor()) wheelTravel = 0;
+            if (wheelTravel >= settings.wheelThreshold && chooseNextColor()) wheelTravel = 0;
         }, { passive: true });
 
         let touchGesture = null;
@@ -691,7 +694,7 @@
             touchGesture = null;
             if (cancelled || gesture.moved || Math.abs(window.scrollY - gesture.scrollY) > 2 ||
                 performance.now() - gesture.startedAt > settings.tapMaxDuration) return;
-            chooseRandomColor();
+            chooseNextColor();
             if (gesture.startedOnTile) requestTiltPermission();
         }
 
@@ -705,7 +708,7 @@
                 return;
             }
             const movement = Math.hypot(event.gamma - tiltAnchor.gamma, event.beta - tiltAnchor.beta);
-            if (movement >= settings.tiltThreshold && chooseRandomColor()) {
+            if (movement >= settings.tiltThreshold && chooseNextColor()) {
                 tiltAnchor = { gamma: event.gamma, beta: event.beta };
             }
         };
@@ -821,6 +824,7 @@
 
         function resetToBlue() {
             targetColor = 'blue';
+            previousColor = null;
             currentWeights = transitionFrom = transitionTo = [1, 0, 0];
             nextColorChangeAt = performance.now();
             applyColorWeights(currentWeights);
