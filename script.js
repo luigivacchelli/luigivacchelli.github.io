@@ -218,6 +218,19 @@
         const lastPositions = new WeakMap();
         const lastDirections = new WeakMap();
 
+        function captureCarouselPositions(items) {
+            return items.flatMap(item => {
+                const carousel = item.matches('.carousel-container') ? item : item.querySelector('.carousel-container');
+                return carousel ? [[carousel, carousel.scrollLeft]] : [];
+            });
+        }
+
+        function restoreCarouselPositions(positions) {
+            positions.forEach(([carousel, scrollLeft]) => {
+                carousel.scrollLeft = scrollLeft;
+            });
+        }
+
         const readPosition = target => target === window ? window.scrollY : target.scrollTop;
 
         function readSurfaceOffset(surface, scrollTarget) {
@@ -243,7 +256,9 @@
             const last = items[items.length - 1];
             const firstTopBefore = first.getBoundingClientRect().top;
             const trigger = surface.querySelector(':scope > .scroll-trigger');
+            const carouselPositions = captureCarouselPositions([last]);
             surface.insertBefore(last, first);
+            restoreCarouselPositions(carouselPositions);
             const shift = first.getBoundingClientRect().top - firstTopBefore;
 
             if (shift > 1) {
@@ -261,56 +276,55 @@
         function recyclePassedItems(surface, scrollTarget, direction) {
             const isWindow = scrollTarget === window;
             const viewportTop = isWindow ? 0 : surface.getBoundingClientRect().top;
-            let rotations = 0;
+            const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
+            if (items.length < 2) return;
 
             // Replenish the top buffer before native scrolling reaches its boundary.
             if (direction < 0) {
-                while (rotations < 24) {
-                    const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
-                    if (items.length < 2) return;
+                const offset = readSurfaceOffset(surface, scrollTarget);
+                const firstRect = items[0].getBoundingClientRect();
+                const firstMargin = parseFloat(getComputedStyle(items[0]).marginBottom) || 0;
+                if (offset > firstRect.height + firstMargin + 1) return;
 
-                    const first = items[0];
-                    const last = items[items.length - 1];
-                    const firstRect = first.getBoundingClientRect();
-                    const firstMargin = parseFloat(getComputedStyle(first).marginBottom) || 0;
-                    const topBuffer = firstRect.height + firstMargin;
-                    if (readSurfaceOffset(surface, scrollTarget) > topBuffer + 1) return;
-
-                    const firstTopBefore = firstRect.top;
-                    surface.insertBefore(last, first);
-                    const shift = first.getBoundingClientRect().top - firstTopBefore;
-                    if (shift <= 1) {
-                        surface.insertBefore(last, surface.querySelector(':scope > .scroll-trigger'));
-                        return;
-                    }
-
-                    writePosition(scrollTarget, readPosition(scrollTarget) + shift);
-                    rotations++;
+                let addedHeight = 0;
+                let count = 0;
+                while (count < items.length - 1 && offset + addedHeight <= firstRect.height + firstMargin + 1) {
+                    const item = items[items.length - 1 - count];
+                    addedHeight += item.getBoundingClientRect().height;
+                    count++;
                 }
+                if (!count) return;
+
+                const firstTopBefore = items[0].getBoundingClientRect().top;
+                const movedItems = items.slice(-count);
+                const carouselPositions = captureCarouselPositions(movedItems);
+                const fragment = document.createDocumentFragment();
+                movedItems.forEach(item => fragment.appendChild(item));
+                surface.insertBefore(fragment, items[0]);
+                restoreCarouselPositions(carouselPositions);
+                const shift = items[0].getBoundingClientRect().top - firstTopBefore;
+                if (shift > 1) writePosition(scrollTarget, readPosition(scrollTarget) + shift);
                 return;
             }
 
             if (direction <= 0) return;
+            let count = 0;
+            while (count < items.length - 1 && items[count].getBoundingClientRect().bottom <= viewportTop + 1) count++;
+            if (!count) return;
 
-            while (rotations < 24) {
-                const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
-                if (items.length < 2) return;
+            const firstRect = items[0].getBoundingClientRect();
+            const nextRect = items[count].getBoundingClientRect();
+            const shift = nextRect.top - firstRect.top;
+            if (shift <= 1) return;
 
-                const first = items[0];
-                const next = items[1];
-                const firstRect = first.getBoundingClientRect();
-                if (firstRect.bottom > viewportTop + 1) return;
-
-                const nextRect = next.getBoundingClientRect();
-                const shift = nextRect.top - firstRect.top;
-                if (shift <= 1) return;
-
-                const trigger = surface.querySelector(':scope > .scroll-trigger');
-                surface.insertBefore(first, trigger);
-
-                writePosition(scrollTarget, Math.max(0, readPosition(scrollTarget) - shift));
-                rotations++;
-            }
+            const movedItems = items.slice(0, count);
+            const carouselPositions = captureCarouselPositions(movedItems);
+            const fragment = document.createDocumentFragment();
+            movedItems.forEach(item => fragment.appendChild(item));
+            const trigger = surface.querySelector(':scope > .scroll-trigger');
+            surface.insertBefore(fragment, trigger);
+            restoreCarouselPositions(carouselPositions);
+            writePosition(scrollTarget, Math.max(0, readPosition(scrollTarget) - shift));
         }
 
         function scheduleRecycle(surface, scrollTarget) {
@@ -408,6 +422,7 @@
     function setupVideoLoading() {
         const videos = Array.from(document.querySelectorAll('main video'));
         const waitingToPlay = new WeakSet();
+        const playAttempts = new WeakSet();
         const startedVideos = new WeakSet();
         const columnQueues = new Map();
         const activeLoads = new Map();
@@ -420,6 +435,14 @@
 
         function startVideo(video, column) {
             if (startedVideos.has(video)) return;
+            if (video.dataset.autoplay === 'true') {
+                video.muted = true;
+                video.defaultMuted = true;
+                video.autoplay = true;
+                video.playsInline = true;
+                video.controls = false;
+            }
+            video.preload = video.dataset.autoplay === 'true' ? 'auto' : video.preload;
             let hasSource = false;
             if (video.dataset.src) {
                 video.src = video.dataset.src;
@@ -433,7 +456,6 @@
             if (!hasSource) return;
             startedVideos.add(video);
             video.dataset.mediaLoaded = 'true';
-            video.preload = 'auto';
             if (column) activeLoads.set(column, activeLoads.get(column) + 1);
 
             if (column) {
@@ -476,6 +498,10 @@
                 queue.splice(queuedIndex, 1);
                 queue.unshift(video);
             }
+            if (video.dataset.inView === 'true') {
+                startVideo(video, column);
+                return;
+            }
             loadNextInColumn(column);
         }
 
@@ -483,18 +509,20 @@
             if (video.dataset.inView !== 'true') return;
             const play = () => {
                 waitingToPlay.delete(video);
-                if (video.dataset.inView === 'true') {
+                if (video.dataset.inView === 'true' && !document.hidden && !playAttempts.has(video) && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+                    playAttempts.add(video);
                     video.play().catch(error => {
+                        playAttempts.delete(video);
                         if (error.name !== 'AbortError') {
                             console.warn('Inline video playback was blocked:', error.name, video.currentSrc || video.src);
                         }
                     });
                 }
             };
-            if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) play();
+            if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) play();
             else if (!waitingToPlay.has(video)) {
                 waitingToPlay.add(video);
-                video.addEventListener('canplay', play, { once: true });
+                video.addEventListener('loadeddata', play, { once: true });
             }
         }
 
@@ -506,9 +534,16 @@
                 video.dataset.inView = String(entry.isIntersecting);
                 if (entry.isIntersecting) {
                     loadVideo(video);
-                    if (video.dataset.autoplay === 'true') playWhenReady(video);
+                    if (video.dataset.autoplay === 'true') {
+                        video.addEventListener('canplay', () => {
+                            playAttempts.delete(video);
+                            playWhenReady(video);
+                        }, { once: true });
+                        playWhenReady(video);
+                    }
                 } else if (video.dataset.autoplay === 'true') {
                     video.pause();
+                    playAttempts.delete(video);
                 }
             });
         }, { threshold: 0.1 }) : null;
@@ -521,6 +556,17 @@
                 playWhenReady(video);
             }
         });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) return;
+            videos.forEach(video => {
+                if (video.dataset.autoplay === 'true' && video.dataset.inView === 'true') playWhenReady(video);
+            });
+        });
+        document.addEventListener('pointerdown', () => {
+            videos.forEach(video => {
+                if (video.dataset.autoplay === 'true' && video.dataset.inView === 'true') playWhenReady(video);
+            });
+        }, { passive: true });
         return loadVideo;
     }
 
@@ -1037,7 +1083,7 @@
                     track.classList.add('has-peeked');
                 }, 500);
             });
-        }, { threshold: 0.75 });
+        }, { threshold: 0.35 });
         peekObserver.observe(carouselElement);
 
         function cancelPeekAnimation() {

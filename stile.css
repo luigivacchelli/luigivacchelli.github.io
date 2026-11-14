@@ -479,9 +479,9 @@ body.loading-finished #preloader p {
 /* === CAROUSEL STYLES === */
 @keyframes peek-a-boo {
     0%, 100% { transform: translateX(0); }
-    25%       { transform: translateX(-20%); }
-    50%       { transform: translateX(20%); }
-    75%       { transform: translateX(20%); }
+    25%       { transform: translateX(max(-64px, -10vw)); }
+    50%       { transform: translateX(min(10vw, 64px)); }
+    75%       { transform: translateX(min(10vw, 64px)); }
 }
 
 .carousel-track.has-peeked {
