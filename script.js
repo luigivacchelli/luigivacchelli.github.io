@@ -591,65 +591,115 @@
         const [blue, red, green] = layers;
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const settings = {
-            smoothing: reducedMotion ? 0.03 : 0.06,
-            wheelGain: 0.0006,
-            tiltRange: 35,
-            deadZone: 0.05,
+            transitionDuration: reducedMotion ? 0 : 420,
+            inputCooldown: 240,
+            pointerThreshold: 38,
+            wheelThreshold: 45,
+            touchThreshold: 28,
+            tiltThreshold: 8,
             rateNudge: 0.5,
             seekAbove: 0.15
         };
         const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-        const smoothstep = (edge0, edge1, value) => {
-            const t = clamp((value - edge0) / (edge1 - edge0), 0, 1);
-            return t * t * (3 - 2 * t);
-        };
-
-        let targetX = 0.5;
-        let targetY = 0.5;
-        let currentX = 0.5;
-        let currentY = 0.5;
+        const colorTargets = [
+            { name: 'blue', weights: [1, 0, 0] },
+            { name: 'red', weights: [0, 1, 0] },
+            { name: 'green', weights: [0, 0, 1] }
+        ];
+        let currentWeights = [1, 0, 0];
+        let transitionFrom = [1, 0, 0];
+        let transitionTo = [1, 0, 0];
+        let targetColor = 'blue';
+        let transitionStartedAt = 0;
+        let lastColorChangeAt = -Infinity;
         let tileVisible = false;
         let running = false;
         let started = false;
         let pending = false;
-        let lastFrameTime = 0;
         let lastRetryTime = 0;
-        let tiltBaseline = null;
+        let tiltAnchor = null;
         let tiltEnabled = false;
 
         const aboutIsOpen = () => aboutOverlay?.classList.contains('is-open') === true;
-        const setPoint = (x, y) => {
-            if (aboutIsOpen()) return;
-            targetX = clamp(x / Math.max(window.innerWidth, 1), 0, 1);
-            targetY = clamp(y / Math.max(window.innerHeight, 1), 0, 1);
+        function applyColorWeights(weights) {
+            const [blueShare, redShare, greenShare] = weights;
+            red.style.opacity = (blueShare + redShare > 0.0001
+                ? redShare / (blueShare + redShare)
+                : 0).toFixed(4);
+            green.style.opacity = greenShare.toFixed(4);
         };
 
+        function chooseRandomColor() {
+            if (aboutIsOpen()) return false;
+            const now = performance.now();
+            if (now - lastColorChangeAt < settings.inputCooldown) return false;
+            const choices = colorTargets.filter(color => color.name !== targetColor);
+            const next = choices[Math.floor(Math.random() * choices.length)];
+            lastColorChangeAt = now;
+            targetColor = next.name;
+            transitionFrom = [...currentWeights];
+            transitionTo = [...next.weights];
+            transitionStartedAt = now;
+
+            if (!tileVisible || settings.transitionDuration === 0) {
+                currentWeights = [...transitionTo];
+                applyColorWeights(currentWeights);
+            }
+            return true;
+        }
+
+        let pointerPosition = null;
+        let pointerTravel = 0;
         window.addEventListener('pointermove', event => {
-            if (event.pointerType !== 'touch') setPoint(event.clientX, event.clientY);
+            if (event.pointerType === 'touch' || aboutIsOpen()) return;
+            if (pointerPosition) {
+                pointerTravel += Math.hypot(event.clientX - pointerPosition.x, event.clientY - pointerPosition.y);
+                if (pointerTravel >= settings.pointerThreshold && chooseRandomColor()) pointerTravel = 0;
+            }
+            pointerPosition = { x: event.clientX, y: event.clientY };
         }, { passive: true });
 
-        const handleTouch = event => {
-            const touch = event.touches[0];
-            if (touch) setPoint(touch.clientX, touch.clientY);
-        };
-        window.addEventListener('touchstart', handleTouch, { passive: true });
-        window.addEventListener('touchmove', handleTouch, { passive: true });
+        let wheelTravel = 0;
         window.addEventListener('wheel', event => {
             if (aboutIsOpen()) return;
-            targetX = clamp(targetX + event.deltaX * settings.wheelGain, 0, 1);
-            targetY = clamp(targetY + event.deltaY * settings.wheelGain, 0, 1);
+            wheelTravel += Math.abs(event.deltaX) + Math.abs(event.deltaY);
+            if (wheelTravel >= settings.wheelThreshold && chooseRandomColor()) wheelTravel = 0;
         }, { passive: true });
+
+        let touchPosition = null;
+        let touchTravel = 0;
+        window.addEventListener('touchstart', event => {
+            const touch = event.touches[0];
+            if (touch) touchPosition = { x: touch.clientX, y: touch.clientY };
+            touchTravel = 0;
+        }, { passive: true });
+        const handleTouch = event => {
+            if (aboutIsOpen()) return;
+            const touch = event.touches[0];
+            if (!touch) return;
+            if (touchPosition) {
+                touchTravel += Math.hypot(touch.clientX - touchPosition.x, touch.clientY - touchPosition.y);
+                if (touchTravel >= settings.touchThreshold && chooseRandomColor()) touchTravel = 0;
+            }
+            touchPosition = { x: touch.clientX, y: touch.clientY };
+        };
+        window.addEventListener('touchmove', handleTouch, { passive: true });
 
         const handleTilt = event => {
             if (event.gamma == null || event.beta == null || aboutIsOpen()) return;
-            if (!tiltBaseline) tiltBaseline = { gamma: event.gamma, beta: event.beta };
-            targetX = clamp(0.5 + (event.gamma - tiltBaseline.gamma) / (2 * settings.tiltRange), 0, 1);
-            targetY = clamp(0.5 + (event.beta - tiltBaseline.beta) / (2 * settings.tiltRange), 0, 1);
+            if (!tiltAnchor) {
+                tiltAnchor = { gamma: event.gamma, beta: event.beta };
+                return;
+            }
+            const movement = Math.hypot(event.gamma - tiltAnchor.gamma, event.beta - tiltAnchor.beta);
+            if (movement >= settings.tiltThreshold && chooseRandomColor()) {
+                tiltAnchor = { gamma: event.gamma, beta: event.beta };
+            }
         };
         const enableTilt = () => {
             if (tiltEnabled) return;
             tiltEnabled = true;
-            tiltBaseline = null;
+            tiltAnchor = null;
             window.addEventListener('deviceorientation', handleTilt);
         };
 
@@ -667,14 +717,6 @@
             }, { once: true });
         } else if ('ondeviceorientation' in window && window.matchMedia('(pointer: coarse)').matches) {
             enableTilt();
-        }
-
-        function computeWeights() {
-            const dx = currentX - 0.5;
-            const dy = currentY - 0.5;
-            const strength = smoothstep(settings.deadZone, 0.9, Math.hypot(dx, dy) / 0.5);
-            const redShare = 0.5 + 0.5 * Math.cos(Math.atan2(dy, dx) + Math.PI / 4);
-            return [1 - strength, strength * redShare, strength * (1 - redShare)];
         }
 
         function syncFollowers() {
@@ -729,19 +771,16 @@
 
         function frame(now) {
             if (!running) return;
-            const frameScale = lastFrameTime
-                ? clamp((now - lastFrameTime) / 16.67, 0.5, 6)
-                : 1;
-            lastFrameTime = now;
-            const amount = 1 - Math.pow(1 - settings.smoothing, frameScale);
-            currentX += (targetX - currentX) * amount;
-            currentY += (targetY - currentY) * amount;
-
-            const [blueShare, redShare, greenShare] = computeWeights();
-            red.style.opacity = (blueShare + redShare > 0.0001
-                ? redShare / (blueShare + redShare)
-                : 0).toFixed(4);
-            green.style.opacity = greenShare.toFixed(4);
+            if (currentWeights.some((weight, index) => Math.abs(weight - transitionTo[index]) > 0.0001)) {
+                const progress = settings.transitionDuration
+                    ? clamp((now - transitionStartedAt) / settings.transitionDuration, 0, 1)
+                    : 1;
+                const eased = progress * progress * (3 - 2 * progress);
+                currentWeights = transitionFrom.map((weight, index) =>
+                    weight + (transitionTo[index] - weight) * eased);
+                if (progress === 1) currentWeights = [...transitionTo];
+                applyColorWeights(currentWeights);
+            }
 
             if (layers.some(video => video.paused)) started = false;
             if (!started && now - lastRetryTime > 500) {
@@ -755,7 +794,6 @@
         function start() {
             if (running || !tileVisible || aboutIsOpen()) return;
             running = true;
-            lastFrameTime = 0;
             playAll();
             requestAnimationFrame(frame);
         }
@@ -767,10 +805,9 @@
         }
 
         function resetToBlue() {
-            targetX = currentX = 0.5;
-            targetY = currentY = 0.5;
-            red.style.opacity = '0';
-            green.style.opacity = '0';
+            targetColor = 'blue';
+            currentWeights = transitionFrom = transitionTo = [1, 0, 0];
+            applyColorWeights(currentWeights);
         }
 
         if ('IntersectionObserver' in window) {
