@@ -220,6 +220,12 @@
 
         const readPosition = target => target === window ? window.scrollY : target.scrollTop;
 
+        function readSurfaceOffset(surface, scrollTarget) {
+            if (scrollTarget !== window) return scrollTarget.scrollTop;
+            const surfaceDocumentTop = surface.getBoundingClientRect().top + window.scrollY;
+            return window.scrollY - surfaceDocumentTop;
+        }
+
         function writePosition(target, position) {
             if (target === window) window.scrollTo(window.scrollX, position);
             else target.scrollTop = position;
@@ -255,27 +261,33 @@
         function recyclePassedItems(surface, scrollTarget, direction) {
             const isWindow = scrollTarget === window;
             const viewportTop = isWindow ? 0 : surface.getBoundingClientRect().top;
-            const position = readPosition(scrollTarget);
             let rotations = 0;
 
-            // When native scrolling reaches its top boundary, prepend the last item
-            // and compensate the offset so upward scrolling can continue seamlessly.
-            if (direction < 0 && position <= 1) {
-                const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
-                if (items.length > 1) {
+            // Replenish the top buffer before native scrolling reaches its boundary.
+            if (direction < 0) {
+                while (rotations < 24) {
+                    const items = Array.from(surface.querySelectorAll(':scope > .media-link'));
+                    if (items.length < 2) return;
+
                     const first = items[0];
                     const last = items[items.length - 1];
-                    const firstTopBefore = first.getBoundingClientRect().top;
-                    const trigger = surface.querySelector(':scope > .scroll-trigger');
+                    const firstRect = first.getBoundingClientRect();
+                    const firstMargin = parseFloat(getComputedStyle(first).marginBottom) || 0;
+                    const topBuffer = firstRect.height + firstMargin;
+                    if (readSurfaceOffset(surface, scrollTarget) > topBuffer + 1) return;
+
+                    const firstTopBefore = firstRect.top;
                     surface.insertBefore(last, first);
                     const shift = first.getBoundingClientRect().top - firstTopBefore;
-
-                    if (shift > 1) {
-                        writePosition(scrollTarget, position + shift);
+                    if (shift <= 1) {
+                        surface.insertBefore(last, surface.querySelector(':scope > .scroll-trigger'));
                         return;
                     }
-                    surface.insertBefore(last, trigger);
+
+                    writePosition(scrollTarget, readPosition(scrollTarget) + shift);
+                    rotations++;
                 }
+                return;
             }
 
             if (direction <= 0) return;
@@ -570,6 +582,226 @@
             }
         });
     }
+
+    function setupColorBlend() {
+        const tile = document.getElementById('color-blend');
+        if (!tile) return;
+        const layers = Array.from(tile.querySelectorAll('video'));
+        if (layers.length !== 3) return;
+        const [blue, red, green] = layers;
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const settings = {
+            smoothing: reducedMotion ? 0.03 : 0.06,
+            wheelGain: 0.0006,
+            tiltRange: 35,
+            deadZone: 0.05,
+            rateNudge: 0.5,
+            seekAbove: 0.15
+        };
+        const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+        const smoothstep = (edge0, edge1, value) => {
+            const t = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+            return t * t * (3 - 2 * t);
+        };
+
+        let targetX = 0.5;
+        let targetY = 0.5;
+        let currentX = 0.5;
+        let currentY = 0.5;
+        let tileVisible = false;
+        let running = false;
+        let started = false;
+        let pending = false;
+        let lastFrameTime = 0;
+        let lastRetryTime = 0;
+        let tiltBaseline = null;
+        let tiltEnabled = false;
+
+        const aboutIsOpen = () => aboutOverlay?.classList.contains('is-open') === true;
+        const setPoint = (x, y) => {
+            if (aboutIsOpen()) return;
+            targetX = clamp(x / Math.max(window.innerWidth, 1), 0, 1);
+            targetY = clamp(y / Math.max(window.innerHeight, 1), 0, 1);
+        };
+
+        window.addEventListener('pointermove', event => {
+            if (event.pointerType !== 'touch') setPoint(event.clientX, event.clientY);
+        }, { passive: true });
+
+        const handleTouch = event => {
+            const touch = event.touches[0];
+            if (touch) setPoint(touch.clientX, touch.clientY);
+        };
+        window.addEventListener('touchstart', handleTouch, { passive: true });
+        window.addEventListener('touchmove', handleTouch, { passive: true });
+        window.addEventListener('wheel', event => {
+            if (aboutIsOpen()) return;
+            targetX = clamp(targetX + event.deltaX * settings.wheelGain, 0, 1);
+            targetY = clamp(targetY + event.deltaY * settings.wheelGain, 0, 1);
+        }, { passive: true });
+
+        const handleTilt = event => {
+            if (event.gamma == null || event.beta == null || aboutIsOpen()) return;
+            if (!tiltBaseline) tiltBaseline = { gamma: event.gamma, beta: event.beta };
+            targetX = clamp(0.5 + (event.gamma - tiltBaseline.gamma) / (2 * settings.tiltRange), 0, 1);
+            targetY = clamp(0.5 + (event.beta - tiltBaseline.beta) / (2 * settings.tiltRange), 0, 1);
+        };
+        const enableTilt = () => {
+            if (tiltEnabled) return;
+            tiltEnabled = true;
+            tiltBaseline = null;
+            window.addEventListener('deviceorientation', handleTilt);
+        };
+
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+            const tiltButton = document.createElement('button');
+            tiltButton.type = 'button';
+            tiltButton.className = 'blend-tilt';
+            tiltButton.textContent = getLanguage() === 'it' ? 'attiva tilt' : 'enable tilt';
+            tile.appendChild(tiltButton);
+            tiltButton.addEventListener('click', () => {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permission => {
+                        if (permission === 'granted') {
+                            enableTilt();
+                            tiltButton.remove();
+                        }
+                    })
+                    .catch(() => {});
+            });
+        } else if ('ondeviceorientation' in window && window.matchMedia('(pointer: coarse)').matches) {
+            enableTilt();
+        }
+
+        function computeWeights() {
+            const dx = currentX - 0.5;
+            const dy = currentY - 0.5;
+            const strength = smoothstep(settings.deadZone, 0.9, Math.hypot(dx, dy) / 0.5);
+            const redShare = 0.5 + 0.5 * Math.cos(Math.atan2(dy, dx) + Math.PI / 4);
+            return [1 - strength, strength * redShare, strength * (1 - redShare)];
+        }
+
+        function syncFollowers() {
+            const duration = blue.duration;
+            if (!Number.isFinite(duration) || duration <= 0) return;
+            [red, green].forEach(video => {
+                if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+                let drift = video.currentTime - blue.currentTime;
+                if (drift > duration / 2) drift -= duration;
+                else if (drift < -duration / 2) drift += duration;
+                if (Math.abs(drift) > settings.seekAbove) {
+                    video.currentTime = blue.currentTime;
+                    video.playbackRate = 1;
+                } else {
+                    video.playbackRate = clamp(1 - drift * settings.rateNudge, 0.95, 1.05);
+                }
+            });
+        }
+
+        function waitUntilReady(video) {
+            if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+                const cleanup = () => {
+                    video.removeEventListener('canplay', onReady);
+                    video.removeEventListener('error', onError);
+                };
+                const onReady = () => { cleanup(); resolve(); };
+                const onError = () => { cleanup(); reject(video.error || new Error('Blend video failed to load')); };
+                video.addEventListener('canplay', onReady, { once: true });
+                video.addEventListener('error', onError, { once: true });
+            });
+        }
+
+        function playAll() {
+            if (pending || !running || aboutIsOpen()) return;
+            pending = true;
+            Promise.all(layers.map(video => video.play()))
+                .then(() => Promise.all(layers.map(waitUntilReady)))
+                .then(() => {
+                    if (!running || aboutIsOpen()) {
+                        layers.forEach(video => video.pause());
+                        return;
+                    }
+                    red.currentTime = blue.currentTime;
+                    green.currentTime = blue.currentTime;
+                    layers.forEach(video => { video.playbackRate = 1; });
+                    started = true;
+                })
+                .catch(() => { started = false; })
+                .finally(() => { pending = false; });
+        }
+
+        function frame(now) {
+            if (!running) return;
+            const frameScale = lastFrameTime
+                ? clamp((now - lastFrameTime) / 16.67, 0.5, 6)
+                : 1;
+            lastFrameTime = now;
+            const amount = 1 - Math.pow(1 - settings.smoothing, frameScale);
+            currentX += (targetX - currentX) * amount;
+            currentY += (targetY - currentY) * amount;
+
+            const [blueShare, redShare, greenShare] = computeWeights();
+            red.style.opacity = (blueShare + redShare > 0.0001
+                ? redShare / (blueShare + redShare)
+                : 0).toFixed(4);
+            green.style.opacity = greenShare.toFixed(4);
+
+            if (layers.some(video => video.paused)) started = false;
+            if (!started && now - lastRetryTime > 500) {
+                lastRetryTime = now;
+                playAll();
+            }
+            if (started) syncFollowers();
+            requestAnimationFrame(frame);
+        }
+
+        function start() {
+            if (running || !tileVisible || aboutIsOpen()) return;
+            running = true;
+            lastFrameTime = 0;
+            playAll();
+            requestAnimationFrame(frame);
+        }
+
+        function stop() {
+            running = false;
+            started = false;
+            layers.forEach(video => video.pause());
+        }
+
+        function resetToBlue() {
+            targetX = currentX = 0.5;
+            targetY = currentY = 0.5;
+            red.style.opacity = '0';
+            green.style.opacity = '0';
+        }
+
+        if ('IntersectionObserver' in window) {
+            new IntersectionObserver(entries => {
+                const entry = entries.find(item => item.target === tile);
+                if (!entry) return;
+                tileVisible = entry.isIntersecting;
+                if (tileVisible) start();
+                else stop();
+            }, { threshold: 0.1 }).observe(tile);
+        } else {
+            tileVisible = true;
+            start();
+        }
+
+        if (aboutOverlay && 'MutationObserver' in window) {
+            new MutationObserver(() => {
+                if (aboutIsOpen()) {
+                    resetToBlue();
+                    stop();
+                } else if (tileVisible) {
+                    start();
+                }
+            }).observe(aboutOverlay, { attributes: true, attributeFilter: ['class'] });
+        }
+    }
     
     const pendingImageUpgrades = new WeakMap();
 
@@ -710,12 +942,23 @@
         track.insertBefore(lastClone, items[0]);
         items = Array.from(track.children);
 
-        setTimeout(() => {
-            track.style.transition       = 'none';
-            carouselElement.scrollLeft   = carouselElement.querySelector('.carousel-item:not(.clone)').offsetLeft;
-            track.style.transition       = '';
-            checkAndLoadVisibleItems();
-        }, 75);
+        const initializePosition = () => {
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (!carouselElement.isConnected) return;
+                const firstItem = items.find(item => !item.classList.contains('clone'));
+                if (!firstItem) return;
+                track.style.transition = 'none';
+                carouselElement.scrollLeft = firstItem.offsetLeft;
+                track.style.transition = '';
+                checkAndLoadVisibleItems();
+            }));
+        };
+        const galleryStylesheet = document.querySelector('link[rel="stylesheet"][href*="stile.css"]');
+        if (galleryStylesheet && galleryStylesheet.media !== 'all') {
+            galleryStylesheet.addEventListener('load', initializePosition, { once: true });
+        } else {
+            initializePosition();
+        }
 
         let peekTimeout;
         let peekPlayed = carouselElement.dataset.peekPlayed === 'true';
@@ -981,6 +1224,7 @@
         setupVideoToggle();
         setupPoolAnimation();
         setupInteractiveBalls();
+        setupColorBlend();
         trackCriticalContent(prepareVideo);
         const allCarousels = document.querySelectorAll('.carousel-container');
         allCarousels.forEach(setupInfiniteCarousel);
