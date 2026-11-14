@@ -574,23 +574,6 @@ body.loading-finished #preloader p {
     opacity: 0;
 }
 
-.blend-tilt {
-    position: absolute;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    z-index: 3;
-    padding: 0.25rem 0.6rem;
-    border: 2px solid var(--color-primary);
-    background: var(--page-background);
-    color: var(--color-primary);
-    font-family: 'Kirome', sans-serif;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.blend-tilt:hover {
-    color: var(--color-hover);
-}
 /* === END OF COLOUR BLEND TILE === */
 
 html.overlay-active { overflow: hidden !important; }

@@ -655,21 +655,16 @@
 
         if (typeof DeviceOrientationEvent !== 'undefined' &&
             typeof DeviceOrientationEvent.requestPermission === 'function') {
-            const tiltButton = document.createElement('button');
-            tiltButton.type = 'button';
-            tiltButton.className = 'blend-tilt';
-            tiltButton.textContent = getLanguage() === 'it' ? 'attiva tilt' : 'enable tilt';
-            tile.appendChild(tiltButton);
-            tiltButton.addEventListener('click', () => {
+            let tiltPermissionRequested = false;
+            tile.addEventListener('pointerdown', () => {
+                if (tiltPermissionRequested) return;
+                tiltPermissionRequested = true;
                 DeviceOrientationEvent.requestPermission()
                     .then(permission => {
-                        if (permission === 'granted') {
-                            enableTilt();
-                            tiltButton.remove();
-                        }
+                        if (permission === 'granted') enableTilt();
                     })
                     .catch(() => {});
-            });
+            }, { once: true });
         } else if ('ondeviceorientation' in window && window.matchMedia('(pointer: coarse)').matches) {
             enableTilt();
         }
