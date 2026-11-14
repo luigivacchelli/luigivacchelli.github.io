@@ -583,7 +583,7 @@
         });
     }
 
-    function setupColorBlend() {
+    function setupColorBlend(prepareVideo) {
         const tile = document.getElementById('color-blend');
         if (!tile) return;
         const layers = Array.from(tile.querySelectorAll('video'));
@@ -783,11 +783,21 @@
                 const entry = entries.find(item => item.target === tile);
                 if (!entry) return;
                 tileVisible = entry.isIntersecting;
-                if (tileVisible) start();
+                if (tileVisible) {
+                    layers.forEach(video => {
+                        video.dataset.inView = 'true';
+                        prepareVideo(video);
+                    });
+                    start();
+                }
                 else stop();
             }, { threshold: 0.1 }).observe(tile);
         } else {
             tileVisible = true;
+            layers.forEach(video => {
+                video.dataset.inView = 'true';
+                prepareVideo(video);
+            });
             start();
         }
 
@@ -1224,7 +1234,7 @@
         setupVideoToggle();
         setupPoolAnimation();
         setupInteractiveBalls();
-        setupColorBlend();
+        setupColorBlend(prepareVideo);
         trackCriticalContent(prepareVideo);
         const allCarousels = document.querySelectorAll('.carousel-container');
         allCarousels.forEach(setupInfiniteCarousel);
