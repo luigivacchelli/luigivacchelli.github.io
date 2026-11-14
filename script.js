@@ -592,10 +592,11 @@
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const settings = {
             transitionDuration: reducedMotion ? 0 : 420,
-            inputCooldown: 240,
+            fullColorHold: 260,
             pointerThreshold: 38,
             wheelThreshold: 45,
-            touchThreshold: 28,
+            touchMoveThreshold: 12,
+            tapMaxDuration: 700,
             tiltThreshold: 8,
             rateNudge: 0.5,
             seekAbove: 0.15
@@ -611,7 +612,7 @@
         let transitionTo = [1, 0, 0];
         let targetColor = 'blue';
         let transitionStartedAt = 0;
-        let lastColorChangeAt = -Infinity;
+        let nextColorChangeAt = -Infinity;
         let tileVisible = false;
         let running = false;
         let started = false;
@@ -632,10 +633,9 @@
         function chooseRandomColor() {
             if (aboutIsOpen()) return false;
             const now = performance.now();
-            if (now - lastColorChangeAt < settings.inputCooldown) return false;
+            if (now < nextColorChangeAt) return false;
             const choices = colorTargets.filter(color => color.name !== targetColor);
             const next = choices[Math.floor(Math.random() * choices.length)];
-            lastColorChangeAt = now;
             targetColor = next.name;
             transitionFrom = [...currentWeights];
             transitionTo = [...next.weights];
@@ -645,6 +645,7 @@
                 currentWeights = [...transitionTo];
                 applyColorWeights(currentWeights);
             }
+            nextColorChangeAt = now + (tileVisible ? settings.transitionDuration : 0) + settings.fullColorHold;
             return true;
         }
 
@@ -666,24 +667,36 @@
             if (wheelTravel >= settings.wheelThreshold && chooseRandomColor()) wheelTravel = 0;
         }, { passive: true });
 
-        let touchPosition = null;
-        let touchTravel = 0;
-        window.addEventListener('touchstart', event => {
-            const touch = event.touches[0];
-            if (touch) touchPosition = { x: touch.clientX, y: touch.clientY };
-            touchTravel = 0;
+        let touchGesture = null;
+        window.addEventListener('pointerdown', event => {
+            if (event.pointerType !== 'touch') return;
+            touchGesture = {
+                id: event.pointerId,
+                x: event.clientX,
+                y: event.clientY,
+                scrollY: window.scrollY,
+                startedAt: performance.now(),
+                moved: false,
+                startedOnTile: tile.contains(event.target)
+            };
         }, { passive: true });
-        const handleTouch = event => {
-            if (aboutIsOpen()) return;
-            const touch = event.touches[0];
-            if (!touch) return;
-            if (touchPosition) {
-                touchTravel += Math.hypot(touch.clientX - touchPosition.x, touch.clientY - touchPosition.y);
-                if (touchTravel >= settings.touchThreshold && chooseRandomColor()) touchTravel = 0;
-            }
-            touchPosition = { x: touch.clientX, y: touch.clientY };
-        };
-        window.addEventListener('touchmove', handleTouch, { passive: true });
+        window.addEventListener('pointermove', event => {
+            if (event.pointerType !== 'touch' || touchGesture?.id !== event.pointerId || touchGesture.moved) return;
+            touchGesture.moved = Math.hypot(event.clientX - touchGesture.x, event.clientY - touchGesture.y) > settings.touchMoveThreshold;
+        }, { passive: true });
+
+        function finishTouch(event, cancelled = false) {
+            if (event.pointerType !== 'touch' || touchGesture?.id !== event.pointerId) return;
+            const gesture = touchGesture;
+            touchGesture = null;
+            if (cancelled || gesture.moved || Math.abs(window.scrollY - gesture.scrollY) > 2 ||
+                performance.now() - gesture.startedAt > settings.tapMaxDuration) return;
+            chooseRandomColor();
+            if (gesture.startedOnTile) requestTiltPermission();
+        }
+
+        window.addEventListener('pointerup', event => finishTouch(event), { passive: true });
+        window.addEventListener('pointercancel', event => finishTouch(event, true), { passive: true });
 
         const handleTilt = event => {
             if (event.gamma == null || event.beta == null || aboutIsOpen()) return;
@@ -703,19 +716,21 @@
             window.addEventListener('deviceorientation', handleTilt);
         };
 
+        let tiltPermissionRequested = false;
+        function requestTiltPermission() {
+            if (tiltPermissionRequested || typeof DeviceOrientationEvent === 'undefined' ||
+                typeof DeviceOrientationEvent.requestPermission !== 'function') return;
+            tiltPermissionRequested = true;
+            DeviceOrientationEvent.requestPermission()
+                .then(permission => {
+                    if (permission === 'granted') enableTilt();
+                })
+                .catch(() => {});
+        }
+
         if (typeof DeviceOrientationEvent !== 'undefined' &&
-            typeof DeviceOrientationEvent.requestPermission === 'function') {
-            let tiltPermissionRequested = false;
-            tile.addEventListener('pointerdown', () => {
-                if (tiltPermissionRequested) return;
-                tiltPermissionRequested = true;
-                DeviceOrientationEvent.requestPermission()
-                    .then(permission => {
-                        if (permission === 'granted') enableTilt();
-                    })
-                    .catch(() => {});
-            }, { once: true });
-        } else if ('ondeviceorientation' in window && window.matchMedia('(pointer: coarse)').matches) {
+            typeof DeviceOrientationEvent.requestPermission !== 'function' &&
+            'ondeviceorientation' in window && window.matchMedia('(pointer: coarse)').matches) {
             enableTilt();
         }
 
@@ -807,6 +822,7 @@
         function resetToBlue() {
             targetColor = 'blue';
             currentWeights = transitionFrom = transitionTo = [1, 0, 0];
+            nextColorChangeAt = performance.now();
             applyColorWeights(currentWeights);
         }
 
