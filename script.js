@@ -231,6 +231,15 @@
             });
         }
 
+        function ensureScrollCapacity(surface, target, position) {
+            const maxPosition = target === window
+                ? Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) - window.innerHeight
+                : target.scrollHeight - target.clientHeight;
+            if (maxPosition >= position) return;
+            const currentPadding = parseFloat(getComputedStyle(surface).paddingBottom) || 0;
+            surface.style.paddingBottom = `${currentPadding + position - maxPosition + 2}px`;
+        }
+
         const readPosition = target => target === window ? window.scrollY : target.scrollTop;
 
         function readSurfaceOffset(surface, scrollTarget) {
@@ -258,19 +267,17 @@
             const trigger = surface.querySelector(':scope > .scroll-trigger');
             const carouselPositions = captureCarouselPositions([last]);
             surface.insertBefore(last, first);
-            restoreCarouselPositions(carouselPositions);
             const shift = first.getBoundingClientRect().top - firstTopBefore;
 
             if (shift > 1) {
                 const positionBeforeShift = readPosition(scrollTarget);
-                writePosition(scrollTarget, positionBeforeShift + shift);
-                const remainingOffset = first.getBoundingClientRect().top - firstTopBefore;
-                if (Math.abs(remainingOffset) > 1) {
-                    writePosition(scrollTarget, readPosition(scrollTarget) + remainingOffset);
-                }
+                const desiredPosition = positionBeforeShift + shift;
+                ensureScrollCapacity(surface, scrollTarget, desiredPosition);
+                writePosition(scrollTarget, desiredPosition);
             } else {
                 surface.insertBefore(last, trigger);
             }
+            restoreCarouselPositions(carouselPositions);
         }
 
         function recyclePassedItems(surface, scrollTarget, direction) {
@@ -648,6 +655,8 @@
             seekAbove: 0.15
         };
         const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+        const tiltNeedsPermission = typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function';
         const colorTargets = [
             { name: 'blue', weights: [1, 0, 0] },
             { name: 'red', weights: [0, 1, 0] },
@@ -740,8 +749,7 @@
             touchGesture = null;
             if (cancelled || gesture.moved || Math.abs(window.scrollY - gesture.scrollY) > 2 ||
                 performance.now() - gesture.startedAt > settings.tapMaxDuration) return;
-            chooseNextColor();
-            if (gesture.startedOnTile) requestTiltPermission();
+            if (!tiltNeedsPermission || gesture.startedOnTile) chooseNextColor();
         }
 
         window.addEventListener('pointerup', event => finishTouch(event), { passive: true });
@@ -765,21 +773,7 @@
             window.addEventListener('deviceorientation', handleTilt);
         };
 
-        let tiltPermissionRequested = false;
-        function requestTiltPermission() {
-            if (tiltPermissionRequested || typeof DeviceOrientationEvent === 'undefined' ||
-                typeof DeviceOrientationEvent.requestPermission !== 'function') return;
-            tiltPermissionRequested = true;
-            DeviceOrientationEvent.requestPermission()
-                .then(permission => {
-                    if (permission === 'granted') enableTilt();
-                })
-                .catch(() => {});
-        }
-
-        if (typeof DeviceOrientationEvent !== 'undefined' &&
-            typeof DeviceOrientationEvent.requestPermission !== 'function' &&
-            'ondeviceorientation' in window && window.matchMedia('(pointer: coarse)').matches) {
+        if (typeof DeviceOrientationEvent !== 'undefined' && !tiltNeedsPermission) {
             enableTilt();
         }
 
@@ -1017,6 +1011,7 @@
             e.preventDefault();
             const x    = e.pageX - carouselElement.offsetLeft;
             const walk = (x - startX);
+            if (Math.abs(walk) > 8) cancelPeekAnimation();
             carouselElement.scrollLeft = scrollLeft - walk;
         };
 
@@ -1070,6 +1065,7 @@
 
         let peekTimeout;
         let peekPlayed = carouselElement.dataset.peekPlayed === 'true';
+        let peekPointer = null;
         const peekObserver = new IntersectionObserver((entries, obs) => {
             entries.forEach(entry => {
                 if (!entry.isIntersecting) return;
@@ -1092,13 +1088,27 @@
             peekPlayed = true;
             carouselElement.dataset.peekPlayed = 'true';
             track.classList.remove('has-peeked');
-            carouselElement.removeEventListener('pointerdown', cancelPeekAnimation);
-            carouselElement.removeEventListener('wheel', cancelPeekAnimation);
-            carouselElement.removeEventListener('keydown', cancelPeekAnimation);
         }
-        carouselElement.addEventListener('pointerdown', cancelPeekAnimation, { once: true, passive: true });
-        carouselElement.addEventListener('wheel', cancelPeekAnimation, { once: true, passive: true });
-        carouselElement.addEventListener('keydown', cancelPeekAnimation, { once: true });
+        carouselElement.addEventListener('pointerdown', event => {
+            peekPointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        }, { passive: true });
+        carouselElement.addEventListener('pointermove', event => {
+            if (!peekPointer || event.pointerId !== peekPointer.id) return;
+            const deltaX = Math.abs(event.clientX - peekPointer.x);
+            const deltaY = Math.abs(event.clientY - peekPointer.y);
+            if (deltaX > 8 && deltaX > deltaY) cancelPeekAnimation();
+            if (deltaX > 8 || deltaY > 8) peekPointer = null;
+        }, { passive: true });
+        carouselElement.addEventListener('pointerup', () => { peekPointer = null; }, { passive: true });
+        carouselElement.addEventListener('pointercancel', () => { peekPointer = null; }, { passive: true });
+        carouselElement.addEventListener('wheel', event => {
+            if (Math.abs(event.deltaX) > 0 && (event.shiftKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY))) {
+                cancelPeekAnimation();
+            }
+        }, { passive: true });
+        carouselElement.addEventListener('keydown', event => {
+            if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) cancelPeekAnimation();
+        });
         const clearPeekClass = event => {
             if (event.animationName === 'peek-a-boo') track.classList.remove('has-peeked');
         };
