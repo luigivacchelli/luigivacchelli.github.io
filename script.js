@@ -267,6 +267,10 @@
             });
         }
 
+        function hasActivePeek(item) {
+            return Boolean(item.querySelector('.carousel-track.has-peeked'));
+        }
+
         function ensureScrollCapacity(surface, target, position) {
             const maxPosition = target === window
                 ? Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) - window.innerHeight
@@ -333,6 +337,7 @@
                 let count = 0;
                 while (count < items.length - 1 && offset + addedHeight <= firstRect.height + firstMargin + 1) {
                     const item = items[items.length - 1 - count];
+                    if (hasActivePeek(item)) break;
                     addedHeight += item.getBoundingClientRect().height;
                     count++;
                 }
@@ -352,7 +357,10 @@
 
             if (direction <= 0) return;
             let count = 0;
-            while (count < items.length - 1 && items[count].getBoundingClientRect().bottom <= viewportTop + 1) count++;
+            while (count < items.length - 1 && items[count].getBoundingClientRect().bottom <= viewportTop + 1) {
+                if (hasActivePeek(items[count])) break;
+                count++;
+            }
             if (!count) return;
 
             const firstRect = items[0].getBoundingClientRect();
@@ -426,6 +434,11 @@
         // Recycling media before it reaches the viewport intentionally keeps the footer hidden.
         bindScrollSurfaces();
         mobileQuery.addEventListener('change', bindScrollSurfaces);
+        mainContainer.addEventListener('animationend', event => {
+            if (event.animationName !== 'peek-a-boo') return;
+            const surface = event.target.closest('.column');
+            if (surface) scheduleRecycle(surface, mobileQuery.matches ? window : surface);
+        });
     }
     
     function setupPoolAnimation() {
@@ -479,6 +492,14 @@
         const waitingToPlay = new WeakSet();
         const playAttempts = new WeakSet();
         const startedVideos = new WeakSet();
+        const videosAwaitingReadiness = new Set(videos.filter(video =>
+            video.dataset.src || video.querySelector('source[data-src], source[src]')
+        ));
+        let resolveAllVideosReady;
+        const allVideosReady = new Promise(resolve => {
+            resolveAllVideosReady = resolve;
+            if (videosAwaitingReadiness.size === 0) resolve();
+        });
         const columnQueues = new Map();
         const activeLoads = new Map();
         const maxLoadsPerColumn = 1;
@@ -508,25 +529,33 @@
                 source.removeAttribute('data-src');
                 hasSource = true;
             });
-            if (!hasSource) return;
+            if (!hasSource) {
+                markVideoReady(video);
+                return;
+            }
             startedVideos.add(video);
             video.dataset.mediaLoaded = 'true';
             if (column) activeLoads.set(column, activeLoads.get(column) + 1);
 
-            if (column) {
-                let released = false;
-                const releaseSlot = () => {
-                    if (released) return;
-                    released = true;
-                    video.removeEventListener('canplay', releaseSlot);
-                    video.removeEventListener('error', releaseSlot);
-                    activeLoads.set(column, activeLoads.get(column) - 1);
-                    loadNextInColumn(column);
-                };
-                video.addEventListener('canplay', releaseSlot, { once: true });
-                video.addEventListener('error', releaseSlot, { once: true });
-            }
+            let released = false;
+            const releaseSlot = () => {
+                if (released) return;
+                released = true;
+                video.removeEventListener('canplay', releaseSlot);
+                video.removeEventListener('error', releaseSlot);
+                markVideoReady(video);
+                if (!column) return;
+                activeLoads.set(column, activeLoads.get(column) - 1);
+                loadNextInColumn(column);
+            };
+            video.addEventListener('canplay', releaseSlot, { once: true });
+            video.addEventListener('error', releaseSlot, { once: true });
             video.load();
+        }
+
+        function markVideoReady(video) {
+            videosAwaitingReadiness.delete(video);
+            if (videosAwaitingReadiness.size === 0) resolveAllVideosReady();
         }
 
         function loadNextInColumn(column) {
@@ -562,6 +591,7 @@
 
         function playWhenReady(video) {
             if (video.dataset.inView !== 'true') return;
+            if (video.closest('#dolphin-toggle')) return;
             const play = () => {
                 waitingToPlay.delete(video);
                 if (video.dataset.inView === 'true' && !document.hidden && !playAttempts.has(video) && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
@@ -622,6 +652,7 @@
                 if (video.dataset.autoplay === 'true' && video.dataset.inView === 'true') playWhenReady(video);
             });
         }, { passive: true });
+        loadVideo.allReady = allVideosReady;
         return loadVideo;
     }
 
@@ -632,11 +663,94 @@
         const vNormal = container.querySelector('.video-normal');
         const vPixel  = container.querySelector('.video-pixelated');
         if (!vNormal || !vPixel) return;
+        const videos = [vNormal, vPixel];
+        let visible = false;
+        let running = false;
+        let started = false;
+        let pending = false;
+        let lastRetryTime = 0;
 
-        // --- Toggle Logic ---
+        videos.forEach(video => {
+            video.muted = true;
+            video.defaultMuted = true;
+            video.playsInline = true;
+        });
+
         container.addEventListener('click', () => {
             const isPixelated = container.classList.toggle('is-pixelated');
             container.setAttribute('aria-pressed', String(isPixelated));
+        });
+
+        function syncFollower() {
+            if (videos.some(video => video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA)) return;
+            const duration = vNormal.duration;
+            if (!Number.isFinite(duration) || duration <= 0) return;
+            let drift = vPixel.currentTime - vNormal.currentTime;
+            if (drift > duration / 2) drift -= duration;
+            else if (drift < -duration / 2) drift += duration;
+            if (Math.abs(drift) > 0.15) {
+                vPixel.currentTime = vNormal.currentTime;
+                vPixel.playbackRate = 1;
+            } else {
+                vPixel.playbackRate = Math.min(1.05, Math.max(0.95, 1 - drift * 0.5));
+            }
+        }
+
+        function playTogether() {
+            if (pending || !visible || document.hidden || videos.some(video =>
+                video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA
+            )) return;
+            pending = true;
+            vPixel.currentTime = vNormal.currentTime;
+            Promise.all(videos.map(video => video.play()))
+                .then(() => { started = true; })
+                .catch(() => {
+                    started = false;
+                    videos.forEach(video => video.pause());
+                })
+                .finally(() => { pending = false; });
+        }
+
+        function frame(now) {
+            if (!running) return;
+            if (videos.some(video => video.paused)) started = false;
+            if (!started && now - lastRetryTime > 500) {
+                lastRetryTime = now;
+                playTogether();
+            }
+            if (started) syncFollower();
+            requestAnimationFrame(frame);
+        }
+
+        function start() {
+            if (running || !visible) return;
+            running = true;
+            playTogether();
+            requestAnimationFrame(frame);
+        }
+
+        function stop() {
+            running = false;
+            started = false;
+            videos.forEach(video => video.pause());
+        }
+
+        if ('IntersectionObserver' in window) {
+            new IntersectionObserver(entries => {
+                const entry = entries.find(item => item.target === container);
+                if (!entry) return;
+                visible = entry.isIntersecting;
+                if (visible) start();
+                else stop();
+            }, { threshold: 0.1 }).observe(container);
+        } else {
+            visible = true;
+            start();
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stop();
+            else if (visible) start();
         });
 
     }
@@ -768,20 +882,44 @@
 
         let pointerPosition = null;
         let pointerTravel = 0;
+        let pointerGestureTriggered = false;
+        let pointerIdleTimer = null;
         window.addEventListener('pointermove', event => {
             if (event.pointerType === 'touch' || aboutIsOpen()) return;
             if (pointerPosition) {
                 pointerTravel += Math.hypot(event.clientX - pointerPosition.x, event.clientY - pointerPosition.y);
-                if (pointerTravel >= settings.pointerThreshold && chooseNextColor()) pointerTravel = 0;
+                if (pointerTravel >= settings.pointerThreshold && !pointerGestureTriggered) {
+                    pointerGestureTriggered = true;
+                    chooseNextColor();
+                }
             }
             pointerPosition = { x: event.clientX, y: event.clientY };
+            clearTimeout(pointerIdleTimer);
+            pointerIdleTimer = setTimeout(() => {
+                pointerPosition = null;
+                pointerTravel = 0;
+                pointerGestureTriggered = false;
+                pointerIdleTimer = null;
+            }, 220);
         }, { passive: true });
 
         let wheelTravel = 0;
+        let wheelGestureTriggered = false;
+        let wheelIdleTimer = null;
         window.addEventListener('wheel', event => {
             if (aboutIsOpen()) return;
+            clearTimeout(wheelIdleTimer);
+            wheelIdleTimer = setTimeout(() => {
+                wheelTravel = 0;
+                wheelGestureTriggered = false;
+                wheelIdleTimer = null;
+            }, 500);
+            if (wheelGestureTriggered) return;
             wheelTravel += Math.abs(event.deltaX) + Math.abs(event.deltaY);
-            if (wheelTravel >= settings.wheelThreshold && chooseNextColor()) wheelTravel = 0;
+            if (wheelTravel >= settings.wheelThreshold) {
+                wheelGestureTriggered = true;
+                chooseNextColor();
+            }
         }, { passive: true });
 
         let touchGesture = null;
@@ -1014,36 +1152,44 @@
     function setupHiresSwapping() {
         if (hiresSwappingStarted) return;
         hiresSwappingStarted = true;
-        if (!('IntersectionObserver' in window)) {
-            galleryImages.forEach(img => {
-                const rect = img.getBoundingClientRect();
-                if (img.dataset.hiresSrc && rect.width > 0 && rect.bottom > 0 && rect.top < innerHeight) {
-                    swapImageWhenDecoded(img, img.dataset.hiresSrc);
-                }
-            });
-            return;
-        }
-        const observerCallback = (entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img      = entry.target;
-                    const hiresSrc = img.dataset.hiresSrc;
-                    if (hiresSrc && !img.dataset.isSwapped) {
-                        swapImageWhenDecoded(img, hiresSrc);
-                        observer.unobserve(img);
-                    }
-                }
-            });
+        const overlayImage = document.querySelector('.about-image');
+        const images = [...galleryImages, ...(overlayImage ? [overlayImage] : [])];
+        const imageJobs = images
+            .filter(img => img.dataset.hiresSrc && img.dataset.isSwapped !== 'true')
+            .map(img => ({ img, source: img.dataset.hiresSrc }));
+        const auxiliarySources = [...new Set(images.flatMap(img =>
+            (img.dataset.hiresGallery || '').split(',').map(source => source.trim()).filter(Boolean)
+        ))];
+        const jobs = [
+            ...imageJobs,
+            ...auxiliarySources.map(source => ({ source }))
+        ];
+        const concurrency = window.matchMedia('(max-width: 768px)').matches ? 1 : 2;
+
+        const preloadAndDecode = source => new Promise(resolve => {
+            const image = new Image();
+            image.fetchPriority = 'low';
+            image.onload = () => {
+                if (typeof image.decode === 'function') image.decode().then(resolve, resolve);
+                else resolve();
+            };
+            image.onerror = resolve;
+            image.src = source;
+        });
+        const processNext = () => {
+            const job = jobs.shift();
+            if (!job) return;
+            const request = job.img
+                ? swapImageWhenDecoded(job.img, job.source)
+                : preloadAndDecode(job.source);
+            request.finally(processNext);
         };
-        const observer = new IntersectionObserver(observerCallback, { rootMargin: '200px' });
-        // galleryImages is already scoped to `main .media-link img` — the overlay photo
-        // is handled separately by upgradeOverlayImage() and will not receive a duplicate observer.
-        galleryImages.forEach(img => { if (img.dataset.hiresSrc) observer.observe(img); });
+        for (let index = 0; index < concurrency; index++) processNext();
     }
     
     function upgradeOverlayImage() {
         const overlayImage = document.querySelector('.about-image');
-        if (!overlayImage || !overlayImage.dataset.hiresSrc || overlayImage.dataset.isSwapped === 'true') return;
+        if (!hiresSwappingStarted || !overlayImage || !overlayImage.dataset.hiresSrc || overlayImage.dataset.isSwapped === 'true') return;
         swapImageWhenDecoded(overlayImage, overlayImage.dataset.hiresSrc);
     }
     
@@ -1057,6 +1203,7 @@
         let scrollLeft;
 
         function loadHires(item) {
+            if (!hiresSwappingStarted) return;
             const img = item.tagName === 'IMG' ? item : item.querySelector('img');
             if (img && img.dataset.hiresSrc && !img.dataset.isSwapped) {
                 swapImageWhenDecoded(img, img.dataset.hiresSrc);
@@ -1353,7 +1500,6 @@
         if (!hasFinishedLoading && isContentLoaded && isTimerFinished) {
             hasFinishedLoading = true;
             if (loadingDeadline) clearTimeout(loadingDeadline);
-            setupHiresSwapping();
             document.body.classList.add('loading-finished');
             document.body.classList.add('layout-ready');
 
@@ -1403,7 +1549,11 @@
             criticalItems.find(media => media.tagName === 'IMG' && media.closest('.column') === surface)
         ).filter(Boolean));
         const loadingImages = new WeakSet();
+        const completedImageSurfaces = new Set();
+        const activeImageLoads = new Map(imageSurfaces.map(surface => [surface, 0]));
+        const maxImagesPerSurface = 2;
         let backgroundImagesStarted = false;
+        let hiresStartScheduled = false;
         const completeImage = img => new Promise(resolve => {
             const finish = () => {
                 img.removeEventListener('load', onLoad);
@@ -1446,21 +1596,36 @@
             imageQueues.forEach(queue => queue.forEach(img => upcomingObserver.observe(img)));
         }
 
+        const maybeStartHiresImages = () => {
+            if (!backgroundImagesStarted || hiresStartScheduled || completedImageSurfaces.size < imageSurfaces.length) return;
+            hiresStartScheduled = true;
+            Promise.resolve(prepareVideo?.allReady).then(setupHiresSwapping);
+        };
+
         processImageQueue = surface => {
             const queue = imageQueues.get(surface);
-            if (!queue?.length) return;
-            const img = queue.shift();
-            if (loadingImages.has(img)) {
-                processImageQueue(surface);
-                return;
+            if (!queue) return;
+            while (activeImageLoads.get(surface) < maxImagesPerSurface && queue.length) {
+                const img = queue.shift();
+                if (loadingImages.has(img)) continue;
+                loadingImages.add(img);
+                activeImageLoads.set(surface, activeImageLoads.get(surface) + 1);
+                completeImage(img).finally(() => {
+                    activeImageLoads.set(surface, activeImageLoads.get(surface) - 1);
+                    processImageQueue(surface);
+                });
+                img.loading = 'eager';
             }
-            loadingImages.add(img);
-            completeImage(img).finally(() => processImageQueue(surface));
-            img.loading = 'eager';
+            if (!queue.length && activeImageLoads.get(surface) === 0) {
+                completedImageSurfaces.add(surface);
+                maybeStartHiresImages();
+            }
         };
         startBackgroundImageLoading = () => {
+            if (backgroundImagesStarted) return;
             backgroundImagesStarted = true;
             imageQueues.forEach((_, surface) => processImageQueue(surface));
+            maybeStartHiresImages();
         };
 
         if (criticalItems.length === 0) {
