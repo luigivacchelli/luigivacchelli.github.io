@@ -481,7 +481,7 @@
         const startedVideos = new WeakSet();
         const columnQueues = new Map();
         const activeLoads = new Map();
-        const maxLoadsPerColumn = 2;
+        const maxLoadsPerColumn = 1;
 
         document.querySelectorAll('main .column').forEach(column => {
             columnQueues.set(column, Array.from(column.querySelectorAll('video')));
@@ -980,6 +980,7 @@
         request.source = source;
         request.promise = new Promise(resolve => { request.resolve = resolve; });
         const hiresImage = new Image();
+        hiresImage.fetchPriority = 'low';
         pendingImageUpgrades.set(img, request);
         const finish = swapped => {
             if (pendingImageUpgrades.get(img) === request) pendingImageUpgrades.delete(img);
@@ -1011,7 +1012,17 @@
     }
 
     function setupHiresSwapping() {
-        if (!('IntersectionObserver' in window)) return;
+        if (hiresSwappingStarted) return;
+        hiresSwappingStarted = true;
+        if (!('IntersectionObserver' in window)) {
+            galleryImages.forEach(img => {
+                const rect = img.getBoundingClientRect();
+                if (img.dataset.hiresSrc && rect.width > 0 && rect.bottom > 0 && rect.top < innerHeight) {
+                    swapImageWhenDecoded(img, img.dataset.hiresSrc);
+                }
+            });
+            return;
+        }
         const observerCallback = (entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -1333,34 +1344,16 @@
     
     let isContentLoaded = false;
     let isTimerFinished = false;
-    let isInitialHiresReady = false;
-    let initialHiresStarted = false;
+    let hiresSwappingStarted = false;
     let hasFinishedLoading = false;
     let loadingDeadline = null;
-
-    function startInitialHiresLoading() {
-        if (initialHiresStarted) return;
-        initialHiresStarted = true;
-        setupHiresSwapping();
-
-        const initialImages = Array.from(galleryImages).filter(img => {
-            if (!img.dataset.hiresSrc || img.dataset.isSwapped === 'true') return false;
-            const rect = img.getBoundingClientRect();
-            return rect.bottom > 0 && rect.top < window.innerHeight &&
-                rect.right > 0 && rect.left < window.innerWidth;
-        });
-
-        Promise.all(initialImages.map(img => swapImageWhenDecoded(img, img.dataset.hiresSrc)))
-            .then(() => {
-                isInitialHiresReady = true;
-                finishLoading();
-            });
-    }
+    let startBackgroundImageLoading = () => {};
     
     function finishLoading() {
-        if (!hasFinishedLoading && isContentLoaded && isTimerFinished && isInitialHiresReady) {
+        if (!hasFinishedLoading && isContentLoaded && isTimerFinished) {
             hasFinishedLoading = true;
             if (loadingDeadline) clearTimeout(loadingDeadline);
+            setupHiresSwapping();
             document.body.classList.add('loading-finished');
             document.body.classList.add('layout-ready');
 
@@ -1388,17 +1381,94 @@
     function markContentLoaded() {
         if (isContentLoaded) return;
         isContentLoaded = true;
+        startBackgroundImageLoading();
         finishLoading();
     }
 
     function trackCriticalContent(prepareVideo) {
         const mediaItems = Array.from(document.querySelectorAll('main img, main video'));
-        if (mediaItems.length === 0) {
+        const isInViewport = media => {
+            const rect = media.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight &&
+                rect.right > 0 && rect.left < window.innerWidth;
+        };
+        const criticalItems = mediaItems.filter(isInViewport);
+
+        const imageSurfaces = Array.from(mainContainer.querySelectorAll('.column'));
+        const imageQueues = new Map(imageSurfaces.map(surface => [
+            surface,
+            Array.from(surface.querySelectorAll('img')).filter(img => !isInViewport(img))
+        ]));
+        const firstCriticalImages = new Set(imageSurfaces.map(surface =>
+            criticalItems.find(media => media.tagName === 'IMG' && media.closest('.column') === surface)
+        ).filter(Boolean));
+        const loadingImages = new WeakSet();
+        let backgroundImagesStarted = false;
+        const completeImage = img => new Promise(resolve => {
+            const finish = () => {
+                img.removeEventListener('load', onLoad);
+                img.removeEventListener('error', finish);
+                resolve();
+            };
+            const onLoad = () => {
+                if (typeof img.decode === 'function') img.decode().then(finish, finish);
+                else finish();
+            };
+            if (img.complete) {
+                if (img.naturalWidth > 0 && typeof img.decode === 'function') img.decode().then(finish, finish);
+                else finish();
+                return;
+            }
+            img.addEventListener('load', onLoad, { once: true });
+            img.addEventListener('error', finish, { once: true });
+        });
+
+        let processImageQueue = () => {};
+        const promoteImage = img => {
+            for (const [surface, queue] of imageQueues) {
+                const index = queue.indexOf(img);
+                if (index > 0) {
+                    queue.splice(index, 1);
+                    queue.unshift(img);
+                    if (backgroundImagesStarted) processImageQueue(surface);
+                    break;
+                }
+            }
+        };
+        if ('IntersectionObserver' in window) {
+            const upcomingObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    promoteImage(entry.target);
+                    upcomingObserver.unobserve(entry.target);
+                });
+            }, { rootMargin: '1000px 0px' });
+            imageQueues.forEach(queue => queue.forEach(img => upcomingObserver.observe(img)));
+        }
+
+        processImageQueue = surface => {
+            const queue = imageQueues.get(surface);
+            if (!queue?.length) return;
+            const img = queue.shift();
+            if (loadingImages.has(img)) {
+                processImageQueue(surface);
+                return;
+            }
+            loadingImages.add(img);
+            completeImage(img).finally(() => processImageQueue(surface));
+            img.loading = 'eager';
+        };
+        startBackgroundImageLoading = () => {
+            backgroundImagesStarted = true;
+            imageQueues.forEach((_, surface) => processImageQueue(surface));
+        };
+
+        if (criticalItems.length === 0) {
             markContentLoaded();
             return;
         }
 
-        const promises = mediaItems.map(media => {
+        const promises = criticalItems.map(media => {
             return new Promise(resolve => {
                 let settled = false;
                 const finish = () => {
@@ -1418,6 +1488,7 @@
 
                 if (media.tagName === 'IMG') {
                     media.loading = 'eager';
+                    if (firstCriticalImages.has(media)) media.fetchPriority = 'high';
                     media.addEventListener('load', onImageLoad, { once: true });
                     media.addEventListener('error', onError, { once: true });
                     if (media.complete) {
@@ -1489,16 +1560,15 @@
     
     setTimeout(() => {
         isTimerFinished = true;
-        startInitialHiresLoading();
         finishLoading();
     }, 4000);
 
     loadingDeadline = setTimeout(() => {
-        if (!isContentLoaded || !isInitialHiresReady) {
+        if (!isContentLoaded) {
             console.warn('Portfolio loading reached the 10-second limit; showing media ready so far.');
         }
         isContentLoaded = true;
-        isInitialHiresReady = true;
+        startBackgroundImageLoading();
         finishLoading();
     }, Math.max(0, 10000 - (performance.now() - loadingStartedAt)));
     
