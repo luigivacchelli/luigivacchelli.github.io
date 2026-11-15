@@ -4,20 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google-site-verification" content="o4zUiu6eCaEDegd2uTiCIguf2TpWLpOcmKP_yFJpdJw" />
-  <title>Luigi Vacchelli</title>
+  <title>Luigi Vacchelli | Regista e Fotografo</title>
   
-  <!-- SEO TAGS -->
+  <!-- SEO metadata -->
   <meta name="description" content="Luigi Vacchelli, regista e fotografo genovese trapiantato a Roma. Nel mio portfolio troverete una collezione di fotografie e riprese video.">
-  <meta name="keywords" content="Luigi Vacchelli, portfolio, director, photographer, photography, filmmaking, Rome, Italy, regia, fotografo, cinema, Roma, Italia">
   <meta name="author" content="Luigi Vacchelli">
-  <!-- FIX: Added index, follow to make robots directive explicit rather than relying on undefined defaults -->
   <meta name="robots" content="index, follow, max-image-preview:large">
   
-  <!-- FIX: Removed hreflang="it" and hreflang="en" — both pointed to the same URL, which is
-       a misconfiguration. hreflang is for signalling *different* URLs per language.
-       Since language switching is done client-side in JS, only x-default is correct here. -->
+  <!-- Add language alternates when each language has its own URL. -->
   <link rel="alternate" hreflang="x-default" href="https://luigivacchelli.github.io/" />
-  <!-- END OF SEO TAGS -->
   
   <!-- CRITICAL CSS: Render the preloader instantly, before stile.css loads -->
   <style>
@@ -76,8 +71,7 @@
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
-          /* FIX: Synced to 96% to match stile.css — previously this was 96% here and 97% in stile.css,
-             causing the last-loaded stylesheet to win with a different animation. Now both are identical. */
+          /* Keep this animation synchronized with stile.css. */
           animation: loading-progress-animation 4s ease-in-out forwards;
       }
       @keyframes loading-progress-animation {
@@ -93,13 +87,10 @@
   </style>
 
   <link rel="stylesheet" href="stile.css" media="print" onload="this.media='all'"/>
-  <!-- FIX: noscript fallback — without this, users with JS disabled get a completely unstyled page
-       because the media="print" trick above relies on JS to swap the media attribute to "all". -->
+  <!-- The print-media stylesheet loading technique needs this no-JavaScript fallback. -->
   <noscript><link rel="stylesheet" href="stile.css"></noscript>
 
-  <!-- FIX: Preloading the first visible images in each column to improve LCP score.
-       frame.webp (left column, item 1) and track.webp (right column, item 1) are the
-       Largest Contentful Paint candidates — they should load as early as possible. -->
+  <!-- Preload the first visible image in each desktop column. -->
   <link rel="preload" href="pictures/bw/lores/frame.webp" as="image">
   <link rel="preload" href="pictures/c41/lores/track.webp" as="image">
   <link rel="preload" href="logos/lores/loaderlogo.webp" as="image">
@@ -112,9 +103,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
   <link rel="shortcut icon" href="favicon/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
-  <!-- FIX: Changed from placeholder "MyWebSite" to the actual site name.
-       This is what appears as the app label when a user saves the site to their iPhone home screen. -->
-  <meta name="apple-mobile-web-app-title" content="Luigi Vacchelli" />
+  <meta name="apple-mobile-web-app-title" content="LuigiVacchelliPortfolio" />
   <link rel="manifest" href="favicon/site.webmanifest" />
 
   <script type="application/ld+json">
@@ -146,17 +135,15 @@
     <header class="page-header">
       <div class="header-left font-display">luigivacchelli</div>
       <div class="header-right font-display">
-          <button id="about-trigger" class="about-toggle" data-i18n-key="aboutLink" aria-label="Open About Me">chisono</button>
+        <button id="about-trigger" class="about-toggle" data-i18n-key="aboutLink" data-i18n-aria-label="aboutOpen">chisono</button>
       </div>
     </header>
         
     <!-- Overlay con bio -->
-    <!-- FIX: Added aria-label to give the dialog an accessible name.
-         Screen readers announce the dialog purpose when it receives focus on open.
-         aria-labelledby requires an element with an ID inside the dialog;
-         aria-label is the simpler and equally valid solution when no visible heading exists. -->
-    <div id="about-overlay" class="about-overlay" role="dialog" aria-modal="true" aria-label="About Luigi Vacchelli">
-        <div id="about-background" class="about-background" aria-label="Close Overlay"></div>
+    <!-- The dialog has no visible title, so its accessible name is provided here. -->
+    <div id="about-overlay" class="about-overlay" role="dialog" aria-modal="true" data-i18n-aria-label="aboutDialog" aria-label="About Luigi Vacchelli" aria-hidden="true" inert tabindex="-1">
+        <div id="about-background" class="about-background" aria-hidden="true"></div>
+        <button id="about-close" class="about-close" type="button" data-i18n-aria-label="aboutClose" aria-label="Close About">×</button>
         <div class="about-content-container">
             <!-- PART 1: The Image Column -->
             <div class="about-column about-image-column">
@@ -200,17 +187,19 @@
                 <img src="pictures/c41/lores/orangetrees.webp" data-hires-src="pictures/c41/hires/orangetrees.jpg" alt="Trees lit by sunlight and a seagull flying over the branches" width="2400" height="1600">
             </div>
             <div class="media-link">
-                <img loading="lazy" src="pictures/peter/lores/peter1.webp" data-hires-src="pictures/peter/hires/peter1.jpg" data-gallery="pictures/peter/lores/peter2.webp,pictures/peter/lores/peter3.webp,pictures/peter/lores/peter4.webp,pictures/peter/lores/peter5.webp" data-hires-gallery="pictures/peter/hires/peter2.jpg,pictures/peter/hires/peter3.jpg,pictures/peter/hires/peter4.jpg,pictures/peter/hires/peter5.jpg" alt="A guy lit by the sun in a church." width="2400" height="1600">
+                <button class="image-gallery-control media-control" type="button" data-i18n-aria-label="galleryNext" aria-label="Show next gallery image">
+                    <img loading="lazy" src="pictures/peter/lores/peter1.webp" data-hires-src="pictures/peter/hires/peter1.jpg" data-gallery="pictures/peter/lores/peter2.webp,pictures/peter/lores/peter3.webp,pictures/peter/lores/peter4.webp,pictures/peter/lores/peter5.webp" data-hires-gallery="pictures/peter/hires/peter2.jpg,pictures/peter/hires/peter3.jpg,pictures/peter/hires/peter4.jpg,pictures/peter/hires/peter5.jpg" alt="A guy lit by the sun in a church." width="2400" height="1600">
+                </button>
             </div>
             <div class="media-link">
                 <img loading="lazy" src="pictures/c41/lores/edera.webp" data-hires-src="pictures/c41/hires/edera.jpg" alt="Flowers on a hill at sunset." width="10877" height="7227">
             </div>
-            <div class="media-link color-blend" id="color-blend" role="group" aria-label="Interactive colour blend animation">
+            <div class="media-link color-blend" id="color-blend" role="button" tabindex="0" data-i18n-aria-label="colorCycle" aria-label="Color-changing video. Press Enter or Space to change color.">
                 <video data-src="graphics/cog/lores_colors/lvfavblue.mp4" poster="pictures/posters/lvfav_poster.webp" muted playsinline loop preload="none" width="1690" height="1280" aria-label="Luigi Vacchelli is your favourite dickhead"></video>
                 <video data-src="graphics/cog/lores_colors/lvfavred.mp4" muted playsinline loop preload="none" width="1690" height="1280" aria-hidden="true" style="opacity: 0"></video>
                 <video data-src="graphics/cog/lores_colors/lvfavgreen.mp4" muted playsinline loop preload="none" width="1690" height="1280" aria-hidden="true" style="opacity: 0"></video>
             </div>
-            <div class="media-link carousel-container" id="image-carousel-1">
+            <div class="media-link carousel-container" id="image-carousel-1" role="region" aria-roledescription="carousel" tabindex="0" data-i18n-aria-label="carouselName" aria-label="Photograph carousel">
                 <div class="carousel-track">
                     <img class="carousel-item" src="graphics/carousels/lores/1/1.webp" data-hires-src="graphics/carousels/hires/1/1.jpg" alt="Artistic collage of images overlapping" width="2000" height="2000">
                     <img class="carousel-item" src="graphics/carousels/lores/1/2.webp" data-hires-src="graphics/carousels/hires/1/2.jpg" alt="Artistic collage of images overlapping" width="2000" height="2000">
@@ -224,12 +213,12 @@
                     <img class="carousel-item" loading="lazy" src="graphics/carousels/lores/1/10.webp" data-hires-src="graphics/carousels/hires/1/10.jpg" alt="Artistic collage of images overlapping" width="2000" height="2000">
                 </div>
             </div>
-            <div class="media-link image-to-video-container" id="pool-animation">
+            <button class="media-link image-to-video-container media-control" id="pool-animation" type="button" data-i18n-aria-label="poolPlay" aria-label="Play pool video with sound" aria-pressed="false">
                 <img loading="lazy" src="pictures/c41/lores/pool.webp" data-hires-src="pictures/c41/hires/pool.jpg" alt="Two hands holding a cue stick." class="pool-image" width="2400" height="1600">
                 <video class="pool-video" playsinline width="1080" height="720">
                     <source data-src="graphics/pool/lores/pool.mp4" type="video/mp4">
                 </video>
-            </div>
+            </button>
             <div class="media-link">
                 <img src="pictures/bw/lores/tent.webp" data-hires-src="pictures/bw/hires/tent.jpg" alt="A white tent in a field at night." width="3090" height="2048">
             </div>
@@ -261,14 +250,14 @@
             <div class="media-link">
                 <img loading="lazy" src="pictures/bw/lores/ambulance.webp" data-hires-src="pictures/bw/hires/ambulance.jpg" alt="A hearse parked in an ambulance parking spot." width="3090" height="2048">
             </div>
-            <div class="media-link video-toggle-container" id="dolphin-toggle">
+            <button class="media-link video-toggle-container media-control" id="dolphin-toggle" type="button" data-i18n-aria-label="dolphinToggle" aria-label="Toggle pixelated dolphin video" aria-pressed="false">
                 <video class="video-normal" autoplay data-autoplay="true" loop muted playsinline preload="none" poster="pictures/posters/dolphins_poster.webp" width="1200" height="664">
                     <source data-src="videos/dolphins/lores/dolphins.mp4" type="video/mp4">
                 </video>
                 <video class="video-pixelated" autoplay data-autoplay="true" loop muted playsinline preload="none" aria-hidden="true" width="1200" height="664">
                     <source data-src="videos/dolphins/lores/dolphinspxl.mp4" type="video/mp4">
                 </video>
-            </div>
+            </button>
             <div class="media-link">
                 <img loading="lazy" src="pictures/c41/lores/valviola.webp" data-hires-src="pictures/c41/hires/valviola.jpg" alt="Cows grazing by a lake in a sunny landscape." width="1445" height="1137">
             </div>
@@ -280,12 +269,12 @@
                     <source data-src="videos/lores/vulcano.mp4" type="video/mp4">
                 </video>
             </div>
-            <div class="media-link interactive-balls-container">
+            <button class="media-link interactive-balls-container media-control" type="button" data-i18n-aria-label="ballsToggle" aria-label="Play or pause juggling animation" aria-pressed="false">
                 <img loading="lazy" src="pictures/bw/lores/balls.webp" data-hires-src="pictures/bw/hires/balls.jpg" alt="A guy juggling with plastic balls." class="balls-image" width="500" height="500">
                 <video class="balls-video" muted playsinline poster="pictures/bw/lores/balls.webp" width="360" height="360">
                     <source data-src="graphics/balls/lores/balls.mp4" type="video/mp4">
                 </video>
-            </div>
+            </button>
             <div class="media-link">
                 <video autoplay data-autoplay="true" loop muted playsinline preload="none" poster="pictures/posters/rainbow_poster.webp" width="720" height="1280">
                     <source data-src="videos/lores/rainbow.mp4" type="video/mp4">

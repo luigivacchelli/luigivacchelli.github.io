@@ -8,35 +8,58 @@
     const mainContainer     = document.querySelector('.container');
     const webcamVideo       = document.getElementById('webcam');
     const webcamContainer   = document.querySelector('.webcam-container');
-    // FIX: Scoped to `main` to exclude the .about-image inside the overlay.
-    // Previously, document.querySelectorAll('.media-link img') also matched the overlay
-    // photo, causing it to receive a redundant IntersectionObserver in setupHiresSwapping
-    // on top of the dedicated upgradeOverlayImage() handler.
+    // The About portrait has a separate high-resolution upgrade path.
     const galleryImages     = document.querySelectorAll('main .media-link img');
     const i18nElements      = document.querySelectorAll('[data-i18n-key]');
     const headerLeft        = document.querySelector('.header-left');
     const aboutTrigger      = document.getElementById('about-trigger');
     const aboutOverlay      = document.getElementById('about-overlay');
     const aboutBackground   = document.getElementById('about-background');
+    const aboutCloseButton  = document.getElementById('about-close');
     const easterEggLayer    = document.getElementById('easter-egg-layer');
     let webcamStream = null;
     let webcamRequestPending = false;
     let pageIsLeaving = false;
+    let previouslyFocusedElement = null;
     const loadingStartedAt = performance.now();
     
     // --- DICTIONARY FOR TRANSLATIONS ---
     const translations = {
         'en': {
+            documentTitle:          "Luigi Vacchelli | Director and Photographer",
+            metaDescription:        "Luigi Vacchelli is a director and photographer based in Rome, Italy. Explore his photography and film work.",
             welcomeMessage:         `This site uses your webcam to enhance the experience. <br> Please don't be shy!`,
             aboutLink:              "whoami",
+            aboutOpen:              "Open About Me",
+            aboutDialog:            "About Luigi Vacchelli",
+            aboutClose:             "Close About",
+            galleryNext:            "Show next gallery image",
+            colorCycle:             "Change the graphic color",
+            carouselName:           "Photograph carousel",
+            carouselSlideStatus:    "Image {index} of {total}",
+            poolPlay:               "Play pool video with sound",
+            dolphinToggle:          "Toggle pixelated dolphin video",
+            ballsToggle:            "Play or pause juggling animation",
             easterEggLeftHeader:    "what are you doing up so late?",
             easterEggRightHeader:   "go to sleep!",
             aboutBio:               `Director and photographer, born in '98. I live in Rome, but my heart is in Genoa. <br> I work on short films, photographic projects and international film productions. <br> Also, there's a good chance I'll beat you at <a href="https://www.chess.com/member/lksmrkds" target="_blank" rel="noopener noreferrer">chess</a>.`,
             copyright:              "© 2026 Luigi Vacchelli. All rights reserved."
         },
         'it': {
+            documentTitle:          "Luigi Vacchelli | Regista e Fotografo",
+            metaDescription:        "Luigi Vacchelli, regista e fotografo genovese trapiantato a Roma. Nel mio portfolio troverete una collezione di fotografie e riprese video.",
             welcomeMessage:         `Questo sito richiede l'accesso alla webcam per essere più bello.<br> Non fate i timidi!`,
             aboutLink:              "chisono",
+            aboutOpen:              "Apri Chi Sono",
+            aboutDialog:            "Chi sono Luigi Vacchelli",
+            aboutClose:             "Chiudi Chi Sono",
+            galleryNext:            "Mostra l'immagine successiva",
+            colorCycle:             "Cambia il colore dell'elemento grafico",
+            carouselName:           "Carosello fotografico",
+            carouselSlideStatus:    "Immagine {index} di {total}",
+            poolPlay:               "Riproduci il video del biliardo con audio",
+            dolphinToggle:          "Attiva o disattiva l'effetto pixelato sui delfini",
+            ballsToggle:            "Riproduci o metti in pausa l'animazione delle palline",
             easterEggLeftHeader:    "cosa ci fai ancora in piedi?",
             easterEggRightHeader:   "corri a letto!",
             aboutBio:               `Regista e fotografo, classe '98. Vivo a Roma, ma ho lasciato il cuore a Genova. <br> Lavoro a cortometraggi, progetti fotografici e produzioni cinematografiche internazionali. <br> Inoltre, ci sono buone probabilità che ti batta a <a href="https://www.chess.com/member/lksmrkds" target="_blank" rel="noopener noreferrer">scacchi</a>.`,
@@ -44,42 +67,54 @@
         }
     };
 
-    // --- HELPER: Detect language ---
-    // FIX: Added .toLowerCase() — the BCP 47 spec does not guarantee lowercase language tags,
-    // even though all major browsers currently return them that way. This makes detection
-    // defensive against edge cases at zero cost.
+    // Use the primary language subtag, regardless of its casing.
     function getLanguage() {
         return navigator.language.substring(0, 2).toLowerCase() === 'it' ? 'it' : 'en';
     }
     
     // --- FUNCTION DEFINITIONS ---
     function openOverlay() {
-        if (aboutOverlay) {
-            aboutOverlay.classList.add('is-open');
-            document.documentElement.classList.add('overlay-active');
-            aboutOverlay.setAttribute('aria-hidden', 'false');
-            upgradeOverlayImage();
-            requestWebcamAccess();
-        }
+        if (!aboutOverlay || aboutOverlay.classList.contains('is-open')) return;
+        previouslyFocusedElement = document.activeElement;
+        aboutOverlay.inert = false;
+        aboutOverlay.removeAttribute('inert');
+        aboutOverlay.setAttribute('aria-hidden', 'false');
+        aboutOverlay.classList.add('is-open');
+        document.documentElement.classList.add('overlay-active');
+        requestAnimationFrame(() => (aboutCloseButton || aboutOverlay).focus({ preventScroll: true }));
+        upgradeOverlayImage();
+        requestWebcamAccess();
     }
     
     function closeOverlay() {
-        if (aboutOverlay) {
-            aboutOverlay.classList.remove('is-open');
-            document.documentElement.classList.remove('overlay-active');
-            aboutOverlay.setAttribute('aria-hidden', 'true');
-            // Keep the granted stream ready so the feed is present on the next open.
+        if (!aboutOverlay || !aboutOverlay.classList.contains('is-open')) return;
+        aboutOverlay.classList.remove('is-open');
+        aboutOverlay.setAttribute('aria-hidden', 'true');
+        aboutOverlay.inert = true;
+        aboutOverlay.setAttribute('inert', '');
+        document.documentElement.classList.remove('overlay-active');
+        if (previouslyFocusedElement instanceof HTMLElement) {
+            previouslyFocusedElement.focus({ preventScroll: true });
         }
+        previouslyFocusedElement = null;
+        // Keep the granted stream ready so the feed is present on the next open.
     }
     
     function translatePage() {
         const language = getLanguage();
+        document.documentElement.lang = language;
+        document.title = translations[language].documentTitle;
+        document.querySelector('meta[name="description"]')?.setAttribute('content', translations[language].metaDescription);
         i18nElements.forEach(element => {
             const key         = element.dataset.i18nKey;
             const translation = translations[language][key];
             if (translation !== undefined) {
                 element.innerHTML = translation;
             }
+        });
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(element => {
+            const translation = translations[language][element.dataset.i18nAriaLabel];
+            if (translation !== undefined) element.setAttribute('aria-label', translation);
         });
     }
     
@@ -137,7 +172,8 @@
             const hiresGallery     = img.dataset.hiresGallery ? img.dataset.hiresGallery.split(',') : [];
             let index = 0;
             if (loresGallery.length === 0) return;
-            img.addEventListener('click', () => {
+            const control = img.closest('button') || img;
+            control.addEventListener('click', () => {
                 cancelPendingImageUpgrade(img);
                 index = (index + 1) % (loresGallery.length + 1);
                 let targetSrc;
@@ -401,17 +437,25 @@
         video.preload = 'auto';
 
         video.addEventListener('ended', () => {
-            setTimeout(() => { container.classList.remove('is-playing'); }, 50);
+            setTimeout(() => {
+                container.classList.remove('is-playing');
+                container.setAttribute('aria-pressed', 'false');
+            }, 50);
         });
 
         container.addEventListener('click', () => {
             if (container.classList.contains('is-playing')) return;
             container.classList.add('is-playing');
+            container.setAttribute('aria-pressed', 'true');
             video.currentTime = 0;
             video.muted = false;
             const playPromise = video.play();
             if (playPromise !== undefined) {
-                playPromise.catch(error => { console.warn("Autoplay prevented:", error); });
+                playPromise.catch(error => {
+                    container.classList.remove('is-playing');
+                    container.setAttribute('aria-pressed', 'false');
+                    console.warn("Pool video play failed:", error);
+                });
             }
         });
 
@@ -422,7 +466,11 @@
         // is ever refactored to be callable multiple times, move this listener to the
         // main DOMContentLoaded block alongside the other aboutTrigger listeners.
         aboutTrigger.addEventListener('click', () => {
-            if (video) { video.pause(); container.classList.remove('is-playing'); }
+            if (video) {
+                video.pause();
+                container.classList.remove('is-playing');
+                container.setAttribute('aria-pressed', 'false');
+            }
         });
     }
 
@@ -587,7 +635,8 @@
 
         // --- Toggle Logic ---
         container.addEventListener('click', () => {
-            container.classList.toggle('is-pixelated');
+            const isPixelated = container.classList.toggle('is-pixelated');
+            container.setAttribute('aria-pressed', String(isPixelated));
         });
 
     }
@@ -598,10 +647,7 @@
         const video = container.querySelector('.balls-video');
         if (!video) return;
 
-        // FIX: Store the replay timeout reference so it can be cancelled on click.
-        // Previously, if a user clicked during the 3-second replay delay, `video.play()`
-        // could be called both by the click handler AND by the timeout, producing
-        // a "play() called on an already-playing element" console error.
+        // Keep the replay timer cancellable when the user turns the animation off.
         let replayTimeout = null;
 
         video.addEventListener('ended', () => {
@@ -621,6 +667,7 @@
                     replayTimeout = null;
                 }
                 container.classList.remove('is-playing');
+                container.setAttribute('aria-pressed', 'false');
                 video.pause();
             } else {
                 // Turning ON: cancel any pending replay (shouldn't exist, but be safe)
@@ -630,8 +677,13 @@
                     replayTimeout = null;
                 }
                 container.classList.add('is-playing');
+                container.setAttribute('aria-pressed', 'true');
                 video.currentTime = 0;
-                video.play().catch(e => console.warn("Balls video play failed", e));
+                video.play().catch(e => {
+                    container.classList.remove('is-playing');
+                    container.setAttribute('aria-pressed', 'false');
+                    console.warn("Balls video play failed", e);
+                });
             }
         });
     }
@@ -706,6 +758,13 @@
             nextColorChangeAt = now + (tileVisible ? settings.transitionDuration : 0) + settings.fullColorHold;
             return true;
         }
+
+        tile.addEventListener('click', chooseNextColor);
+        tile.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            chooseNextColor();
+        });
 
         let pointerPosition = null;
         let pointerTravel = 0;
@@ -1037,13 +1096,45 @@
         });
         // --- End Mouse Drag Logic ---
 
+        const realItems = [...items];
         const firstClone = items[0].cloneNode(true);
         const lastClone  = items[items.length - 1].cloneNode(true);
         firstClone.classList.add('clone');
         lastClone.classList.add('clone');
+        firstClone.inert = true;
+        lastClone.inert = true;
+        firstClone.setAttribute('aria-hidden', 'true');
+        lastClone.setAttribute('aria-hidden', 'true');
         track.appendChild(firstClone);
         track.insertBefore(lastClone, items[0]);
         items = Array.from(track.children);
+
+        const slideStatus = document.createElement('span');
+        slideStatus.className = 'visually-hidden';
+        slideStatus.setAttribute('aria-live', 'polite');
+        slideStatus.setAttribute('aria-atomic', 'true');
+        carouselElement.append(slideStatus);
+        let slideStatusTimer;
+
+        function nearestItem() {
+            const center = carouselElement.scrollLeft + carouselElement.clientWidth / 2;
+            return items.reduce((nearest, item) => {
+                const distance = Math.abs(item.offsetLeft + item.offsetWidth / 2 - center);
+                return !nearest || distance < nearest.distance ? { item, distance } : nearest;
+            }, null)?.item;
+        }
+
+        function announceCurrentSlide() {
+            const item = nearestItem();
+            if (!item) return;
+            const slideIndex = item === lastClone ? realItems.length
+                : item === firstClone ? 1
+                : realItems.indexOf(item) + 1;
+            const language = getLanguage();
+            slideStatus.textContent = translations[language].carouselSlideStatus
+                .replace('{index}', String(slideIndex))
+                .replace('{total}', String(realItems.length));
+        }
 
         const initializePosition = () => {
             requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -1066,21 +1157,28 @@
         let peekTimeout;
         let peekPlayed = carouselElement.dataset.peekPlayed === 'true';
         let peekPointer = null;
-        const peekObserver = new IntersectionObserver((entries, obs) => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                obs.unobserve(carouselElement);
-                if (peekPlayed || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-                peekTimeout = setTimeout(() => {
-                    peekTimeout = null;
-                    if (peekPlayed || !carouselElement.isConnected) return;
-                    peekPlayed = true;
-                    carouselElement.dataset.peekPlayed = 'true';
-                    track.classList.add('has-peeked');
-                }, 500);
-            });
-        }, { threshold: 0.35 });
-        peekObserver.observe(carouselElement);
+        function schedulePeek() {
+            if (peekPlayed || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            peekTimeout = setTimeout(() => {
+                peekTimeout = null;
+                if (peekPlayed || !carouselElement.isConnected) return;
+                peekPlayed = true;
+                carouselElement.dataset.peekPlayed = 'true';
+                track.classList.add('has-peeked');
+            }, 500);
+        }
+
+        if ('IntersectionObserver' in window) {
+            const peekObserver = new IntersectionObserver((entries, observer) => {
+                if (!entries.some(entry => entry.isIntersecting)) return;
+                observer.unobserve(carouselElement);
+                schedulePeek();
+            }, { threshold: 0.35 });
+            peekObserver.observe(carouselElement);
+        } else {
+            const rect = carouselElement.getBoundingClientRect();
+            if (rect.top < innerHeight && rect.bottom > 0) schedulePeek();
+        }
 
         function cancelPeekAnimation() {
             if (peekTimeout) clearTimeout(peekTimeout);
@@ -1107,7 +1205,20 @@
             }
         }, { passive: true });
         carouselElement.addEventListener('keydown', event => {
-            if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) cancelPeekAnimation();
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            cancelPeekAnimation();
+            let target;
+            if (event.key === 'Home') target = realItems[0];
+            else if (event.key === 'End') target = realItems[realItems.length - 1];
+            else {
+                const index = items.indexOf(nearestItem());
+                target = items[Math.max(0, Math.min(items.length - 1, index + (event.key === 'ArrowRight' ? 1 : -1)))];
+            }
+            carouselElement.scrollTo({
+                left: target.offsetLeft,
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+            });
         });
         const clearPeekClass = event => {
             if (event.animationName === 'peek-a-boo') track.classList.remove('has-peeked');
@@ -1117,6 +1228,8 @@
 
         carouselElement.addEventListener('scroll', () => {
             checkAndLoadVisibleItems();
+            clearTimeout(slideStatusTimer);
+            slideStatusTimer = setTimeout(announceCurrentSlide, 180);
             if (isTeleporting) return;
             const firstItem = carouselElement.querySelector('.carousel-item:not(.clone)');
             const lastItem  = items[items.length - 2];
@@ -1198,11 +1311,7 @@
                 pageHeader.classList.remove('visible');
             }, 5000);
             
-            // FIX: Second timeout moved from 5000ms to 6000ms.
-            // Previously both timeouts fired at exactly 5000ms. The remove('visible') and
-            // add('visible') calls landed in the same JS tick, meaning the CSS fade-out
-            // transition never had time to run — the header text swapped abruptly with
-            // no animation. 6000ms gives the 1s opacity transition room to complete first.
+            // Allow the header's one-second fade-out to finish before restoring its labels.
             setTimeout(() => {
                 document.body.classList.remove('easter-egg-active');
                 headerLeft.textContent   = originalLeftText;
@@ -1348,10 +1457,32 @@
         allCarousels.forEach(setupInfiniteCarousel);
         setupFooterObserver();
         if (aboutTrigger)    aboutTrigger.addEventListener('click', openOverlay);
+        if (aboutCloseButton) aboutCloseButton.addEventListener('click', closeOverlay);
         if (aboutBackground) aboutBackground.addEventListener('click', closeOverlay);
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && aboutOverlay.classList.contains('is-open')) {
+            if (!aboutOverlay?.classList.contains('is-open')) return;
+            if (event.key === 'Escape') {
+                event.preventDefault();
                 closeOverlay();
+                return;
+            }
+            if (event.key !== 'Tab') return;
+            const focusable = [...aboutOverlay.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )].filter(element => element.getClientRects().length > 0);
+            if (focusable.length === 0) {
+                event.preventDefault();
+                aboutOverlay.focus();
+                return;
+            }
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && (document.activeElement === first || document.activeElement === aboutOverlay)) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === aboutOverlay)) {
+                event.preventDefault();
+                first.focus();
             }
         });
     });
