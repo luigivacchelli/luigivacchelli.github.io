@@ -485,7 +485,7 @@ body.loading-finished #preloader p {
 }
 
 .carousel-track.has-peeked {
-    animation: peek-a-boo 4.5s ease-in-out;
+    animation: peek-a-boo 3s ease-in-out;
 }
 
 .carousel-container {
