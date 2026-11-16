@@ -19,6 +19,7 @@
     const easterEggLayer    = document.getElementById('easter-egg-layer');
     let webcamStream = null;
     let webcamRequestPending = false;
+    let webcamRequestVersion = 0;
     let pageIsLeaving = false;
     let previouslyFocusedElement = null;
     const loadingStartedAt = performance.now();
@@ -97,7 +98,7 @@
             previouslyFocusedElement.focus({ preventScroll: true });
         }
         previouslyFocusedElement = null;
-        // Keep the granted stream ready so the feed is present on the next open.
+        stopWebcam();
     }
     
     function translatePage() {
@@ -119,7 +120,7 @@
     }
     
     function requestWebcamAccess() {
-        if (!webcamVideo || !webcamContainer || webcamRequestPending) return;
+        if (!webcamVideo || !webcamContainer || webcamRequestPending || document.hidden || pageIsLeaving) return;
         webcamContainer.style.removeProperty('display');
         if (webcamStream?.getVideoTracks().some(track => track.readyState === 'live')) {
             if (webcamVideo.srcObject !== webcamStream) webcamVideo.srcObject = webcamStream;
@@ -132,11 +133,15 @@
             return;
         }
         webcamRequestPending = true;
+        const requestVersion = webcamRequestVersion;
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 webcamRequestPending = false;
-                if (pageIsLeaving) {
+                if (pageIsLeaving || document.hidden || requestVersion !== webcamRequestVersion) {
                     stream.getTracks().forEach(track => track.stop());
+                    if (!pageIsLeaving && !document.hidden && aboutOverlay?.classList.contains('is-open')) {
+                        requestWebcamAccess();
+                    }
                     return;
                 }
                 webcamStream = stream;
@@ -158,12 +163,21 @@
     }
 
     function stopWebcam() {
+        webcamRequestVersion++;
         if (webcamStream) {
             webcamStream.getTracks().forEach(track => track.stop());
             webcamStream = null;
         }
         if (webcamVideo) webcamVideo.srcObject = null;
     }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopWebcam();
+        } else if (aboutOverlay?.classList.contains('is-open')) {
+            requestWebcamAccess();
+        }
+    });
     
     function setupImageGallery() {
         galleryImages.forEach(img => {
