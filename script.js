@@ -489,7 +489,6 @@
 
     function setupVideoLoading() {
         const videos = Array.from(document.querySelectorAll('main video'));
-        const waitingToPlay = new WeakSet();
         const playAttempts = new WeakSet();
         const startedVideos = new WeakSet();
         const videosAwaitingReadiness = new Set(videos.filter(video =>
@@ -534,22 +533,37 @@
                 return;
             }
             startedVideos.add(video);
-            video.dataset.mediaLoaded = 'true';
+            video.dataset.mediaRequested = 'true';
+            delete video.dataset.mediaLoaded;
             if (column) activeLoads.set(column, activeLoads.get(column) + 1);
 
             let released = false;
             const releaseSlot = () => {
                 if (released) return;
                 released = true;
+                window.clearTimeout(releaseTimer);
+                video.removeEventListener('loadedmetadata', releaseSlot);
                 video.removeEventListener('canplay', releaseSlot);
-                video.removeEventListener('error', releaseSlot);
-                markVideoReady(video);
+                video.removeEventListener('error', onError);
                 if (!column) return;
                 activeLoads.set(column, activeLoads.get(column) - 1);
                 loadNextInColumn(column);
             };
+            const onLoadedData = () => {
+                video.dataset.mediaLoaded = 'true';
+                markVideoReady(video);
+            };
+            const onError = () => {
+                video.dataset.mediaError = 'true';
+                markVideoReady(video);
+                releaseSlot();
+            };
+            // Some mobile browsers defer hidden-video loading without firing readiness events.
+            const releaseTimer = window.setTimeout(releaseSlot, 5000);
+            video.addEventListener('loadeddata', onLoadedData, { once: true });
+            video.addEventListener('loadedmetadata', releaseSlot, { once: true });
             video.addEventListener('canplay', releaseSlot, { once: true });
-            video.addEventListener('error', releaseSlot, { once: true });
+            video.addEventListener('error', onError, { once: true });
             video.load();
         }
 
@@ -592,23 +606,14 @@
         function playWhenReady(video) {
             if (video.dataset.inView !== 'true') return;
             if (video.closest('#dolphin-toggle')) return;
-            const play = () => {
-                waitingToPlay.delete(video);
-                if (video.dataset.inView === 'true' && !document.hidden && !playAttempts.has(video) && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-                    playAttempts.add(video);
-                    video.play().catch(error => {
-                        playAttempts.delete(video);
-                        if (error.name !== 'AbortError') {
-                            console.warn('Inline video playback was blocked:', error.name, video.currentSrc || video.src);
-                        }
-                    });
+            if (!mainContainer?.classList.contains('visible') || document.hidden || playAttempts.has(video)) return;
+            playAttempts.add(video);
+            video.play().catch(error => {
+                playAttempts.delete(video);
+                if (error.name !== 'AbortError') {
+                    console.warn('Inline video playback was blocked:', error.name, video.currentSrc || video.src);
                 }
-            };
-            if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) play();
-            else if (!waitingToPlay.has(video)) {
-                waitingToPlay.add(video);
-                video.addEventListener('loadeddata', play, { once: true });
-            }
+            });
         }
 
         columnQueues.forEach((_, column) => loadNextInColumn(column));
@@ -652,6 +657,11 @@
                 if (video.dataset.autoplay === 'true' && video.dataset.inView === 'true') playWhenReady(video);
             });
         }, { passive: true });
+        loadVideo.resumeVisibleAutoplay = () => {
+            videos.forEach(video => {
+                if (video.dataset.autoplay === 'true' && video.dataset.inView === 'true') playWhenReady(video);
+            });
+        };
         loadVideo.allReady = allVideosReady;
         return loadVideo;
     }
@@ -1495,6 +1505,7 @@
     let hasFinishedLoading = false;
     let loadingDeadline = null;
     let startBackgroundImageLoading = () => {};
+    let resumeVisibleAutoplay = () => {};
     
     function finishLoading() {
         if (!hasFinishedLoading && isContentLoaded && isTimerFinished) {
@@ -1519,7 +1530,10 @@
 
             const easterEggActive = checkForEasterEgg();
 
-            if (mainContainer) mainContainer.classList.add('visible');
+            if (mainContainer) {
+                mainContainer.classList.add('visible');
+                requestAnimationFrame(resumeVisibleAutoplay);
+            }
             if (!easterEggActive && pageHeader) pageHeader.classList.add('visible');
         }
     }
@@ -1684,6 +1698,7 @@
         setupInfiniteGallery();
         setupImageGallery();
         const prepareVideo = setupVideoLoading();
+        resumeVisibleAutoplay = prepareVideo.resumeVisibleAutoplay;
         setupVideoToggle();
         setupPoolAnimation();
         setupInteractiveBalls();
