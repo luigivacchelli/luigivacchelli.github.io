@@ -487,6 +487,12 @@
         });
     }
 
+    function setupMediaControlFocus() {
+        const root = document.documentElement;
+        document.addEventListener('pointerdown', () => root.classList.add('pointer-input'), true);
+        document.addEventListener('keydown', () => root.classList.remove('pointer-input'), true);
+    }
+
     function setupVideoLoading() {
         const videos = Array.from(document.querySelectorAll('main video'));
         const playAttempts = new WeakSet();
@@ -1693,6 +1699,7 @@
     // --- MAIN EVENT LISTENERS ---
     document.addEventListener('DOMContentLoaded', () => {
         if (preloaderContent) preloaderContent.classList.add('ready');
+        setupMediaControlFocus();
         translatePage();
         setupResponsiveGalleryOrder();
         setupInfiniteGallery();

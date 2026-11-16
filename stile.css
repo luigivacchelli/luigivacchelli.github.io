@@ -444,12 +444,20 @@ body.loading-finished #preloader p {
   cursor: pointer;
 }
 
+.media-control {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .media-control:focus-visible,
 .about-close:focus-visible,
 .carousel-container:focus-visible,
 .color-blend:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;
+}
+
+html.pointer-input .media-control:focus {
+  outline: none;
 }
 
 .visually-hidden {
