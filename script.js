@@ -98,7 +98,7 @@
             previouslyFocusedElement.focus({ preventScroll: true });
         }
         previouslyFocusedElement = null;
-        stopWebcam();
+        // Keep capture active while the portfolio page remains visible.
     }
     
     function translatePage() {
@@ -174,7 +174,7 @@
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             stopWebcam();
-        } else if (aboutOverlay?.classList.contains('is-open')) {
+        } else {
             requestWebcamAccess();
         }
     });
@@ -1780,7 +1780,7 @@
 
     window.addEventListener('pageshow', () => {
         pageIsLeaving = false;
-        if (aboutOverlay?.classList.contains('is-open')) requestWebcamAccess();
+        requestWebcamAccess();
     });
 
 })();
